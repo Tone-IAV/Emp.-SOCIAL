@@ -52,95 +52,88 @@
 </div>
 
 <script>
-const mapaPocos = {};
-const escapeHtml = texto => String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  (() => {
+    const mapaPocos = {};
+    const { escapeHtml, formatarMoeda } = window;
 
-// =============================
-// CARREGAR POÇOS NO SELECT
-// =============================
-function carregarSelectPocos() {
-  google.script.run.withSuccessHandler(pocos => {
-    const select = document.getElementById('pocoId');
-    const options = pocos.map(p => {
-      const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
-      const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
-      mapaPocos[p.ID] = { nome, local };
-      return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
-    });
-    select.innerHTML = options.join('');
-    carregarPrestacoes();
-  }).listarPocos();
-}
-
-// =============================
-// SUBMIT FORMULÁRIO
-// =============================
-document.getElementById('formDespesa').addEventListener('submit', async e => {
-  e.preventDefault();
-
-  const pocoId = document.getElementById('pocoId').value;
-  const data = document.getElementById('data').value;
-  const descricao = document.getElementById('descricao').value;
-  const valor = parseFloat(document.getElementById('valor').value);
-  const fileInput = document.getElementById('comprovante');
-
-  let comprovanteURL = '';
-  if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    const base64 = await new Promise(resolve => {
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(file);
-    });
-
-    await new Promise(resolve => {
-      google.script.run.withSuccessHandler(url => {
-        comprovanteURL = url;
-        resolve();
-      }).uploadFile(base64, file.name, file.type);
-    });
-  }
-
-  const despesa = { pocoId, data, descricao, valor, comprovanteURL };
-  google.script.run.withSuccessHandler(() => {
-    e.target.reset();
-    carregarPrestacoes();
-  }).salvarPrestacao(despesa);
-});
-
-// =============================
-// CARREGAR LISTA
-// =============================
-function carregarPrestacoes() {
-  google.script.run.withSuccessHandler(registros => {
-    const tbody = document.querySelector('#tabelaPrestacoes tbody');
-    let total = 0;
-    if (!registros.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
-      document.getElementById('totalizador').textContent = '💰 Total lançado: R$ 0,00';
-      return;
+    function carregarSelectPocos() {
+      google.script.run.withSuccessHandler(pocos => {
+        const select = document.getElementById('pocoId');
+        const options = pocos.map(p => {
+          const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+          const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+          mapaPocos[p.ID] = { nome, local };
+          return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+        });
+        select.innerHTML = options.join('');
+        carregarPrestacoes();
+      }).listarPocos();
     }
-    tbody.innerHTML = registros.map(r => {
-      const valor = Number(r.Valor || 0);
-      total += valor;
-      const data = r.Data ? new Date(r.Data) : null;
-      const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
-      const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '' };
-      return `
-        <tr class="border-b hover:bg-gray-50">
-          <td class="p-2">
-            <div class="font-semibold text-gray-900">${escapeHtml(infoPoco.nome)}</div>
-            <small class="text-gray-500">${escapeHtml(infoPoco.local)}</small>
-          </td>
-          <td class="p-2">${dataTexto}</td>
-          <td class="p-2">${escapeHtml(r.Descrição)}</td>
-          <td class="p-2">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-          <td class="p-2">${r.ComprovanteURL ? `<a href="${escapeHtml(r.ComprovanteURL)}" target="_blank">📎 Ver</a>` : '-'}</td>
-        </tr>`;
-    }).join('');
-    document.getElementById('totalizador').textContent = `💰 Total lançado: ${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-  }).listarPrestacoes();
-}
 
-carregarSelectPocos();
+    document.getElementById('formDespesa').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const pocoId = document.getElementById('pocoId').value;
+      const data = document.getElementById('data').value;
+      const descricao = document.getElementById('descricao').value;
+      const valor = parseFloat(document.getElementById('valor').value);
+      const fileInput = document.getElementById('comprovante');
+
+      let comprovanteURL = '';
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        const base64 = await new Promise(resolve => {
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+
+        await new Promise(resolve => {
+          google.script.run.withSuccessHandler(url => {
+            comprovanteURL = url;
+            resolve();
+          }).uploadFile(base64, file.name, file.type);
+        });
+      }
+
+      const despesa = { pocoId, data, descricao, valor, comprovanteURL };
+      google.script.run.withSuccessHandler(() => {
+        e.target.reset();
+        carregarPrestacoes();
+      }).salvarPrestacao(despesa);
+    });
+
+    function carregarPrestacoes() {
+      google.script.run.withSuccessHandler(registros => {
+        const tbody = document.querySelector('#tabelaPrestacoes tbody');
+        let total = 0;
+        if (!registros.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
+          document.getElementById('totalizador').textContent = '💰 Total lançado: R$ 0,00';
+          return;
+        }
+        tbody.innerHTML = registros.map(r => {
+          const valor = Number(r.Valor || 0);
+          total += valor;
+          const data = r.Data ? new Date(r.Data) : null;
+          const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+          const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '' };
+          return `
+            <tr class="border-b hover:bg-gray-50">
+              <td class="p-2">
+                <div class="font-semibold text-gray-900">${escapeHtml(infoPoco.nome)}</div>
+                <small class="text-gray-500">${escapeHtml(infoPoco.local)}</small>
+              </td>
+              <td class="p-2">${dataTexto}</td>
+              <td class="p-2">${escapeHtml(r.Descrição)}</td>
+              <td class="p-2">${formatarMoeda(valor)}</td>
+              <td class="p-2">${r.ComprovanteURL ? `<a href="${escapeHtml(r.ComprovanteURL)}" target="_blank">📎 Ver</a>` : '-'}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('totalizador').textContent = `💰 Total lançado: ${formatarMoeda(total)}`;
+      }).listarPrestacoes();
+    }
+
+    carregarSelectPocos();
+  })();
 </script>

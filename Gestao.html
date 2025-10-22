@@ -130,100 +130,102 @@
 </div>
 
 <script>
-  const formatarNumero = valor => Number(valor || 0).toLocaleString('pt-BR');
-  const formatarMoeda = valor => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const escapeHtml = texto => String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  (() => {
+    const { formatarNumero, formatarMoeda, escapeHtml } = window;
 
-  function renderTabelaGenerica(id, linhas, template, colunas = 4) {
-    const tbody = document.querySelector(`#${id} tbody`);
-    if (!tbody) return;
-    if (!linhas || !linhas.length) {
-      tbody.innerHTML = `<tr><td colspan="${colunas}" class="text-gray-500 text-center py-3">Sem registros no momento.</td></tr>`;
-      return;
+    function renderTabelaGenerica(id, linhas, template, colunas = 4) {
+      const tbody = document.querySelector(`#${id} tbody`);
+      if (!tbody) return;
+      if (!linhas || !linhas.length) {
+        tbody.innerHTML = `<tr><td colspan="${colunas}" class="text-gray-500 text-center py-3">Sem registros no momento.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = linhas.map(template).join('');
     }
-    tbody.innerHTML = linhas.map(template).join('');
-  }
 
-  function renderCronograma(lista) {
-    const container = document.getElementById('listaCronograma');
-    if (!lista || !lista.length) {
-      container.innerHTML = '<p class="text-gray-500">Nenhum marco previsto ainda.</p>';
-      return;
+    function renderCronograma(lista) {
+      const container = document.getElementById('listaCronograma');
+      if (!lista || !lista.length) {
+        container.innerHTML = '<p class="text-gray-500">Nenhum marco previsto ainda.</p>';
+        return;
+      }
+      container.innerHTML = lista.map(item => {
+        const data = item.data ? new Date(item.data).toLocaleDateString('pt-BR') : 'Data a definir';
+        return `
+          <div class="timeline-item">
+            <strong>${escapeHtml(item.poco)}</strong> — <span class="gestao-tag">${escapeHtml(item.etapa)}</span>
+            <div>${escapeHtml(item.descricao)}</div>
+            <small>${data} • ${escapeHtml(item.status)}</small>
+          </div>
+        `;
+      }).join('');
     }
-    container.innerHTML = lista.map(item => {
-      const data = item.data ? new Date(item.data).toLocaleDateString('pt-BR') : 'Data a definir';
-      return `
-        <div class="timeline-item">
-          <strong>${escapeHtml(item.poco)}</strong> — <span class="gestao-tag">${escapeHtml(item.etapa)}</span>
-          <div>${escapeHtml(item.descricao)}</div>
-          <small>${data} • ${escapeHtml(item.status)}</small>
+
+    function renderGestao(dados) {
+      const resumo = dados.resumo || {};
+      const cards = [
+        { titulo: 'Poços ativos', valor: formatarNumero(resumo.totalPocos || 0), detalhe: `${formatarNumero(resumo.emExecucao || 0)} em execução` },
+        { titulo: 'Planejados', valor: formatarNumero(resumo.planejados || 0), detalhe: 'Em fase de preparação' },
+        { titulo: 'Concluídos', valor: formatarNumero(resumo.concluidos || 0), detalhe: 'Entregues e monitorados' },
+        { titulo: 'Gap financeiro', valor: formatarMoeda(resumo.gapFinanceiro || 0), detalhe: 'Previsto - executado' }
+      ];
+      document.getElementById('cardsGestao').innerHTML = cards.map(c => `
+        <div class="gestao-card">
+          <span class="text-sm font-semibold text-emerald-700 uppercase">${c.titulo}</span>
+          <p class="text-2xl font-bold mt-1">${c.valor}</p>
+          <span class="text-sm text-gray-500">${c.detalhe}</span>
         </div>
-      `;
-    }).join('');
-  }
+      `).join('');
 
-  function renderGestao(dados) {
-    const resumo = dados.resumo || {};
-    const cards = [
-      { titulo: 'Poços ativos', valor: formatarNumero(resumo.totalPocos || 0), detalhe: `${formatarNumero(resumo.emExecucao || 0)} em execução` },
-      { titulo: 'Planejados', valor: formatarNumero(resumo.planejados || 0), detalhe: 'Em fase de preparação' },
-      { titulo: 'Concluídos', valor: formatarNumero(resumo.concluidos || 0), detalhe: 'Entregues e monitorados' },
-      { titulo: 'Gap financeiro', valor: formatarMoeda(resumo.gapFinanceiro || 0), detalhe: 'Previsto - executado' }
-    ];
-    document.getElementById('cardsGestao').innerHTML = cards.map(c => `
-      <div class="gestao-card">
-        <span class="text-sm font-semibold text-emerald-700 uppercase">${c.titulo}</span>
-        <p class="text-2xl font-bold mt-1">${c.valor}</p>
-        <span class="text-sm text-gray-500">${c.detalhe}</span>
-      </div>
-    `).join('');
+      renderTabelaGenerica('tabelaAndamento', dados.andamento, item => {
+        const ultimoContato = item.ultimoContato ? new Date(item.ultimoContato).toLocaleDateString('pt-BR') : '-';
+        const gap = item.gapFinanceiro > 0
+          ? `<span class="text-red-600 font-semibold">${formatarMoeda(item.gapFinanceiro)}</span>`
+          : `<span class="text-emerald-600">${formatarMoeda(item.gapFinanceiro)}</span>`;
+        return `
+          <tr>
+            <td>
+              <div class="font-semibold text-gray-900">${escapeHtml(item.nome)}</div>
+              <small class="text-gray-500">${escapeHtml(item.local)}</small>
+            </td>
+            <td><span class="gestao-tag">${escapeHtml(item.status)}</span></td>
+            <td>${escapeHtml(item.responsavel)}</td>
+            <td>
+              <div>${escapeHtml(item.proximaAcao || '-')}</div>
+              <small class="text-gray-500">Contato: ${escapeHtml(item.statusContato)}</small>
+            </td>
+            <td>${ultimoContato}</td>
+            <td>${gap}</td>
+          </tr>
+        `;
+      }, 6);
 
-    renderTabelaGenerica('tabelaAndamento', dados.andamento, item => {
-      const ultimoContato = item.ultimoContato ? new Date(item.ultimoContato).toLocaleDateString('pt-BR') : '-';
-      const gap = item.gapFinanceiro > 0 ? `<span class="text-red-600 font-semibold">${formatarMoeda(item.gapFinanceiro)}</span>` : `<span class="text-emerald-600">${formatarMoeda(item.gapFinanceiro)}</span>`;
-      return `
+      renderTabelaGenerica('tabelaAlertasGestao', dados.alertas, item => `
         <tr>
-          <td>
-            <div class="font-semibold text-gray-900">${escapeHtml(item.nome)}</div>
-            <small class="text-gray-500">${escapeHtml(item.local)}</small>
-          </td>
-          <td><span class="gestao-tag">${escapeHtml(item.status)}</span></td>
+          <td>${escapeHtml(item.poco)}</td>
+          <td>${escapeHtml(item.motivo)}</td>
           <td>${escapeHtml(item.responsavel)}</td>
-          <td>
-            <div>${escapeHtml(item.proximaAcao || '-')}</div>
-            <small class="text-gray-500">Contato: ${escapeHtml(item.statusContato)}</small>
-          </td>
-          <td>${ultimoContato}</td>
-          <td>${gap}</td>
+          <td>${escapeHtml(item.proximaAcao)}</td>
         </tr>
-      `;
-    }, 6);
+      `);
 
-    renderTabelaGenerica('tabelaAlertasGestao', dados.alertas, item => `
-      <tr>
-        <td>${escapeHtml(item.poco)}</td>
-        <td>${escapeHtml(item.motivo)}</td>
-        <td>${escapeHtml(item.responsavel)}</td>
-        <td>${escapeHtml(item.proximaAcao)}</td>
-      </tr>
-    `);
+      renderTabelaGenerica('tabelaFornecedores', dados.fornecedores, item => `
+        <tr>
+          <td>${escapeHtml(item.fornecedor)}</td>
+          <td>${formatarNumero(item.pocosAtendidos)}</td>
+          <td>${formatarMoeda(item.valorPrevisto)}</td>
+          <td>${formatarMoeda(item.valorExecutado)}</td>
+          <td>${escapeHtml(item.status)}</td>
+          <td>
+            <div>${escapeHtml(item.contato || '-')}</div>
+            <small class="text-gray-500">${escapeHtml(item.observacoes || '')}</small>
+          </td>
+        </tr>
+      `, 6);
 
-    renderTabelaGenerica('tabelaFornecedores', dados.fornecedores, item => `
-      <tr>
-        <td>${escapeHtml(item.fornecedor)}</td>
-        <td>${formatarNumero(item.pocosAtendidos)}</td>
-        <td>${formatarMoeda(item.valorPrevisto)}</td>
-        <td>${formatarMoeda(item.valorExecutado)}</td>
-        <td>${escapeHtml(item.status)}</td>
-        <td>
-          <div>${escapeHtml(item.contato || '-')}</div>
-          <small class="text-gray-500">${escapeHtml(item.observacoes || '')}</small>
-        </td>
-      </tr>
-    `, 6);
+      renderCronograma(dados.cronograma);
+    }
 
-    renderCronograma(dados.cronograma);
-  }
-
-  google.script.run.withSuccessHandler(renderGestao).obterResumoGestao();
+    google.script.run.withSuccessHandler(renderGestao).obterResumoGestao();
+  })();
 </script>

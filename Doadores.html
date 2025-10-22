@@ -52,66 +52,65 @@
 </div>
 
 <script>
-const escapeHtml = texto => String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-// Carregar lista de poços no select
-function carregarSelectPocos() {
-  google.script.run.withSuccessHandler(pocos => {
-    const select = document.getElementById('pocosSelect');
-    const options = pocos.map(p => {
-      const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
-      const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
-      return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+  (() => {
+    const { escapeHtml, formatarMoeda } = window;
+
+    function carregarSelectPocos() {
+      google.script.run.withSuccessHandler(pocos => {
+        const select = document.getElementById('pocosSelect');
+        const options = pocos.map(p => {
+          const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+          const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+          return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+        });
+        select.innerHTML = options.join('');
+      }).listarPocos();
+    }
+
+    document.getElementById('formDoador').addEventListener('submit', e => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const telefone = document.getElementById('telefone').value;
+      const valorDoado = document.getElementById('valorDoado').value;
+      const pocosSelecionados = Array.from(document.getElementById('pocosSelect').selectedOptions).map(o => o.value);
+
+      const doador = { nome, email, telefone, valorDoado };
+
+      google.script.run.withSuccessHandler(res => {
+        if (pocosSelecionados.length > 0) {
+          google.script.run.vincularDoadorAPocos(res.id, pocosSelecionados);
+        }
+        document.getElementById('msgDoador').textContent = '✅ Doador salvo com sucesso!';
+        e.target.reset();
+        carregarDoadores();
+      }).salvarDoador(doador);
     });
-    select.innerHTML = options.join('');
-  }).listarPocos();
-}
 
-// Envio do formulário
-document.getElementById('formDoador').addEventListener('submit', e => {
-  e.preventDefault();
-  const nome = document.getElementById('nome').value;
-  const email = document.getElementById('email').value;
-  const telefone = document.getElementById('telefone').value;
-  const valorDoado = document.getElementById('valorDoado').value;
-  const pocosSelecionados = Array.from(document.getElementById('pocosSelect').selectedOptions).map(o => o.value);
-
-  const doador = { nome, email, telefone, valorDoado };
-
-  // 1️⃣ Salvar doador
-  google.script.run.withSuccessHandler(res => {
-    if (pocosSelecionados.length > 0) {
-      google.script.run.vincularDoadorAPocos(res.id, pocosSelecionados);
+    function carregarDoadores() {
+      google.script.run.withSuccessHandler(doadores => {
+        const tbody = document.querySelector('#tabelaDoadores tbody');
+        if (!doadores.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4">Nenhum doador cadastrado.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = doadores.map(d => {
+          const data = d.DataDoacao ? new Date(d.DataDoacao) : null;
+          const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+          const valor = formatarMoeda(d.ValorDoado);
+          return `
+            <tr class="border-b hover:bg-gray-50">
+              <td class="p-2">${escapeHtml(d.Nome)}</td>
+              <td class="p-2">${escapeHtml(d.Email || '-')}</td>
+              <td class="p-2">${valor}</td>
+              <td class="p-2">${dataTexto}</td>
+            </tr>
+          `;
+        }).join('');
+      }).listarDoadores();
     }
-    document.getElementById('msgDoador').textContent = '✅ Doador salvo com sucesso!';
-    e.target.reset();
+
+    carregarSelectPocos();
     carregarDoadores();
-  }).salvarDoador(doador);
-});
-
-// Carregar tabela
-function carregarDoadores() {
-  google.script.run.withSuccessHandler(doadores => {
-    const tbody = document.querySelector('#tabelaDoadores tbody');
-    if (!doadores.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4">Nenhum doador cadastrado.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = doadores.map(d => {
-      const data = d.DataDoacao ? new Date(d.DataDoacao) : null;
-      const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
-      const valor = Number(d.ValorDoado || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      return `
-        <tr class="border-b hover:bg-gray-50">
-          <td class="p-2">${escapeHtml(d.Nome)}</td>
-          <td class="p-2">${escapeHtml(d.Email || '-')}</td>
-          <td class="p-2">${valor}</td>
-          <td class="p-2">${dataTexto}</td>
-        </tr>
-      `;
-    }).join('');
-  }).listarDoadores();
-}
-
-carregarSelectPocos();
-carregarDoadores();
+  })();
 </script>
