@@ -41,8 +41,34 @@
       <div><label>Doador</label><input id="doador" class="border p-2 w-full rounded"></div>
     </div>
 
+    <div class="grid md:grid-cols-3 gap-3">
+      <div><label>Responsável interno pelo contato</label><input id="responsavelContato" class="border p-2 w-full rounded"></div>
+      <div><label>Contato para instalação</label><input id="contatoInstalacao" class="border p-2 w-full rounded"></div>
+      <div><label>Telefone / WhatsApp</label><input id="telefoneContato" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
+      <div>
+        <label>Status do contato</label>
+        <select id="statusContato" class="border p-2 w-full rounded">
+          <option>Não iniciado</option>
+          <option>Em negociação</option>
+          <option>Aguardando resposta</option>
+          <option>Confirmado</option>
+          <option>Concluído</option>
+        </select>
+      </div>
+      <div><label>Último contato</label><input id="ultimoContato" type="date" class="border p-2 w-full rounded"></div>
+      <div><label>Próxima ação</label><input id="proximaAcao" class="border p-2 w-full rounded" placeholder="Ex.: enviar orçamento"></div>
+    </div>
+
     <div>
-      <label>Observações</label>
+      <label>Impacto na situação do poço</label>
+      <textarea id="impactoNoStatus" rows="2" class="border p-2 w-full rounded" placeholder="Resumo do impacto do contato"></textarea>
+    </div>
+
+    <div>
+      <label>Observações gerais</label>
       <textarea id="obs" rows="2" class="border p-2 w-full rounded"></textarea>
     </div>
 
@@ -61,8 +87,12 @@
           <th class="p-2 text-left">Comunidade</th>
           <th class="p-2 text-left">Estado</th>
           <th class="p-2 text-left">Beneficiários</th>
-          <th class="p-2 text-left">Investimento</th>
           <th class="p-2 text-left">Status</th>
+          <th class="p-2 text-left">Responsável</th>
+          <th class="p-2 text-left">Contato instalação</th>
+          <th class="p-2 text-left">Status contato</th>
+          <th class="p-2 text-left">Próxima ação</th>
+          <th class="p-2 text-left">Último contato</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -93,7 +123,14 @@ document.getElementById('formPoco').addEventListener('submit', e => {
     valorPerf: valorPerf.value,
     valorInst: valorInst.value,
     empresa: empresa.value,
-    obs: obs.value
+    obs: obs.value,
+    responsavelContato: responsavelContato.value,
+    contatoInstalacao: contatoInstalacao.value,
+    telefoneContato: telefoneContato.value,
+    statusContato: statusContato.value,
+    ultimoContato: ultimoContato.value,
+    proximaAcao: proximaAcao.value,
+    impactoNoStatus: impactoNoStatus.value
   };
 
   google.script.run.withSuccessHandler(() => {
@@ -106,14 +143,25 @@ document.getElementById('formPoco').addEventListener('submit', e => {
 function carregarPocos() {
   google.script.run.withSuccessHandler(pocos => {
     const tbody = document.querySelector('#tabelaPocos tbody');
+    const formatDate = valor => {
+      if (!valor) return '-';
+      const data = new Date(valor);
+      if (isNaN(data.getTime())) return '-';
+      return data.toLocaleDateString('pt-BR');
+    };
+
     tbody.innerHTML = pocos.map(p => `
       <tr class="border-b hover:bg-gray-50">
-        <td class="p-2">${p['Município']}</td>
+        <td class="p-2">${p['Município'] || '-'}</td>
         <td class="p-2">${p['Comunidade'] || '-'}</td>
-        <td class="p-2">${p['Estado']}</td>
+        <td class="p-2">${p['Estado'] || '-'}</td>
         <td class="p-2">${p['Beneficiários'] || '-'}</td>
-        <td class="p-2">R$ ${p['Investimento'] || '-'}</td>
-        <td class="p-2">${p['Status']}</td>
+        <td class="p-2">${p['Status'] || '-'}</td>
+        <td class="p-2">${p['ResponsavelContato'] || '-'}</td>
+        <td class="p-2">${p['ContatoInstalacao'] || '-'}</td>
+        <td class="p-2">${p['StatusContato'] || '-'}</td>
+        <td class="p-2">${p['ProximaAcao'] || '-'}</td>
+        <td class="p-2">${formatDate(p['UltimoContato'])}</td>
       </tr>
     `).join('');
   }).listarPocos();
