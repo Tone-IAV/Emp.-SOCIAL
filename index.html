@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Poços Missionários</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; margin:0; background:#f4f6f8; color:#222; }
+    nav { background:#2563eb; color:white; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:10px 20px; }
+    nav .title { font-weight:600; font-size:1.2rem; }
+    nav button { background:none; border:none; color:white; font-weight:500; margin:0 8px; cursor:pointer; }
+    nav button.active { border-bottom:2px solid white; }
+    main { padding:20px; }
+    .section { display:none; animation:fadeIn .3s ease; }
+    .section.active { display:block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav>
+    <span class="title">💧 Poços Missionários</span>
+    <div class="flex flex-wrap gap-2">
+      <button class="nav-item active" data-target="dashboard">Dashboard</button>
+      <button class="nav-item" data-target="pocos">Poços</button>
+      <button class="nav-item" data-target="doadores">Doadores</button>
+      <button class="nav-item" data-target="prestacao">Prestação</button>
+      <button class="nav-item" data-target="relatorio">Relatórios</button>
+<button class="nav-item" data-target="kanban">Kanban</button>
+<button class="nav-item" data-target="gantt">Cronograma</button>
+
+
+    </div>
+  </nav>
+
+  <!-- ÁREA PRINCIPAL -->
+  <main>
+    <div id="dashboard" class="section active"><?!= include('Dashboard'); ?></div>
+    <div id="pocos" class="section"><?!= include('Pocos'); ?></div>
+    <div id="doadores" class="section"><?!= include('Doadores'); ?></div>
+    <div id="prestacao" class="section"><?!= include('PrestacaoContas'); ?></div>
+    <div id="relatorio" class="section"><?!= include('Relatorio'); ?></div>
+   <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
+<div id="gantt" class="section"><?!= include('Gantt'); ?></div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center text-gray-500 py-4 mt-6 text-sm">
+    © 2025 Projeto Poços Missionários — Sistema desenvolvido em Google Apps Script
+  </footer>
+
+  <!-- SCRIPT DE NAVEGAÇÃO -->
+  <script>
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.target;
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>
