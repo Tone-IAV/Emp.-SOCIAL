@@ -1,0 +1,18 @@
+<div class="card">
+  <h2>📊 Dashboard Geral</h2>
+  <p>Resumo dos poços cadastrados.</p>
+  <div id="pocosResumo"></div>
+
+  <script>
+    google.script.run.withSuccessHandler(dados => {
+      const total = dados.length;
+      const concluidos = dados.filter(p => p.Status === "Concluído").length;
+      const andamento = total - concluidos;
+      document.getElementById('pocosResumo').innerHTML = `
+        <p><b>Total:</b> ${total}</p>
+        <p><b>Concluídos:</b> ${concluidos}</p>
+        <p><b>Em andamento:</b> ${andamento}</p>
+      `;
+    }).listarPocos();
+  </script>
+</div>
