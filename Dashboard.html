@@ -1,18 +1,375 @@
-<div class="card">
-  <h2>📊 Dashboard Geral</h2>
-  <p>Resumo dos poços cadastrados.</p>
-  <div id="pocosResumo"></div>
+<div class="space-y-6">
+  <style>
+    .dash-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .dash-card .dash-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1d4ed8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .dash-card .dash-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .dash-card .dash-detail {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    .dash-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40% -40% auto;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), transparent 70%);
+      z-index: 0;
+    }
+    .dash-card > * { position: relative; z-index: 1; }
 
-  <script>
-    google.script.run.withSuccessHandler(dados => {
-      const total = dados.length;
-      const concluidos = dados.filter(p => p.Status === "Concluído").length;
-      const andamento = total - concluidos;
-      document.getElementById('pocosResumo').innerHTML = `
-        <p><b>Total:</b> ${total}</p>
-        <p><b>Concluídos:</b> ${concluidos}</p>
-        <p><b>Em andamento:</b> ${andamento}</p>
-      `;
-    }).listarPocos();
-  </script>
+    .dashboard-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .table-dashboard {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .table-dashboard thead {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .table-dashboard th,
+    .table-dashboard td {
+      padding: 0.75rem 0.85rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.2rem 0.75rem;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 1rem;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+  </style>
+
+  <div class="grid gap-4 md:grid-cols-4" id="indicadoresPrincipais"></div>
+
+  <div class="grid gap-4 md:grid-cols-3" id="indicadoresFinanceiros"></div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Distribuição dos poços por status</h3>
+      <canvas id="graficoStatus" height="220"></canvas>
+    </div>
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Pipeline de contatos de instalação</h3>
+      <canvas id="graficoPipeline" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Investimentos previstos x realizados</h3>
+      <canvas id="graficoFinanceiro" height="220"></canvas>
+    </div>
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Beneficiários por estado</h3>
+      <canvas id="graficoBeneficiarios" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Próximas ações críticas</h3>
+      <div class="overflow-x-auto">
+        <table class="table-dashboard" id="tabelaProximasAcoes">
+          <thead>
+            <tr>
+              <th>Poço / Localidade</th>
+              <th>Responsável</th>
+              <th>Próxima ação</th>
+              <th>Contato</th>
+              <th>Último contato</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Últimos contatos registrados</h3>
+      <div class="overflow-x-auto">
+        <table class="table-dashboard" id="tabelaUltimosContatos">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Poço</th>
+              <th>Contato</th>
+              <th>Responsável</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-card">
+    <h3 class="dashboard-section-title">Gastos por categoria de prestação de contas</h3>
+    <canvas id="graficoGastos" height="240"></canvas>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const chartsDashboard = {};
+
+  const escapeHtml = (text = '') => String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const formatarNumero = (valor, casasDecimais = 0) => {
+    const numero = Number(valor || 0);
+    return numero.toLocaleString('pt-BR', {
+      minimumFractionDigits: casasDecimais,
+      maximumFractionDigits: casasDecimais
+    });
+  };
+
+  const formatarPercentual = valor => `${Number(valor || 0).toFixed(1)}%`;
+
+  const formatarMoeda = valor => {
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  function criarCard(titulo, valor, detalhe) {
+    return `
+      <div class="dash-card">
+        <span class="dash-title">${titulo}</span>
+        <p class="dash-value">${valor}</p>
+        <span class="dash-detail">${detalhe || ''}</span>
+      </div>
+    `;
+  }
+
+  function renderTabela(elementId, linhas, template) {
+    const corpo = document.querySelector(`#${elementId} tbody`);
+    if (!linhas || !linhas.length) {
+      corpo.innerHTML = `<tr><td colspan="5" class="empty-state">Sem registros até o momento.</td></tr>`;
+      return;
+    }
+    corpo.innerHTML = linhas.map(template).join('');
+  }
+
+  function renderChart(id, config) {
+    if (chartsDashboard[id]) chartsDashboard[id].destroy();
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    chartsDashboard[id] = new Chart(ctx, config);
+  }
+
+  function renderDashboard(dados) {
+    const totais = dados.totais || {};
+
+    document.getElementById('indicadoresPrincipais').innerHTML = [
+      criarCard('Poços monitorados', formatarNumero(totais.totalPocos || 0), `${formatarNumero(totais.concluidos || 0)} concluídos`),
+      criarCard('Taxa de conclusão', formatarPercentual(totais.taxaConclusao || 0), 'Percentual de poços entregues'),
+      criarCard('Beneficiários alcançados', formatarNumero(totais.beneficiariosTotal || 0), `Média de ${formatarNumero(totais.mediaBeneficiarios || 0, 1)} por poço`),
+      criarCard('Doadores ativos', formatarNumero(totais.doadoresAtivos || 0), `Total doado ${formatarMoeda(totais.doacoesTotais || 0)}`)
+    ].join('');
+
+    document.getElementById('indicadoresFinanceiros').innerHTML = [
+      criarCard('Investimento previsto', formatarMoeda(totais.investimentoPrevisto || 0), 'Perfuração + instalação'),
+      criarCard('Investimento planejado', formatarMoeda(totais.investimentoPlanejado || 0), 'Valor declarado pelos projetos'),
+      criarCard('Valor realizado', formatarMoeda(totais.investimentoRealizado || 0), `Gap atual ${formatarMoeda(totais.gapFinanceiro || 0)}`)
+    ].join('');
+
+    const coresBase = ['#1d4ed8', '#38bdf8', '#2563eb', '#0ea5e9', '#3b82f6', '#0284c7'];
+
+    const distStatus = dados.distribuicaoStatus || [];
+    renderChart('graficoStatus', {
+      type: 'doughnut',
+      data: {
+        labels: distStatus.map(s => s.status),
+        datasets: [{
+          data: distStatus.map(s => s.total),
+          backgroundColor: coresBase,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    const pipeline = dados.pipelineContatos || [];
+    renderChart('graficoPipeline', {
+      type: 'bar',
+      data: {
+        labels: pipeline.map(p => p.status),
+        datasets: [{
+          label: 'Poços',
+          data: pipeline.map(p => p.total),
+          backgroundColor: '#1d4ed8',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    renderChart('graficoFinanceiro', {
+      type: 'bar',
+      data: {
+        labels: ['Previsto', 'Planejado', 'Realizado'],
+        datasets: [{
+          label: 'R$ (milhares)',
+          data: [totais.investimentoPrevisto || 0, totais.investimentoPlanejado || 0, totais.investimentoRealizado || 0],
+          backgroundColor: ['#2563eb', '#3b82f6', '#1d4ed8'],
+          borderRadius: 10
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: valor => `R$ ${(valor / 1000).toLocaleString('pt-BR')}k`
+            }
+          }
+        }
+      }
+    });
+
+    const estados = dados.porEstado || [];
+    renderChart('graficoBeneficiarios', {
+      type: 'horizontalBar' in Chart.controllers ? 'horizontalBar' : 'bar',
+      data: {
+        labels: estados.map(e => e.estado),
+        datasets: [{
+          label: 'Beneficiários',
+          data: estados.map(e => e.beneficiarios),
+          backgroundColor: '#38bdf8',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true }
+        }
+      }
+    });
+
+    const gastos = dados.gastosPorCategoria || [];
+    renderChart('graficoGastos', {
+      type: 'bar',
+      data: {
+        labels: gastos.map(g => g.categoria),
+        datasets: [{
+          label: 'Valor gasto',
+          data: gastos.map(g => g.valor),
+          backgroundColor: '#0ea5e9',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${formatarMoeda(ctx.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: valor => formatarMoeda(valor)
+            }
+          }
+        }
+      }
+    });
+
+    renderTabela('tabelaProximasAcoes', dados.proximasAcoes, item => {
+      const ultimoContatoData = item.ultimoContato ? new Date(item.ultimoContato) : null;
+      const ultimoContato = ultimoContatoData && !isNaN(ultimoContatoData)
+        ? ultimoContatoData.toLocaleDateString('pt-BR')
+        : '-';
+      const dias = item.diasSemContato != null ? `${item.diasSemContato} dias` : 'Sem registro';
+      return `
+        <tr>
+          <td>${escapeHtml(item.poco)}</td>
+          <td>${escapeHtml(item.responsavel || '-')}</td>
+          <td>
+            <div>${escapeHtml(item.proximaAcao || '-')}</div>
+            ${item.impacto ? `<small style="color:#64748b;">Impacto: ${escapeHtml(item.impacto)}</small>` : ''}
+          </td>
+          <td>
+            <div>${escapeHtml(item.contato || '-')}</div>
+            <span class="status-pill">${escapeHtml(item.statusContato)}</span>
+          </td>
+          <td>
+            <div>${ultimoContato}</div>
+            <small style="color:#64748b;">${dias}</small>
+          </td>
+        </tr>
+      `;
+    });
+
+    renderTabela('tabelaUltimosContatos', dados.ultimosContatos, item => {
+      const dataContato = item.data ? new Date(item.data) : null;
+      const dataTexto = dataContato && !isNaN(dataContato)
+        ? dataContato.toLocaleDateString('pt-BR')
+        : '-';
+      return `
+        <tr>
+          <td>${dataTexto}</td>
+          <td>${escapeHtml(item.poco)}</td>
+          <td>${escapeHtml(item.contato)}</td>
+          <td>${escapeHtml(item.responsavel)}</td>
+          <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
+        </tr>
+      `;
+    });
+  }
+
+  google.script.run.withSuccessHandler(renderDashboard).obterDashboardAnalitico();
+</script>
