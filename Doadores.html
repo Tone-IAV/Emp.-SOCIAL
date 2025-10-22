@@ -1,0 +1,102 @@
+<div class="p-4">
+  <h2 class="text-xl font-bold mb-4">💰 Cadastro e Gerenciamento de Doadores</h2>
+
+  <!-- FORMULÁRIO DE CADASTRO -->
+  <form id="formDoador" class="bg-white rounded-lg shadow p-4 mb-6 space-y-3">
+    <div>
+      <label>Nome do Doador</label>
+      <input type="text" id="nome" class="border p-2 w-full rounded" required>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div>
+        <label>Email</label>
+        <input type="email" id="email" class="border p-2 w-full rounded">
+      </div>
+      <div>
+        <label>Telefone</label>
+        <input type="text" id="telefone" class="border p-2 w-full rounded">
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div>
+        <label>Valor Doado (R$)</label>
+        <input type="number" id="valorDoado" step="0.01" class="border p-2 w-full rounded">
+      </div>
+      <div>
+        <label>Poços para vincular</label>
+        <select id="pocosSelect" multiple class="border p-2 w-full rounded"></select>
+        <small class="text-gray-500">Segure CTRL (ou ⌘ no Mac) para selecionar múltiplos.</small>
+      </div>
+    </div>
+
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      💾 Salvar Doador
+    </button>
+  </form>
+
+  <!-- TABELA DE DOADORES -->
+  <h3 class="font-semibold mb-2">Lista de Doadores Cadastrados</h3>
+  <table id="tabelaDoadores" class="w-full bg-white rounded shadow overflow-hidden">
+    <thead class="bg-green-100">
+      <tr>
+        <th class="p-2 text-left">Nome</th>
+        <th class="p-2 text-left">Email</th>
+        <th class="p-2 text-left">Valor Doado</th>
+        <th class="p-2 text-left">Data</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="msgDoador" class="mt-4 text-green-700 font-semibold"></div>
+</div>
+
+<script>
+// Carregar lista de poços no select
+function carregarSelectPocos() {
+  google.script.run.withSuccessHandler(pocos => {
+    const select = document.getElementById('pocosSelect');
+    select.innerHTML = pocos.map(p => `<option value="${p.ID}">${p.Nome} - ${p.Base}</option>`).join('');
+  }).listarPocos();
+}
+
+// Envio do formulário
+document.getElementById('formDoador').addEventListener('submit', e => {
+  e.preventDefault();
+  const nome = document.getElementById('nome').value;
+  const email = document.getElementById('email').value;
+  const telefone = document.getElementById('telefone').value;
+  const valorDoado = document.getElementById('valorDoado').value;
+  const pocosSelecionados = Array.from(document.getElementById('pocosSelect').selectedOptions).map(o => o.value);
+
+  const doador = { nome, email, telefone, valorDoado };
+
+  // 1️⃣ Salvar doador
+  google.script.run.withSuccessHandler(res => {
+    if (pocosSelecionados.length > 0) {
+      google.script.run.vincularDoadorAPocos(res.id, pocosSelecionados);
+    }
+    document.getElementById('msgDoador').textContent = '✅ Doador salvo com sucesso!';
+    e.target.reset();
+    carregarDoadores();
+  }).salvarDoador(doador);
+});
+
+// Carregar tabela
+function carregarDoadores() {
+  google.script.run.withSuccessHandler(doadores => {
+    const tbody = document.querySelector('#tabelaDoadores tbody');
+    tbody.innerHTML = doadores.map(d => `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-2">${d.Nome}</td>
+        <td class="p-2">${d.Email || '-'}</td>
+        <td class="p-2">R$ ${d.ValorDoado || '0,00'}</td>
+        <td class="p-2">${new Date(d.DataDoacao).toLocaleDateString('pt-BR')}</td>
+      </tr>
+    `).join('');
+  }).listarDoadores();
+}
+
+carregarSelectPocos();
+carregarDoadores();
+</script>
