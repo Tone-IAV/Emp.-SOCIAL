@@ -1,0 +1,270 @@
+<div class="p-4 space-y-6">
+  <h2 class="text-xl font-bold">🌱 Análise de impacto das perfurações</h2>
+  <p class="text-gray-600">Resumo consolidado dos resultados entregues aos doadores e às comunidades atendidas.</p>
+
+  <style>
+    .impact-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
+    }
+    .impact-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 1rem;
+    }
+    .impact-metric {
+      background: linear-gradient(120deg, rgba(59,130,246,0.12), rgba(14,165,233,0.15));
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+    }
+    .impact-metric span {
+      display: block;
+    }
+    .impact-metric .label {
+      color: #1e3a8a;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .impact-metric .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .impact-metric .detail {
+      color: #475569;
+      font-size: 0.85rem;
+    }
+    .impact-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .impact-table thead {
+      background: #e0f2fe;
+      color: #1d4ed8;
+    }
+    .impact-table th,
+    .impact-table td {
+      padding: 0.65rem 0.8rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+    }
+    .timeline-impacto {
+      position: relative;
+      padding-left: 1.5rem;
+    }
+    .timeline-impacto::before {
+      content: '';
+      position: absolute;
+      left: 0.45rem;
+      top: 0.3rem;
+      bottom: 0.3rem;
+      width: 2px;
+      background: #bfdbfe;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -1.05rem;
+      top: 0.2rem;
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 999px;
+      background: #2563eb;
+    }
+    .timeline-item strong {
+      color: #1d4ed8;
+    }
+    .timeline-item small {
+      display: block;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+  </style>
+
+  <div class="grid gap-4 md:grid-cols-5" id="metricasImpacto"></div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="impact-card">
+      <h3>Contribuição por doador</h3>
+      <canvas id="graficoDoadoresImpacto" height="220"></canvas>
+    </div>
+    <div class="impact-card">
+      <h3>Status de entrega dos poços</h3>
+      <canvas id="graficoStatusImpacto" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="impact-card">
+    <h3>Distribuição dos beneficiários por estado</h3>
+    <canvas id="graficoRegioesImpacto" height="230"></canvas>
+  </div>
+
+  <div class="impact-card">
+    <h3>Prestação de contas por poço</h3>
+    <div class="overflow-x-auto">
+      <table class="impact-table" id="tabelaImpactoPocos">
+        <thead>
+          <tr>
+            <th>Poço</th>
+            <th>Status</th>
+            <th>Beneficiários</th>
+            <th>Doadores vinculados</th>
+            <th>Investimento realizado</th>
+            <th>Gap financeiro</th>
+            <th>Vazão estimada</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="impact-card">
+    <h3>Linha do tempo recente</h3>
+    <div class="timeline-impacto" id="timelineImpacto"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const chartsImpacto = {};
+  const formatarNumero = (valor, decimais = 0) => Number(valor || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimais,
+    maximumFractionDigits: decimais
+  });
+  const formatarMoeda = valor => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const escapeHtml = text => String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  function renderMetricas(metricas) {
+    const cards = [
+      { label: 'Beneficiários alcançados', valor: formatarNumero(metricas.beneficiariosTotais || 0), detalhe: 'Pessoas com acesso à água' },
+      { label: 'Famílias estimadas', valor: formatarNumero(metricas.familiasEstimadas || 0), detalhe: 'Baseado em 4 pessoas por família' },
+      { label: 'Volume diário estimado', valor: `${formatarNumero(metricas.volumeAguaDiario || 0)} L`, detalhe: 'Capacidade de oferta de água' },
+      { label: 'Investimento realizado', valor: formatarMoeda(metricas.investimentoRealizado || 0), detalhe: `Previsto ${formatarMoeda(metricas.investimentoPrevisto || 0)}` },
+      { label: 'Custo por beneficiário', valor: formatarMoeda(metricas.custoPorPessoa || 0), detalhe: 'Eficiência financeira atual' }
+    ];
+
+    document.getElementById('metricasImpacto').innerHTML = cards.map(c => `
+      <div class="impact-metric">
+        <span class="label">${c.label}</span>
+        <span class="value">${c.valor}</span>
+        <span class="detail">${c.detalhe}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderTabelaPocos(pocos) {
+    const tbody = document.querySelector('#tabelaImpactoPocos tbody');
+    if (!pocos || !pocos.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">Nenhum poço registrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pocos.map(p => `
+      <tr>
+        <td>
+          <div class="font-semibold text-gray-900">${escapeHtml(p.nome)}</div>
+          <small class="text-gray-500">${escapeHtml(p.local)}</small>
+        </td>
+        <td>${escapeHtml(p.status)}</td>
+        <td>${formatarNumero(p.beneficiarios)}</td>
+        <td>${escapeHtml(p.doadores)}</td>
+        <td>${formatarMoeda(p.valorExecutado)}</td>
+        <td>${formatarMoeda(p.gapFinanceiro)}</td>
+        <td>${formatarNumero(p.vazao)} L/h</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderTimeline(eventos) {
+    const container = document.getElementById('timelineImpacto');
+    if (!eventos || !eventos.length) {
+      container.innerHTML = '<p class="text-gray-500">Sem registros recentes.</p>';
+      return;
+    }
+    container.innerHTML = eventos.map(ev => {
+      const data = ev.data ? new Date(ev.data).toLocaleDateString('pt-BR') : 'Data não informada';
+      return `
+        <div class="timeline-item">
+          <strong>${escapeHtml(ev.poco)}</strong>
+          <div>${escapeHtml(ev.resumo)}</div>
+          <small>${data} • ${escapeHtml(ev.responsavel)} • ${escapeHtml(ev.statusContato)}</small>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderGrafico(id, config) {
+    if (chartsImpacto[id]) chartsImpacto[id].destroy();
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    chartsImpacto[id] = new Chart(ctx, config);
+  }
+
+  function renderImpacto(dados) {
+    renderMetricas(dados.metricas || {});
+    renderTabelaPocos(dados.pocos || []);
+    renderTimeline(dados.timeline || []);
+
+    const doadores = dados.doadores || [];
+    renderGrafico('graficoDoadoresImpacto', {
+      type: 'bar',
+      data: {
+        labels: doadores.map(d => d.nome),
+        datasets: [{
+          label: 'Valor doado (R$)',
+          data: doadores.map(d => d.valor),
+          backgroundColor: '#2563eb',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => `R$ ${formatarNumero(v / 1000)}k` } } }
+      }
+    });
+
+    const status = dados.distribuicaoStatus || [];
+    renderGrafico('graficoStatusImpacto', {
+      type: 'doughnut',
+      data: {
+        labels: status.map(s => s.status),
+        datasets: [{
+          data: status.map(s => s.total),
+          backgroundColor: ['#3b82f6', '#38bdf8', '#1d4ed8', '#0ea5e9'],
+          borderWidth: 0
+        }]
+      },
+      options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const regioes = dados.regioes || [];
+    renderGrafico('graficoRegioesImpacto', {
+      type: 'bar',
+      data: {
+        labels: regioes.map(r => r.estado),
+        datasets: [{
+          label: 'Beneficiários atendidos',
+          data: regioes.map(r => r.beneficiarios),
+          backgroundColor: '#38bdf8',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  google.script.run.withSuccessHandler(renderImpacto).obterAnaliseImpacto();
+</script>

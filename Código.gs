@@ -18,6 +18,31 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+function normalizarNumero(valor) {
+  if (valor instanceof Date) return 0;
+  if (typeof valor === 'number') return valor;
+  if (!valor) return 0;
+  return Number(String(valor).replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
+}
+
+function extrairDataDeTexto(texto) {
+  if (!texto || typeof texto !== 'string') return null;
+  const match = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!match) return null;
+  const [, dia, mes, ano] = match;
+  return new Date(Number(ano), Number(mes) - 1, Number(dia));
+}
+
+function extrairStatusDaEtapa(texto) {
+  if (!texto || typeof texto !== 'string') return 'Sem registro';
+  const lower = texto.toLowerCase();
+  if (lower.includes('conclu')) return 'Concluída';
+  if (lower.includes('andamento')) return 'Em andamento';
+  if (lower.includes('previst')) return 'Prevista';
+  if (lower.includes('licen') || lower.includes('document')) return 'Documentação';
+  return 'Planejado';
+}
+
 // ===========================
 // INICIALIZAÇÃO DAS GUIAS
 // ===========================
@@ -129,6 +154,24 @@ function vincularDoadorAPocos(doadorId, pocosIds) {
       const atuais = row[doadoresIndex] ? row[doadoresIndex].split(',') : [];
       if (!atuais.includes(doadorId)) atuais.push(doadorId);
       sh.getRange(i + 2, doadoresIndex + 1).setValue(atuais.join(','));
+    }
+  }
+
+  const shDoadores = ss.getSheetByName('Doadores');
+  if (shDoadores) {
+    const valoresDoadores = shDoadores.getDataRange().getValues();
+    const headersDoadores = valoresDoadores.shift();
+    const idIndex = headersDoadores.indexOf('ID');
+    const vinculadosIndex = headersDoadores.indexOf('PoçosVinculados');
+    for (let i = 0; i < valoresDoadores.length; i++) {
+      if (valoresDoadores[i][idIndex] === doadorId) {
+        const atuais = valoresDoadores[i][vinculadosIndex] ? valoresDoadores[i][vinculadosIndex].split(',') : [];
+        pocosIds.forEach(id => {
+          if (!atuais.includes(id)) atuais.push(id);
+        });
+        shDoadores.getRange(i + 2, vinculadosIndex + 1).setValue(atuais.join(','));
+        break;
+      }
     }
   }
   return 'Doador vinculado aos poços com sucesso.';
@@ -326,9 +369,11 @@ function obterDashboardAnalitico() {
   const pocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
 
   const mapIdParaNome = {};
+  const mapIdParaPoco = {};
   pocos.forEach(p => {
     const nome = p['Comunidade'] || p['Município'] || p['Estado'] || p.ID;
     mapIdParaNome[p.ID] = nome;
+    mapIdParaPoco[p.ID] = p;
   });
 
   const valoresPrest = shPrest.getDataRange().getValues();
@@ -354,12 +399,7 @@ function obterDashboardAnalitico() {
     }
   }
 
-  const numero = valor => {
-    if (valor instanceof Date) return 0;
-    if (typeof valor === 'number') return valor;
-    if (!valor) return 0;
-    return Number(String(valor).replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
-  };
+  const numero = normalizarNumero;
 
   const totalPocos = pocos.length;
   const concluidos = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'concluído').length;
@@ -388,11 +428,27 @@ function obterDashboardAnalitico() {
     pipelineContatosMapa[status] = (pipelineContatosMapa[status] || 0) + 1;
   });
 
+  const alertas = [];
   const proximasAcoes = pocos
     .filter(p => p['ProximaAcao'])
     .map(p => {
       const ultimoContato = p['UltimoContato'] ? new Date(p['UltimoContato']) : null;
       const diasSemContato = ultimoContato ? Math.max(Math.floor((new Date().getTime() - ultimoContato.getTime()) / 86400000), 0) : null;
+      const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
+      const valorExecutado = numero(p['Valor Realizado']);
+      const gapFinanceiro = valorPrevisto - valorExecutado;
+      const statusLower = (p['Status'] || '').toLowerCase();
+      if ((diasSemContato != null && diasSemContato > 12) || (statusLower !== 'concluído' && gapFinanceiro > 40000)) {
+        alertas.push({
+          poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
+          motivo: diasSemContato != null && diasSemContato > 12
+            ? `Sem contato há ${diasSemContato} dias`
+            : `Gap financeiro de ${gapFinanceiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+          responsavel: p['ResponsavelContato'] || '-',
+          proximaAcao: p['ProximaAcao'] || '-',
+          status: p['Status'] || '-'
+        });
+      }
       return {
         poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
         responsavel: p['ResponsavelContato'] || '-',
@@ -447,6 +503,20 @@ function obterDashboardAnalitico() {
 
   const doacoesTotais = doadores.reduce((acc, d) => acc + numero(d['ValorDoado']), 0);
 
+  const doadoresDestaque = doadores.map(d => {
+    const pocoses = (d['PoçosVinculados'] || '').split(',').map(id => id.trim()).filter(Boolean);
+    const beneficiariosApoiados = pocoses.reduce((acc, id) => {
+      const poco = mapIdParaPoco[id];
+      return acc + (poco ? Number(poco['Beneficiários'] || 0) : 0);
+    }, 0);
+    return {
+      nome: d['Nome'] || 'Sem identificação',
+      valor: numero(d['ValorDoado']),
+      quantidadePocos: pocoses.length,
+      beneficiariosApoiados
+    };
+  }).sort((a, b) => b.valor - a.valor).slice(0, 5);
+
   return {
     totais: {
       totalPocos,
@@ -468,7 +538,298 @@ function obterDashboardAnalitico() {
     ultimosContatos,
     gastosPorCategoria: Object.keys(gastosPorCategoria)
       .map(cat => ({ categoria: cat, valor: gastosPorCategoria[cat] }))
-      .sort((a, b) => b.valor - a.valor)
+      .sort((a, b) => b.valor - a.valor),
+    doadoresDestaque,
+    alertas
+  };
+}
+
+function obterResumoGestao() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const shPocos = ss.getSheetByName('Poços');
+  const shEmpresas = ss.getSheetByName('Empresas');
+  const shContatos = ss.getSheetByName('Contatos');
+
+  const valoresPocos = shPocos.getDataRange().getValues();
+  const headersPocos = valoresPocos.shift();
+  const pocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
+
+  const numero = normalizarNumero;
+
+  let contatos = [];
+  if (shContatos) {
+    const valoresContatos = shContatos.getDataRange().getValues();
+    if (valoresContatos.length > 1) {
+      const headersContatos = valoresContatos.shift();
+      contatos = valoresContatos.map(r => Object.fromEntries(headersContatos.map((h, i) => [h, r[i]])));
+    }
+  }
+
+  const contatosPorPoco = {};
+  contatos.forEach(c => {
+    const id = c['PoçoID'];
+    if (!contatosPorPoco[id]) contatosPorPoco[id] = [];
+    contatosPorPoco[id].push(c);
+  });
+
+  const totalPocos = pocos.length;
+  const concluidos = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'concluído').length;
+  const emExecucao = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'em execução').length;
+  const planejados = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'planejado').length;
+  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']), 0);
+  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p['Valor Realizado']), 0);
+
+  const alertas = [];
+  const andamento = pocos.map(p => {
+    const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
+    const valorExecutado = numero(p['Valor Realizado']);
+    const gapFinanceiro = valorPrevisto - valorExecutado;
+    const ultimoContato = p['UltimoContato'] ? new Date(p['UltimoContato']) : null;
+    const diasSemContato = ultimoContato ? Math.max(Math.floor((new Date().getTime() - ultimoContato.getTime()) / 86400000), 0) : null;
+    if ((diasSemContato != null && diasSemContato > 12) || (gapFinanceiro > 40000 && (p['Status'] || '').toLowerCase() !== 'concluído')) {
+      alertas.push({
+        poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
+        motivo: diasSemContato != null && diasSemContato > 12
+          ? `Sem contato há ${diasSemContato} dias`
+          : `Gap financeiro de ${gapFinanceiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+        responsavel: p['ResponsavelContato'] || '-',
+        status: p['Status'] || '-',
+        proximaAcao: p['ProximaAcao'] || '-'
+      });
+    }
+
+    const listaContatos = (contatosPorPoco[p.ID] || []).sort((a, b) => new Date(b['DataContato']) - new Date(a['DataContato']));
+    const ultimoRegistro = listaContatos[0];
+
+    return {
+      id: p.ID,
+      nome: p['Comunidade'] || p['Município'] || p['Estado'] || 'Sem identificação',
+      local: `${p['Município'] || 'Sem município'} - ${p['Estado'] || 'Sem estado'}`,
+      status: p['Status'] || '-',
+      responsavel: p['ResponsavelContato'] || '-',
+      empresa: p['Empresa Responsável'] || '-',
+      proximaAcao: p['ProximaAcao'] || '-',
+      statusContato: p['StatusContato'] || 'Sem registro',
+      ultimoContato: ultimoRegistro ? new Date(ultimoRegistro['DataContato']).toISOString() : (ultimoContato ? ultimoContato.toISOString() : ''),
+      diasSemContato,
+      perfuracao: p['Perfuração'] || '-',
+      instalacao: p['Instalação'] || '-',
+      valorPrevisto,
+      valorExecutado,
+      gapFinanceiro,
+      impacto: p['ImpactoNoStatus'] || ''
+    };
+  });
+
+  const fornecedoresMapa = {};
+  andamento.forEach(item => {
+    const nome = item.empresa || 'Sem fornecedor atribuído';
+    if (!fornecedoresMapa[nome]) {
+      fornecedoresMapa[nome] = {
+        fornecedor: nome,
+        pocosAtendidos: 0,
+        valorPrevisto: 0,
+        valorExecutado: 0,
+        status: new Set()
+      };
+    }
+    fornecedoresMapa[nome].pocosAtendidos += 1;
+    fornecedoresMapa[nome].valorPrevisto += item.valorPrevisto;
+    fornecedoresMapa[nome].valorExecutado += item.valorExecutado;
+    fornecedoresMapa[nome].status.add(item.status);
+  });
+
+  let fornecedores = Object.values(fornecedoresMapa).map(f => ({
+    fornecedor: f.fornecedor,
+    pocosAtendidos: f.pocosAtendidos,
+    valorPrevisto: f.valorPrevisto,
+    valorExecutado: f.valorExecutado,
+    status: Array.from(f.status).join(', ')
+  }));
+
+  if (shEmpresas) {
+    const valoresEmpresas = shEmpresas.getDataRange().getValues();
+    if (valoresEmpresas.length > 1) {
+      const headersEmpresas = valoresEmpresas.shift();
+      const empresas = valoresEmpresas.map(r => Object.fromEntries(headersEmpresas.map((h, i) => [h, r[i]])));
+      fornecedores = fornecedores.map(f => {
+        const empresaInfo = empresas.find(e => (e['NomeEmpresa'] || '').toLowerCase() === (f.fornecedor || '').toLowerCase());
+        return empresaInfo
+          ? Object.assign({}, f, { contato: empresaInfo['Contato'] || '', observacoes: empresaInfo['Observações'] || '' })
+          : Object.assign({}, f, { contato: '', observacoes: '' });
+      });
+    }
+  }
+
+  const cronograma = [];
+  andamento.forEach(item => {
+    if (item.perfuracao) {
+      const data = extrairDataDeTexto(item.perfuracao);
+      cronograma.push({
+        poco: item.nome,
+        etapa: 'Perfuração',
+        descricao: item.perfuracao,
+        data: data ? data.toISOString() : '',
+        status: extrairStatusDaEtapa(item.perfuracao)
+      });
+    }
+    if (item.instalacao) {
+      const data = extrairDataDeTexto(item.instalacao);
+      cronograma.push({
+        poco: item.nome,
+        etapa: 'Instalação',
+        descricao: item.instalacao,
+        data: data ? data.toISOString() : '',
+        status: extrairStatusDaEtapa(item.instalacao)
+      });
+    }
+  });
+
+  cronograma.sort((a, b) => {
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return new Date(a.data) - new Date(b.data);
+  });
+
+  return {
+    resumo: {
+      totalPocos,
+      planejados,
+      emExecucao,
+      concluidos,
+      investimentoPrevisto,
+      investimentoRealizado,
+      gapFinanceiro: investimentoPrevisto - investimentoRealizado
+    },
+    andamento,
+    alertas,
+    fornecedores,
+    cronograma
+  };
+}
+
+function obterAnaliseImpacto() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const shPocos = ss.getSheetByName('Poços');
+  const shDoadores = ss.getSheetByName('Doadores');
+  const shContatos = ss.getSheetByName('Contatos');
+
+  const valoresPocos = shPocos.getDataRange().getValues();
+  const headersPocos = valoresPocos.shift();
+  const pocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
+
+  let doadores = [];
+  if (shDoadores) {
+    const valoresDoadores = shDoadores.getDataRange().getValues();
+    if (valoresDoadores.length > 1) {
+      const headersDoadores = valoresDoadores.shift();
+      doadores = valoresDoadores.map(r => Object.fromEntries(headersDoadores.map((h, i) => [h, r[i]])));
+    }
+  }
+
+  let contatos = [];
+  if (shContatos) {
+    const valoresContatos = shContatos.getDataRange().getValues();
+    if (valoresContatos.length > 1) {
+      const headersContatos = valoresContatos.shift();
+      contatos = valoresContatos.map(r => Object.fromEntries(headersContatos.map((h, i) => [h, r[i]])));
+    }
+  }
+
+  const numero = normalizarNumero;
+  const totalBeneficiarios = pocos.reduce((acc, p) => acc + Number(p['Beneficiários'] || 0), 0);
+  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p['Valor Realizado']), 0);
+  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']), 0);
+  const volumeDiario = pocos.reduce((acc, p) => acc + Number(p['Vazão (L/H)'] || 0) * 12, 0);
+
+  const mapDoador = {};
+  doadores.forEach(d => {
+    const valor = numero(d['ValorDoado']);
+    const pocoses = (d['PoçosVinculados'] || '').split(',').map(id => id.trim()).filter(Boolean);
+    const beneficiariosApoiados = pocoses.reduce((acc, id) => {
+      const poco = pocos.find(p => p.ID === id);
+      return acc + (poco ? Number(poco['Beneficiários'] || 0) : 0);
+    }, 0);
+    mapDoador[d.ID] = Object.assign({}, d, { valor, pocoses, beneficiariosApoiados });
+  });
+
+  const doadoresImpacto = Object.values(mapDoador)
+    .map(d => ({
+      nome: d['Nome'] || 'Sem identificação',
+      valor: d.valor,
+      beneficiariosApoiados: d.beneficiariosApoiados,
+      quantidadePocos: d.pocoses.length
+    }))
+    .sort((a, b) => b.valor - a.valor);
+
+  const pocoImpacto = pocos.map(p => {
+    const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
+    const valorExecutado = numero(p['Valor Realizado']);
+    const doadoresIds = (p['Doadores'] || '').split(',').map(id => id.trim()).filter(Boolean);
+    const doadoresNomes = doadoresIds.map(id => (mapDoador[id] ? mapDoador[id]['Nome'] : '')).filter(Boolean);
+    return {
+      id: p.ID,
+      nome: p['Comunidade'] || p['Município'] || p['Estado'] || 'Sem identificação',
+      local: `${p['Município'] || 'Sem município'} - ${p['Estado'] || 'Sem estado'}`,
+      status: p['Status'] || '-',
+      beneficiarios: Number(p['Beneficiários'] || 0),
+      doadores: doadoresNomes.join(', ') || 'Sem doador vinculado',
+      valorPrevisto,
+      valorExecutado,
+      gapFinanceiro: valorPrevisto - valorExecutado,
+      vazao: Number(p['Vazão (L/H)'] || 0)
+    };
+  });
+
+  const timeline = contatos
+    .map(c => ({
+      data: c['DataContato'] ? new Date(c['DataContato']).toISOString() : '',
+      poco: pocos.find(p => p.ID === c['PoçoID'])?.['Comunidade'] || c['PoçoID'],
+      resumo: c['Resumo'] || '-',
+      responsavel: c['ResponsavelContato'] || '-',
+      statusContato: c['StatusContato'] || 'Sem registro'
+    }))
+    .sort((a, b) => new Date(b.data) - new Date(a.data))
+    .slice(0, 8);
+
+  const distribuicaoStatusMapa = {};
+  pocos.forEach(p => {
+    const status = p['Status'] || 'Sem status';
+    distribuicaoStatusMapa[status] = (distribuicaoStatusMapa[status] || 0) + 1;
+  });
+
+  const distribuicaoStatus = Object.keys(distribuicaoStatusMapa).map(status => ({
+    status,
+    total: distribuicaoStatusMapa[status]
+  }));
+
+  const regioesMapa = {};
+  pocos.forEach(p => {
+    const estado = p['Estado'] || 'Não informado';
+    if (!regioesMapa[estado]) {
+      regioesMapa[estado] = { estado, beneficiarios: 0, pocos: 0 };
+    }
+    regioesMapa[estado].beneficiarios += Number(p['Beneficiários'] || 0);
+    regioesMapa[estado].pocos += 1;
+  });
+
+  const metricas = {
+    beneficiariosTotais: totalBeneficiarios,
+    familiasEstimadas: totalBeneficiarios ? Math.round(totalBeneficiarios / 4) : 0,
+    volumeAguaDiario: volumeDiario,
+    investimentoRealizado,
+    investimentoPrevisto,
+    custoPorPessoa: totalBeneficiarios ? investimentoRealizado / totalBeneficiarios : 0
+  };
+
+  return {
+    metricas,
+    doadores: doadoresImpacto,
+    pocos: pocoImpacto,
+    timeline,
+    distribuicaoStatus,
+    regioes: Object.values(regioesMapa)
   };
 }
 

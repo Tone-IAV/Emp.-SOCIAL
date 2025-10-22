@@ -27,12 +27,14 @@
     <span class="title">💧 Poços Missionários</span>
     <div class="flex flex-wrap gap-2">
       <button class="nav-item active" data-target="dashboard">Dashboard</button>
+      <button class="nav-item" data-target="gestao">Gestão à vista</button>
+      <button class="nav-item" data-target="impacto">Impacto</button>
       <button class="nav-item" data-target="pocos">Poços</button>
       <button class="nav-item" data-target="doadores">Doadores</button>
       <button class="nav-item" data-target="prestacao">Prestação</button>
       <button class="nav-item" data-target="relatorio">Relatórios</button>
-<button class="nav-item" data-target="kanban">Kanban</button>
-<button class="nav-item" data-target="gantt">Cronograma</button>
+      <button class="nav-item" data-target="kanban">Kanban</button>
+      <button class="nav-item" data-target="gantt">Cronograma</button>
 
 
     </div>
@@ -41,12 +43,14 @@
   <!-- ÁREA PRINCIPAL -->
   <main>
     <div id="dashboard" class="section active"><?!= include('Dashboard'); ?></div>
+    <div id="gestao" class="section"><?!= include('Gestao'); ?></div>
+    <div id="impacto" class="section"><?!= include('Impacto'); ?></div>
     <div id="pocos" class="section"><?!= include('Pocos'); ?></div>
     <div id="doadores" class="section"><?!= include('Doadores'); ?></div>
     <div id="prestacao" class="section"><?!= include('PrestacaoContas'); ?></div>
     <div id="relatorio" class="section"><?!= include('Relatorio'); ?></div>
-   <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
-<div id="gantt" class="section"><?!= include('Gantt'); ?></div>
+    <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
+    <div id="gantt" class="section"><?!= include('Gantt'); ?></div>
   </main>
 
   <!-- FOOTER -->

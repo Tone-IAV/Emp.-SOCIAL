@@ -77,9 +77,15 @@
     }
   </style>
 
-  <div class="grid gap-4 md:grid-cols-4" id="indicadoresPrincipais"></div>
+  <div class="dash-card">
+    <h3 class="dashboard-section-title">Resumo geral dos projetos</h3>
+    <div class="grid gap-4 md:grid-cols-4" id="indicadoresPrincipais"></div>
+  </div>
 
-  <div class="grid gap-4 md:grid-cols-3" id="indicadoresFinanceiros"></div>
+  <div class="dash-card">
+    <h3 class="dashboard-section-title">Situação financeira consolidada</h3>
+    <div class="grid gap-4 md:grid-cols-3" id="indicadoresFinanceiros"></div>
+  </div>
 
   <div class="grid gap-4 md:grid-cols-2">
     <div class="dash-card">
@@ -100,6 +106,42 @@
     <div class="dash-card">
       <h3 class="dashboard-section-title">Beneficiários por estado</h3>
       <canvas id="graficoBeneficiarios" height="220"></canvas>
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Doadores em destaque</h3>
+      <div class="overflow-x-auto">
+        <table class="table-dashboard" id="tabelaDoadoresDestaque">
+          <thead>
+            <tr>
+              <th>Doador</th>
+              <th>Valor doado</th>
+              <th>Beneficiários apoiados</th>
+              <th>Poços financiados</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Alertas operacionais</h3>
+      <div class="overflow-x-auto">
+        <table class="table-dashboard" id="tabelaAlertas">
+          <thead>
+            <tr>
+              <th>Poço</th>
+              <th>Motivo</th>
+              <th>Responsável</th>
+              <th>Próxima ação</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -181,10 +223,10 @@
     `;
   }
 
-  function renderTabela(elementId, linhas, template) {
+  function renderTabela(elementId, linhas, template, colunas = 5) {
     const corpo = document.querySelector(`#${elementId} tbody`);
     if (!linhas || !linhas.length) {
-      corpo.innerHTML = `<tr><td colspan="5" class="empty-state">Sem registros até o momento.</td></tr>`;
+      corpo.innerHTML = `<tr><td colspan="${colunas}" class="empty-state">Sem registros até o momento.</td></tr>`;
       return;
     }
     corpo.innerHTML = linhas.map(template).join('');
@@ -326,6 +368,29 @@
           }
         }
       }
+    });
+
+    renderTabela('tabelaDoadoresDestaque', dados.doadoresDestaque, item => {
+      return `
+        <tr>
+          <td>${escapeHtml(item.nome)}</td>
+          <td>${formatarMoeda(item.valor)}</td>
+          <td>${formatarNumero(item.beneficiariosApoiados)}</td>
+          <td>${formatarNumero(item.quantidadePocos)}</td>
+        </tr>
+      `;
+    }, 4);
+
+    renderTabela('tabelaAlertas', dados.alertas, item => {
+      return `
+        <tr>
+          <td>${escapeHtml(item.poco)}</td>
+          <td>${escapeHtml(item.motivo)}</td>
+          <td>${escapeHtml(item.responsavel)}</td>
+          <td>${escapeHtml(item.proximaAcao)}</td>
+          <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
+        </tr>
+      `;
     });
 
     renderTabela('tabelaProximasAcoes', dados.proximasAcoes, item => {

@@ -52,13 +52,23 @@
 </div>
 
 <script>
+const mapaPocos = {};
+const escapeHtml = texto => String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 // =============================
 // CARREGAR POÇOS NO SELECT
 // =============================
 function carregarSelectPocos() {
   google.script.run.withSuccessHandler(pocos => {
     const select = document.getElementById('pocoId');
-    select.innerHTML = pocos.map(p => `<option value="${p.ID}">${p.Nome} - ${p.Base}</option>`).join('');
+    const options = pocos.map(p => {
+      const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+      const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+      mapaPocos[p.ID] = { nome, local };
+      return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+    });
+    select.innerHTML = options.join('');
+    carregarPrestacoes();
   }).listarPocos();
 }
 
@@ -105,21 +115,32 @@ function carregarPrestacoes() {
   google.script.run.withSuccessHandler(registros => {
     const tbody = document.querySelector('#tabelaPrestacoes tbody');
     let total = 0;
+    if (!registros.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
+      document.getElementById('totalizador').textContent = '💰 Total lançado: R$ 0,00';
+      return;
+    }
     tbody.innerHTML = registros.map(r => {
-      total += Number(r.Valor);
+      const valor = Number(r.Valor || 0);
+      total += valor;
+      const data = r.Data ? new Date(r.Data) : null;
+      const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+      const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '' };
       return `
         <tr class="border-b hover:bg-gray-50">
-          <td class="p-2">${r.PoçoID}</td>
-          <td class="p-2">${new Date(r.Data).toLocaleDateString('pt-BR')}</td>
-          <td class="p-2">${r.Descrição}</td>
-          <td class="p-2">R$ ${Number(r.Valor).toFixed(2)}</td>
-          <td class="p-2">${r.ComprovanteURL ? `<a href="${r.ComprovanteURL}" target="_blank">📎 Ver</a>` : '-'}</td>
+          <td class="p-2">
+            <div class="font-semibold text-gray-900">${escapeHtml(infoPoco.nome)}</div>
+            <small class="text-gray-500">${escapeHtml(infoPoco.local)}</small>
+          </td>
+          <td class="p-2">${dataTexto}</td>
+          <td class="p-2">${escapeHtml(r.Descrição)}</td>
+          <td class="p-2">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+          <td class="p-2">${r.ComprovanteURL ? `<a href="${escapeHtml(r.ComprovanteURL)}" target="_blank">📎 Ver</a>` : '-'}</td>
         </tr>`;
     }).join('');
-    document.getElementById('totalizador').textContent = `💰 Total lançado: R$ ${total.toFixed(2)}`;
+    document.getElementById('totalizador').textContent = `💰 Total lançado: ${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
   }).listarPrestacoes();
 }
 
 carregarSelectPocos();
-carregarPrestacoes();
 </script>
