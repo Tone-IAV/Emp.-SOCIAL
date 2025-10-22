@@ -19,6 +19,28 @@
     .section.active { display:block; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
   </style>
+  <script>
+    window.formatarNumero = function(valor, casasDecimais = 0) {
+      const numero = Number(valor || 0);
+      return numero.toLocaleString('pt-BR', {
+        minimumFractionDigits: casasDecimais,
+        maximumFractionDigits: casasDecimais
+      });
+    };
+
+    window.formatarMoeda = function(valor) {
+      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    window.escapeHtml = function(texto = '') {
+      return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+  </script>
 </head>
 
 <body>

@@ -190,251 +190,235 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const chartsDashboard = {};
+  (() => {
+    const chartsDashboard = {};
+    const { escapeHtml, formatarNumero, formatarMoeda } = window;
 
-  const escapeHtml = (text = '') => String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    const formatarPercentual = valor => `${Number(valor || 0).toFixed(1)}%`;
 
-  const formatarNumero = (valor, casasDecimais = 0) => {
-    const numero = Number(valor || 0);
-    return numero.toLocaleString('pt-BR', {
-      minimumFractionDigits: casasDecimais,
-      maximumFractionDigits: casasDecimais
-    });
-  };
-
-  const formatarPercentual = valor => `${Number(valor || 0).toFixed(1)}%`;
-
-  const formatarMoeda = valor => {
-    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  function criarCard(titulo, valor, detalhe) {
-    return `
-      <div class="dash-card">
-        <span class="dash-title">${titulo}</span>
-        <p class="dash-value">${valor}</p>
-        <span class="dash-detail">${detalhe || ''}</span>
-      </div>
-    `;
-  }
-
-  function renderTabela(elementId, linhas, template, colunas = 5) {
-    const corpo = document.querySelector(`#${elementId} tbody`);
-    if (!linhas || !linhas.length) {
-      corpo.innerHTML = `<tr><td colspan="${colunas}" class="empty-state">Sem registros até o momento.</td></tr>`;
-      return;
+    function criarCard(titulo, valor, detalhe) {
+      return `
+        <div class="dash-card">
+          <span class="dash-title">${titulo}</span>
+          <p class="dash-value">${valor}</p>
+          <span class="dash-detail">${detalhe || ''}</span>
+        </div>
+      `;
     }
-    corpo.innerHTML = linhas.map(template).join('');
-  }
 
-  function renderChart(id, config) {
-    if (chartsDashboard[id]) chartsDashboard[id].destroy();
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
-    chartsDashboard[id] = new Chart(ctx, config);
-  }
-
-  function renderDashboard(dados) {
-    const totais = dados.totais || {};
-
-    document.getElementById('indicadoresPrincipais').innerHTML = [
-      criarCard('Poços monitorados', formatarNumero(totais.totalPocos || 0), `${formatarNumero(totais.concluidos || 0)} concluídos`),
-      criarCard('Taxa de conclusão', formatarPercentual(totais.taxaConclusao || 0), 'Percentual de poços entregues'),
-      criarCard('Beneficiários alcançados', formatarNumero(totais.beneficiariosTotal || 0), `Média de ${formatarNumero(totais.mediaBeneficiarios || 0, 1)} por poço`),
-      criarCard('Doadores ativos', formatarNumero(totais.doadoresAtivos || 0), `Total doado ${formatarMoeda(totais.doacoesTotais || 0)}`)
-    ].join('');
-
-    document.getElementById('indicadoresFinanceiros').innerHTML = [
-      criarCard('Investimento previsto', formatarMoeda(totais.investimentoPrevisto || 0), 'Perfuração + instalação'),
-      criarCard('Investimento planejado', formatarMoeda(totais.investimentoPlanejado || 0), 'Valor declarado pelos projetos'),
-      criarCard('Valor realizado', formatarMoeda(totais.investimentoRealizado || 0), `Gap atual ${formatarMoeda(totais.gapFinanceiro || 0)}`)
-    ].join('');
-
-    const coresBase = ['#1d4ed8', '#38bdf8', '#2563eb', '#0ea5e9', '#3b82f6', '#0284c7'];
-
-    const distStatus = dados.distribuicaoStatus || [];
-    renderChart('graficoStatus', {
-      type: 'doughnut',
-      data: {
-        labels: distStatus.map(s => s.status),
-        datasets: [{
-          data: distStatus.map(s => s.total),
-          backgroundColor: coresBase,
-          borderWidth: 0
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { position: 'bottom' }
-        }
+    function renderTabela(elementId, linhas, template, colunas = 5) {
+      const corpo = document.querySelector(`#${elementId} tbody`);
+      if (!linhas || !linhas.length) {
+        corpo.innerHTML = `<tr><td colspan="${colunas}" class="empty-state">Sem registros até o momento.</td></tr>`;
+        return;
       }
-    });
+      corpo.innerHTML = linhas.map(template).join('');
+    }
 
-    const pipeline = dados.pipelineContatos || [];
-    renderChart('graficoPipeline', {
-      type: 'bar',
-      data: {
-        labels: pipeline.map(p => p.status),
-        datasets: [{
-          label: 'Poços',
-          data: pipeline.map(p => p.total),
-          backgroundColor: '#1d4ed8',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
-    });
+    function renderChart(id, config) {
+      if (chartsDashboard[id]) chartsDashboard[id].destroy();
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      chartsDashboard[id] = new Chart(ctx, config);
+    }
 
-    renderChart('graficoFinanceiro', {
-      type: 'bar',
-      data: {
-        labels: ['Previsto', 'Planejado', 'Realizado'],
-        datasets: [{
-          label: 'R$ (milhares)',
-          data: [totais.investimentoPrevisto || 0, totais.investimentoPlanejado || 0, totais.investimentoRealizado || 0],
-          backgroundColor: ['#2563eb', '#3b82f6', '#1d4ed8'],
-          borderRadius: 10
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: valor => `R$ ${(valor / 1000).toLocaleString('pt-BR')}k`
-            }
-          }
-        }
-      }
-    });
+    function renderDashboard(dados) {
+      const totais = dados.totais || {};
 
-    const estados = dados.porEstado || [];
-    renderChart('graficoBeneficiarios', {
-      type: 'horizontalBar' in Chart.controllers ? 'horizontalBar' : 'bar',
-      data: {
-        labels: estados.map(e => e.estado),
-        datasets: [{
-          label: 'Beneficiários',
-          data: estados.map(e => e.beneficiarios),
-          backgroundColor: '#38bdf8',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { beginAtZero: true }
-        }
-      }
-    });
+      document.getElementById('indicadoresPrincipais').innerHTML = [
+        criarCard('Poços monitorados', formatarNumero(totais.totalPocos || 0), `${formatarNumero(totais.concluidos || 0)} concluídos`),
+        criarCard('Taxa de conclusão', formatarPercentual(totais.taxaConclusao || 0), 'Percentual de poços entregues'),
+        criarCard('Beneficiários alcançados', formatarNumero(totais.beneficiariosTotal || 0), `Média de ${formatarNumero(totais.mediaBeneficiarios || 0, 1)} por poço`),
+        criarCard('Doadores ativos', formatarNumero(totais.doadoresAtivos || 0), `Total doado ${formatarMoeda(totais.doacoesTotais || 0)}`)
+      ].join('');
 
-    const gastos = dados.gastosPorCategoria || [];
-    renderChart('graficoGastos', {
-      type: 'bar',
-      data: {
-        labels: gastos.map(g => g.categoria),
-        datasets: [{
-          label: 'Valor gasto',
-          data: gastos.map(g => g.valor),
-          backgroundColor: '#0ea5e9',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => `${ctx.dataset.label}: ${formatarMoeda(ctx.parsed.y)}`
-            }
-          }
+      document.getElementById('indicadoresFinanceiros').innerHTML = [
+        criarCard('Investimento previsto', formatarMoeda(totais.investimentoPrevisto || 0), 'Perfuração + instalação'),
+        criarCard('Investimento planejado', formatarMoeda(totais.investimentoPlanejado || 0), 'Valor declarado pelos projetos'),
+        criarCard('Valor realizado', formatarMoeda(totais.investimentoRealizado || 0), `Gap atual ${formatarMoeda(totais.gapFinanceiro || 0)}`)
+      ].join('');
+
+      const coresBase = ['#1d4ed8', '#38bdf8', '#2563eb', '#0ea5e9', '#3b82f6', '#0284c7'];
+
+      const distStatus = dados.distribuicaoStatus || [];
+      renderChart('graficoStatus', {
+        type: 'doughnut',
+        data: {
+          labels: distStatus.map(s => s.status),
+          datasets: [{
+            data: distStatus.map(s => s.total),
+            backgroundColor: coresBase,
+            borderWidth: 0
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: valor => formatarMoeda(valor)
+        options: {
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      const pipeline = dados.pipelineContatos || [];
+      renderChart('graficoPipeline', {
+        type: 'bar',
+        data: {
+          labels: pipeline.map(p => p.status),
+          datasets: [{
+            label: 'Poços',
+            data: pipeline.map(p => p.total),
+            backgroundColor: '#1d4ed8',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+
+      renderChart('graficoFinanceiro', {
+        type: 'bar',
+        data: {
+          labels: ['Previsto', 'Planejado', 'Realizado'],
+          datasets: [{
+            label: 'R$ (milhares)',
+            data: [totais.investimentoPrevisto || 0, totais.investimentoPlanejado || 0, totais.investimentoRealizado || 0],
+            backgroundColor: ['#2563eb', '#3b82f6', '#1d4ed8'],
+            borderRadius: 10
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: valor => `R$ ${(valor / 1000).toLocaleString('pt-BR')}k`
+              }
             }
           }
         }
-      }
-    });
+      });
 
-    renderTabela('tabelaDoadoresDestaque', dados.doadoresDestaque, item => {
-      return `
-        <tr>
-          <td>${escapeHtml(item.nome)}</td>
-          <td>${formatarMoeda(item.valor)}</td>
-          <td>${formatarNumero(item.beneficiariosApoiados)}</td>
-          <td>${formatarNumero(item.quantidadePocos)}</td>
-        </tr>
-      `;
-    }, 4);
+      const estados = dados.porEstado || [];
+      renderChart('graficoBeneficiarios', {
+        type: 'horizontalBar' in Chart.controllers ? 'horizontalBar' : 'bar',
+        data: {
+          labels: estados.map(e => e.estado),
+          datasets: [{
+            label: 'Beneficiários',
+            data: estados.map(e => e.beneficiarios),
+            backgroundColor: '#38bdf8',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true }
+          }
+        }
+      });
 
-    renderTabela('tabelaAlertas', dados.alertas, item => {
-      return `
-        <tr>
-          <td>${escapeHtml(item.poco)}</td>
-          <td>${escapeHtml(item.motivo)}</td>
-          <td>${escapeHtml(item.responsavel)}</td>
-          <td>${escapeHtml(item.proximaAcao)}</td>
-          <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
-        </tr>
-      `;
-    });
+      const gastos = dados.gastosPorCategoria || [];
+      renderChart('graficoGastos', {
+        type: 'bar',
+        data: {
+          labels: gastos.map(g => g.categoria),
+          datasets: [{
+            label: 'Valor gasto',
+            data: gastos.map(g => g.valor),
+            backgroundColor: '#0ea5e9',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${formatarMoeda(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: valor => formatarMoeda(valor)
+              }
+            }
+          }
+        }
+      });
 
-    renderTabela('tabelaProximasAcoes', dados.proximasAcoes, item => {
-      const ultimoContatoData = item.ultimoContato ? new Date(item.ultimoContato) : null;
-      const ultimoContato = ultimoContatoData && !isNaN(ultimoContatoData)
-        ? ultimoContatoData.toLocaleDateString('pt-BR')
-        : '-';
-      const dias = item.diasSemContato != null ? `${item.diasSemContato} dias` : 'Sem registro';
-      return `
-        <tr>
-          <td>${escapeHtml(item.poco)}</td>
-          <td>${escapeHtml(item.responsavel || '-')}</td>
-          <td>
-            <div>${escapeHtml(item.proximaAcao || '-')}</div>
-            ${item.impacto ? `<small style="color:#64748b;">Impacto: ${escapeHtml(item.impacto)}</small>` : ''}
-          </td>
-          <td>
-            <div>${escapeHtml(item.contato || '-')}</div>
-            <span class="status-pill">${escapeHtml(item.statusContato)}</span>
-          </td>
-          <td>
-            <div>${ultimoContato}</div>
-            <small style="color:#64748b;">${dias}</small>
-          </td>
-        </tr>
-      `;
-    });
+      renderTabela('tabelaDoadoresDestaque', dados.doadoresDestaque, item => {
+        return `
+          <tr>
+            <td>${escapeHtml(item.nome)}</td>
+            <td>${formatarMoeda(item.valor)}</td>
+            <td>${formatarNumero(item.beneficiariosApoiados)}</td>
+            <td>${formatarNumero(item.quantidadePocos)}</td>
+          </tr>
+        `;
+      }, 4);
 
-    renderTabela('tabelaUltimosContatos', dados.ultimosContatos, item => {
-      const dataContato = item.data ? new Date(item.data) : null;
-      const dataTexto = dataContato && !isNaN(dataContato)
-        ? dataContato.toLocaleDateString('pt-BR')
-        : '-';
-      return `
-        <tr>
-          <td>${dataTexto}</td>
-          <td>${escapeHtml(item.poco)}</td>
-          <td>${escapeHtml(item.contato)}</td>
-          <td>${escapeHtml(item.responsavel)}</td>
-          <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
-        </tr>
-      `;
-    });
-  }
+      renderTabela('tabelaAlertas', dados.alertas, item => {
+        return `
+          <tr>
+            <td>${escapeHtml(item.poco)}</td>
+            <td>${escapeHtml(item.motivo)}</td>
+            <td>${escapeHtml(item.responsavel)}</td>
+            <td>${escapeHtml(item.proximaAcao)}</td>
+            <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
+          </tr>
+        `;
+      });
 
-  google.script.run.withSuccessHandler(renderDashboard).obterDashboardAnalitico();
+      renderTabela('tabelaProximasAcoes', dados.proximasAcoes, item => {
+        const ultimoContatoData = item.ultimoContato ? new Date(item.ultimoContato) : null;
+        const ultimoContato = ultimoContatoData && !isNaN(ultimoContatoData)
+          ? ultimoContatoData.toLocaleDateString('pt-BR')
+          : '-';
+        const dias = item.diasSemContato != null ? `${item.diasSemContato} dias` : 'Sem registro';
+        return `
+          <tr>
+            <td>${escapeHtml(item.poco)}</td>
+            <td>${escapeHtml(item.responsavel || '-')}</td>
+            <td>
+              <div>${escapeHtml(item.proximaAcao || '-')}</div>
+              ${item.impacto ? `<small style="color:#64748b;">Impacto: ${escapeHtml(item.impacto)}</small>` : ''}
+            </td>
+            <td>
+              <div>${escapeHtml(item.contato || '-')}</div>
+              <span class="status-pill">${escapeHtml(item.statusContato)}</span>
+            </td>
+            <td>
+              <div>${ultimoContato}</div>
+              <small style="color:#64748b;">${dias}</small>
+            </td>
+          </tr>
+        `;
+      });
+
+      renderTabela('tabelaUltimosContatos', dados.ultimosContatos, item => {
+        const dataContato = item.data ? new Date(item.data) : null;
+        const dataTexto = dataContato && !isNaN(dataContato)
+          ? dataContato.toLocaleDateString('pt-BR')
+          : '-';
+        return `
+          <tr>
+            <td>${dataTexto}</td>
+            <td>${escapeHtml(item.poco)}</td>
+            <td>${escapeHtml(item.contato)}</td>
+            <td>${escapeHtml(item.responsavel)}</td>
+            <td><span class="status-pill">${escapeHtml(item.status)}</span></td>
+          </tr>
+        `;
+      });
+    }
+
+    google.script.run.withSuccessHandler(renderDashboard).obterDashboardAnalitico();
+  })();
 </script>

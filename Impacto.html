@@ -137,13 +137,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const chartsImpacto = {};
-  const formatarNumero = (valor, decimais = 0) => Number(valor || 0).toLocaleString('pt-BR', {
-    minimumFractionDigits: decimais,
-    maximumFractionDigits: decimais
-  });
-  const formatarMoeda = valor => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  const escapeHtml = text => String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  (() => {
+    const chartsImpacto = {};
+    const { formatarNumero, formatarMoeda, escapeHtml } = window;
 
   function renderMetricas(metricas) {
     const cards = [
@@ -267,4 +263,5 @@
   }
 
   google.script.run.withSuccessHandler(renderImpacto).obterAnaliseImpacto();
+  })();
 </script>
