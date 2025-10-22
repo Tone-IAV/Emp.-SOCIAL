@@ -11,9 +11,9 @@
     <h3 class="text-lg font-semibold mb-2" id="nomePoco"></h3>
     <p><b>Status:</b> <span id="statusPoco"></span></p>
     <p><b>Base:</b> <span id="basePoco"></span></p>
-    <p><b>Valor Previsto:</b> R$ <span id="valorPrevisto"></span></p>
-    <p><b>Valor Realizado:</b> R$ <span id="valorRealizado"></span></p>
-    <p><b>Saldo:</b> R$ <span id="saldo"></span></p>
+    <p><b>Valor Previsto:</b> <span id="valorPrevisto"></span></p>
+    <p><b>Valor Realizado:</b> <span id="valorRealizado"></span></p>
+    <p><b>Saldo:</b> <span id="saldo"></span></p>
   </div>
 
   <!-- GRÁFICO -->
@@ -48,7 +48,12 @@ let grafico = null;
 function carregarSelectPocos() {
   google.script.run.withSuccessHandler(pocos => {
     const select = document.getElementById('pocoSelect');
-    select.innerHTML = '<option value="">Selecione...</option>' + pocos.map(p => `<option value="${p.ID}">${p.Nome} - ${p.Base}</option>`).join('');
+    const options = pocos.map(p => {
+      const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+      const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+      return `<option value="${p.ID}">${nome} (${local || 'Local não informado'})</option>`;
+    });
+    select.innerHTML = '<option value="">Selecione...</option>' + options.join('');
   }).listarPocos();
 }
 
@@ -63,26 +68,44 @@ function carregarRelatorio(id) {
     const p = res.poco;
     const despesas = res.despesas;
 
+    if (!p) {
+      document.getElementById('resumo').classList.add('hidden');
+      document.querySelector('#tabelaDespesas tbody').innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-3">Poço não encontrado.</td></tr>';
+      return;
+    }
+
+    const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+    const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+    const valorPrevPerf = Number(p['Valor Previsto Perfuração'] || 0);
+    const valorPrevInst = Number(p['Valor Previsto Instalação'] || 0);
+    const valorPrevisto = valorPrevPerf + valorPrevInst;
+    const valorRealizado = Number(p['Valor Realizado'] || 0);
+    const saldo = valorPrevisto - valorRealizado;
+
     document.getElementById('resumo').classList.remove('hidden');
-    document.getElementById('nomePoco').textContent = p.Nome;
-    document.getElementById('statusPoco').textContent = p.Status;
-    document.getElementById('basePoco').textContent = p.Base;
-    document.getElementById('valorPrevisto').textContent = Number(p.ValorPrevisto || 0).toFixed(2);
-    document.getElementById('valorRealizado').textContent = Number(p.ValorRealizado || 0).toFixed(2);
-    const saldo = Number(p.ValorPrevisto || 0) - Number(p.ValorRealizado || 0);
-    document.getElementById('saldo').textContent = saldo.toFixed(2);
+    document.getElementById('nomePoco').textContent = nome;
+    document.getElementById('statusPoco').textContent = p['Status'] || '-';
+    document.getElementById('basePoco').textContent = local || '-';
+    document.getElementById('valorPrevisto').textContent = valorPrevisto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('valorRealizado').textContent = valorRealizado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('saldo').textContent = saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // Atualiza tabela
     const tbody = document.querySelector('#tabelaDespesas tbody');
     tbody.innerHTML = despesas.length
-      ? despesas.map(d => `
-          <tr class="border-b">
-            <td class="p-2">${new Date(d.Data).toLocaleDateString('pt-BR')}</td>
-            <td class="p-2">${d.Descrição}</td>
-            <td class="p-2">R$ ${Number(d.Valor).toFixed(2)}</td>
-            <td class="p-2">${d.ComprovanteURL ? `<a href="${d.ComprovanteURL}" target="_blank">📎 Ver</a>` : '-'}</td>
-          </tr>
-        `).join('')
+      ? despesas.map(d => {
+          const data = d.Data ? new Date(d.Data) : null;
+          const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+          const valor = Number(d.Valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          return `
+            <tr class="border-b">
+              <td class="p-2">${dataTexto}</td>
+              <td class="p-2">${d.Descrição}</td>
+              <td class="p-2">${valor}</td>
+              <td class="p-2">${d.ComprovanteURL ? `<a href="${d.ComprovanteURL}" target="_blank">📎 Ver</a>` : '-'}</td>
+            </tr>
+          `;
+        }).join('')
       : '<tr><td colspan="4" class="text-center p-3 text-gray-500">Nenhuma despesa registrada</td></tr>';
 
     // Atualiza gráfico
@@ -93,7 +116,7 @@ function carregarRelatorio(id) {
       data: {
         labels: ['Valor Realizado', 'Saldo Restante'],
         datasets: [{
-          data: [p.ValorRealizado || 0, saldo],
+          data: [valorRealizado, saldo],
           backgroundColor: ['#3b82f6', '#93c5fd']
         }]
       },
@@ -108,27 +131,36 @@ async function gerarPDF() {
   const p = dadosPoco.poco;
   const despesas = dadosPoco.despesas;
 
+  const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+  const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+  const valorPrevPerf = Number(p['Valor Previsto Perfuração'] || 0);
+  const valorPrevInst = Number(p['Valor Previsto Instalação'] || 0);
+  const valorPrevisto = valorPrevPerf + valorPrevInst;
+  const valorRealizado = Number(p['Valor Realizado'] || 0);
+  const saldo = valorPrevisto - valorRealizado;
+
   doc.setFontSize(14);
   doc.text('Relatório de Prestação de Contas', 15, 15);
   doc.setFontSize(11);
-  doc.text(`Poço: ${p.Nome} - ${p.Base}`, 15, 25);
-  doc.text(`Status: ${p.Status}`, 15, 32);
-  doc.text(`Valor Previsto: R$ ${Number(p.ValorPrevisto).toFixed(2)}`, 15, 39);
-  doc.text(`Valor Realizado: R$ ${Number(p.ValorRealizado).toFixed(2)}`, 15, 46);
-  const saldo = Number(p.ValorPrevisto) - Number(p.ValorRealizado);
-  doc.text(`Saldo Restante: R$ ${saldo.toFixed(2)}`, 15, 53);
+  doc.text(`Poço: ${nome}`, 15, 25);
+  doc.text(`Local: ${local || '-'}`, 15, 32);
+  doc.text(`Status: ${p['Status'] || '-'}`, 15, 39);
+  doc.text(`Valor Previsto: R$ ${valorPrevisto.toFixed(2)}`, 15, 46);
+  doc.text(`Valor Realizado: R$ ${valorRealizado.toFixed(2)}`, 15, 53);
+  doc.text(`Saldo Restante: R$ ${saldo.toFixed(2)}`, 15, 60);
 
   // Tabela simples
-  let y = 65;
+  let y = 70;
   doc.text('Despesas:', 15, y);
   y += 8;
   despesas.forEach(d => {
-    doc.text(`${new Date(d.Data).toLocaleDateString('pt-BR')} - ${d.Descrição} - R$ ${Number(d.Valor).toFixed(2)}`, 15, y);
+    const data = d.Data ? new Date(d.Data).toLocaleDateString('pt-BR') : '-';
+    doc.text(`${data} - ${d.Descrição} - R$ ${Number(d.Valor || 0).toFixed(2)}`, 15, y);
     y += 6;
     if (y > 270) { doc.addPage(); y = 20; }
   });
 
-  doc.save(`Relatorio_${p.Nome}.pdf`);
+  doc.save(`Relatorio_${nome}.pdf`);
 }
 
 carregarSelectPocos();

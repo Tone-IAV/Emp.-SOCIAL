@@ -52,11 +52,17 @@
 </div>
 
 <script>
+const escapeHtml = texto => String(texto || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 // Carregar lista de poços no select
 function carregarSelectPocos() {
   google.script.run.withSuccessHandler(pocos => {
     const select = document.getElementById('pocosSelect');
-    select.innerHTML = pocos.map(p => `<option value="${p.ID}">${p.Nome} - ${p.Base}</option>`).join('');
+    const options = pocos.map(p => {
+      const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
+      const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
+      return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+    });
+    select.innerHTML = options.join('');
   }).listarPocos();
 }
 
@@ -86,14 +92,23 @@ document.getElementById('formDoador').addEventListener('submit', e => {
 function carregarDoadores() {
   google.script.run.withSuccessHandler(doadores => {
     const tbody = document.querySelector('#tabelaDoadores tbody');
-    tbody.innerHTML = doadores.map(d => `
-      <tr class="border-b hover:bg-gray-50">
-        <td class="p-2">${d.Nome}</td>
-        <td class="p-2">${d.Email || '-'}</td>
-        <td class="p-2">R$ ${d.ValorDoado || '0,00'}</td>
-        <td class="p-2">${new Date(d.DataDoacao).toLocaleDateString('pt-BR')}</td>
-      </tr>
-    `).join('');
+    if (!doadores.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 py-4">Nenhum doador cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = doadores.map(d => {
+      const data = d.DataDoacao ? new Date(d.DataDoacao) : null;
+      const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
+      const valor = Number(d.ValorDoado || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return `
+        <tr class="border-b hover:bg-gray-50">
+          <td class="p-2">${escapeHtml(d.Nome)}</td>
+          <td class="p-2">${escapeHtml(d.Email || '-')}</td>
+          <td class="p-2">${valor}</td>
+          <td class="p-2">${dataTexto}</td>
+        </tr>
+      `;
+    }).join('');
   }).listarDoadores();
 }
 
