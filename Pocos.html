@@ -1,0 +1,122 @@
+<div class="p-4">
+  <h2 class="text-xl font-bold mb-4">💧 Cadastro e Gerenciamento de Poços</h2>
+
+  <!-- FORMULÁRIO DE CADASTRO -->
+  <form id="formPoco" class="bg-white rounded-lg shadow p-4 mb-6 space-y-4">
+    <div class="grid md:grid-cols-3 gap-3">
+      <div><label>Estado</label><input id="estado" class="border p-2 w-full rounded" required></div>
+      <div><label>Município</label><input id="municipio" class="border p-2 w-full rounded" required></div>
+      <div><label>Comunidade</label><input id="comunidade" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <div><label>Latitude</label><input id="latitude" class="border p-2 w-full rounded"></div>
+      <div><label>Longitude</label><input id="longitude" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <div><label>Beneficiários</label><input id="beneficiarios" type="number" class="border p-2 w-full rounded"></div>
+      <div><label>Investimento (R$)</label><input id="investimento" type="number" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
+      <div><label>Vazão (L/H)</label><input id="vazao" class="border p-2 w-full rounded"></div>
+      <div><label>Profundidade (m)</label><input id="profundidade" class="border p-2 w-full rounded"></div>
+      <div><label>Status</label>
+        <select id="status" class="border p-2 w-full rounded">
+          <option>Planejado</option>
+          <option>Em execução</option>
+          <option>Concluído</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <div><label>Valor Previsto Perfuração (R$)</label><input id="valorPerf" type="number" class="border p-2 w-full rounded"></div>
+      <div><label>Valor Previsto Instalação (R$)</label><input id="valorInst" type="number" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <div><label>Empresa Responsável</label><input id="empresa" class="border p-2 w-full rounded"></div>
+      <div><label>Doador</label><input id="doador" class="border p-2 w-full rounded"></div>
+    </div>
+
+    <div>
+      <label>Observações</label>
+      <textarea id="obs" rows="2" class="border p-2 w-full rounded"></textarea>
+    </div>
+
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      💾 Salvar Poço
+    </button>
+  </form>
+
+  <!-- TABELA -->
+  <h3 class="font-semibold mb-2">Poços Cadastrados</h3>
+  <div class="overflow-x-auto">
+    <table id="tabelaPocos" class="min-w-full bg-white rounded shadow text-sm">
+      <thead class="bg-blue-100">
+        <tr>
+          <th class="p-2 text-left">Município</th>
+          <th class="p-2 text-left">Comunidade</th>
+          <th class="p-2 text-left">Estado</th>
+          <th class="p-2 text-left">Beneficiários</th>
+          <th class="p-2 text-left">Investimento</th>
+          <th class="p-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="mensagem" class="mt-4 text-green-700 font-semibold"></div>
+</div>
+
+<script>
+document.getElementById('formPoco').addEventListener('submit', e => {
+  e.preventDefault();
+
+  const data = {
+    estado: estado.value,
+    municipio: municipio.value,
+    comunidade: comunidade.value,
+    latitude: latitude.value,
+    longitude: longitude.value,
+    beneficiarios: beneficiarios.value,
+    investimento: investimento.value,
+    vazao: vazao.value,
+    profundidade: profundidade.value,
+    perfuracao: '', // opcional para preencher depois
+    instalacao: '', // idem
+    doador: doador.value,
+    status: status.value,
+    valorPerf: valorPerf.value,
+    valorInst: valorInst.value,
+    empresa: empresa.value,
+    obs: obs.value
+  };
+
+  google.script.run.withSuccessHandler(() => {
+    mensagem.textContent = "✅ Poço salvo com sucesso!";
+    e.target.reset();
+    carregarPocos();
+  }).salvarPoco(data);
+});
+
+function carregarPocos() {
+  google.script.run.withSuccessHandler(pocos => {
+    const tbody = document.querySelector('#tabelaPocos tbody');
+    tbody.innerHTML = pocos.map(p => `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-2">${p['Município']}</td>
+        <td class="p-2">${p['Comunidade'] || '-'}</td>
+        <td class="p-2">${p['Estado']}</td>
+        <td class="p-2">${p['Beneficiários'] || '-'}</td>
+        <td class="p-2">R$ ${p['Investimento'] || '-'}</td>
+        <td class="p-2">${p['Status']}</td>
+      </tr>
+    `).join('');
+  }).listarPocos();
+}
+carregarPocos();
+</script>
