@@ -431,13 +431,24 @@
         }
 
         const desenhar = geojson => {
+          const createMapChart = typeof Highcharts.mapChart === 'function'
+            ? Highcharts.mapChart.bind(Highcharts)
+            : ((id, options) => {
+                if (Highcharts && typeof Highcharts.chart === 'function') {
+                  const fallbackOptions = Highcharts.merge({ chart: { type: 'map' } }, options);
+                  return Highcharts.chart(id, fallbackOptions);
+                }
+                console.warn('Highcharts map module não está disponível. O mapa não será renderizado.');
+                return null;
+              });
+
           if (window.__mapChart) {
             window.__mapChart.update({ chart: { map: geojson } }, false);
             window.__mapChart.series[0].setData(serie, true);
             window.__mapChart.reflow();
             return;
           }
-          window.__mapChart = Highcharts.mapChart(containerId, {
+          const novoMapa = createMapChart(containerId, {
             chart: { map: geojson, backgroundColor: '#f8fafc' },
             title: { text: null },
             credits: { enabled: false },
@@ -477,7 +488,10 @@
               }
             }]
           });
-          window.__mapChart.reflow();
+          if (novoMapa) {
+            window.__mapChart = novoMapa;
+            window.__mapChart.reflow();
+          }
         };
 
         if (window.__mapaBrasilGeojson) {
