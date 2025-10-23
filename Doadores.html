@@ -162,11 +162,12 @@
       google.script.run.withSuccessHandler(pocos => {
         const select = document.getElementById('pocosSelect');
         if (!select) return;
-        if (!pocos.length) {
+        const listaPocos = Array.isArray(pocos) ? pocos : [];
+        if (!listaPocos.length) {
           select.innerHTML = '<option value="" disabled>Nenhum poço cadastrado</option>';
           return;
         }
-        const options = pocos.map(p => {
+        const options = listaPocos.map(p => {
           const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
           const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
           return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
@@ -178,13 +179,14 @@
     function preencherSelectDoadores(doadores) {
       const select = document.getElementById('depositoDoador');
       if (!select) return;
-      if (!doadores.length) {
+      const listaDoadores = Array.isArray(doadores) ? doadores : [];
+      if (!listaDoadores.length) {
         select.innerHTML = '<option value="" disabled>Cadastre um doador antes de registrar depósitos</option>';
         select.disabled = true;
         return;
       }
       const options = ['<option value="" disabled selected>Selecione um doador</option>']
-        .concat(doadores.map(d => `<option value="${d.ID}">${escapeHtml(d.Nome)}</option>`));
+        .concat(listaDoadores.map(d => `<option value="${d.ID}">${escapeHtml(d.Nome)}</option>`));
       select.innerHTML = options.join('');
       select.disabled = false;
     }
@@ -263,14 +265,15 @@
 
     function carregarDoadores() {
       google.script.run.withSuccessHandler(doadores => {
-        preencherSelectDoadores(doadores);
+        const listaDoadores = Array.isArray(doadores) ? doadores : [];
+        preencherSelectDoadores(listaDoadores);
         const tbody = document.querySelector('#tabelaDoadores tbody');
         if (!tbody) return;
-        if (!doadores.length) {
+        if (!listaDoadores.length) {
           tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-6">Nenhum doador cadastrado até o momento.</td></tr>';
           return;
         }
-        tbody.innerHTML = doadores.map(d => {
+        tbody.innerHTML = listaDoadores.map(d => {
           const total = formatarMoeda(d.ValorDoado || 0);
           const ultimoDeposito = formatarData(d.DataDoacao);
           const quantidadeDepositos = Number(d.QuantidadeDepositos || (Array.isArray(d.Depositos) ? d.Depositos.length : 0));
