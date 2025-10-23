@@ -15,6 +15,7 @@
       color: #1d4ed8;
       margin-bottom: 1rem;
     }
+    .impact-chart { min-height: 240px; }
     .impact-metric {
       background: linear-gradient(120deg, rgba(59,130,246,0.12), rgba(14,165,233,0.15));
       border-radius: 16px;
@@ -96,17 +97,17 @@
   <div class="grid gap-4 md:grid-cols-2">
     <div class="impact-card">
       <h3>Contribuição por doador</h3>
-      <canvas id="graficoDoadoresImpacto" height="220"></canvas>
+      <div id="graficoDoadoresImpacto" class="impact-chart"></div>
     </div>
     <div class="impact-card">
       <h3>Status de entrega dos poços</h3>
-      <canvas id="graficoStatusImpacto" height="220"></canvas>
+      <div id="graficoStatusImpacto" class="impact-chart"></div>
     </div>
   </div>
 
   <div class="impact-card">
     <h3>Distribuição dos beneficiários por estado</h3>
-    <canvas id="graficoRegioesImpacto" height="230"></canvas>
+    <div id="graficoRegioesImpacto" class="impact-chart"></div>
   </div>
 
   <div class="impact-card">
@@ -135,7 +136,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   (() => {
     const chartsImpacto = {};
@@ -199,11 +199,16 @@
     }).join('');
   }
 
-  function renderGrafico(id, config) {
+  function renderGrafico(id, options) {
+    if (!window.Highcharts) return;
+    const container = document.getElementById(id);
+    if (!container) return;
     if (chartsImpacto[id]) chartsImpacto[id].destroy();
-    const ctx = document.getElementById(id);
-    if (!ctx) return;
-    chartsImpacto[id] = new Chart(ctx, config);
+    chartsImpacto[id] = Highcharts.chart(id, Highcharts.merge({
+      title: { text: null },
+      credits: { enabled: false },
+      legend: { align: 'center', verticalAlign: 'bottom' }
+    }, options));
   }
 
   function renderImpacto(dados) {
@@ -213,52 +218,52 @@
 
     const doadores = dados.doadores || [];
     renderGrafico('graficoDoadoresImpacto', {
-      type: 'bar',
-      data: {
-        labels: doadores.map(d => d.nome),
-        datasets: [{
-          label: 'Valor doado (R$)',
-          data: doadores.map(d => d.valor),
-          backgroundColor: '#2563eb',
-          borderRadius: 8
-        }]
+      chart: { type: 'column' },
+      xAxis: { categories: doadores.map(d => d.nome), title: { text: null } },
+      yAxis: {
+        min: 0,
+        title: { text: 'Valor doado (R$)' },
+        labels: {
+          formatter() {
+            return `R$ ${(this.value / 1000).toLocaleString('pt-BR')}k`;
+          }
+        }
       },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { callback: v => `R$ ${formatarNumero(v / 1000)}k` } } }
-      }
+      legend: { enabled: false },
+      tooltip: {
+        pointFormatter() {
+          return `<span style="color:${this.color}">●</span> ${this.category}: <b>${formatarMoeda(this.y)}</b>`;
+        }
+      },
+      plotOptions: { column: { borderRadius: 8, pointPadding: 0.1 } },
+      series: [{ name: 'Doações', data: doadores.map(d => Number(d.valor || 0)) }]
     });
 
     const status = dados.distribuicaoStatus || [];
     renderGrafico('graficoStatusImpacto', {
-      type: 'doughnut',
-      data: {
-        labels: status.map(s => s.status),
-        datasets: [{
-          data: status.map(s => s.total),
-          backgroundColor: ['#3b82f6', '#38bdf8', '#1d4ed8', '#0ea5e9'],
-          borderWidth: 0
-        }]
+      chart: { type: 'pie' },
+      plotOptions: {
+        pie: {
+          innerSize: '55%',
+          dataLabels: { format: '{point.name}: <b>{point.y}</b>' }
+        }
       },
-      options: { plugins: { legend: { position: 'bottom' } } }
+      tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
+      series: [{
+        name: 'Poços',
+        data: status.map(s => ({ name: s.status, y: Number(s.total || 0) }))
+      }]
     });
 
     const regioes = dados.regioes || [];
     renderGrafico('graficoRegioesImpacto', {
-      type: 'bar',
-      data: {
-        labels: regioes.map(r => r.estado),
-        datasets: [{
-          label: 'Beneficiários atendidos',
-          data: regioes.map(r => r.beneficiarios),
-          backgroundColor: '#38bdf8',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-      }
+      chart: { type: 'column' },
+      xAxis: { categories: regioes.map(r => r.estado) },
+      yAxis: { min: 0, title: { text: 'Beneficiários' } },
+      legend: { enabled: false },
+      tooltip: { pointFormat: '<b>{point.y}</b> beneficiários' },
+      plotOptions: { column: { borderRadius: 6, pointPadding: 0.12 } },
+      series: [{ name: 'Beneficiários', data: regioes.map(r => Number(r.beneficiarios || 0)) }]
     });
   }
 

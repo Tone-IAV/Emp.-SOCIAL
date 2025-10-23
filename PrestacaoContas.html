@@ -28,6 +28,24 @@
       </div>
     </div>
 
+    <div class="grid md:grid-cols-2 gap-3">
+      <div>
+        <label>Categoria da despesa</label>
+        <select id="categoria" class="border p-2 w-full rounded">
+          <option>Perfuração</option>
+          <option>Instalação</option>
+          <option>Manutenção</option>
+          <option>Capacitação</option>
+          <option>Logística</option>
+          <option>Outros investimentos</option>
+        </select>
+      </div>
+      <div>
+        <label>Registrado por</label>
+        <input type="text" id="registradoPor" class="border p-2 w-full rounded" placeholder="Equipe responsável">
+      </div>
+    </div>
+
     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
       💾 Registrar Despesa
     </button>
@@ -42,6 +60,8 @@
         <th class="p-2 text-left">Data</th>
         <th class="p-2 text-left">Descrição</th>
         <th class="p-2 text-left">Valor</th>
+        <th class="p-2 text-left">Categoria</th>
+        <th class="p-2 text-left">Registrado por</th>
         <th class="p-2 text-left">Comprovante</th>
       </tr>
     </thead>
@@ -77,6 +97,8 @@
       const data = document.getElementById('data').value;
       const descricao = document.getElementById('descricao').value;
       const valor = parseFloat(document.getElementById('valor').value);
+      const categoria = document.getElementById('categoria').value;
+      const registradoPor = document.getElementById('registradoPor').value;
       const fileInput = document.getElementById('comprovante');
 
       let comprovanteURL = '';
@@ -96,7 +118,7 @@
         });
       }
 
-      const despesa = { pocoId, data, descricao, valor, comprovanteURL };
+      const despesa = { pocoId, data, descricao, valor, categoria, registradoPor, comprovanteURL };
       google.script.run.withSuccessHandler(() => {
         e.target.reset();
         carregarPrestacoes();
@@ -108,7 +130,7 @@
         const tbody = document.querySelector('#tabelaPrestacoes tbody');
         let total = 0;
         if (!registros.length) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
           document.getElementById('totalizador').textContent = '💰 Total lançado: R$ 0,00';
           return;
         }
@@ -118,6 +140,8 @@
           const data = r.Data ? new Date(r.Data) : null;
           const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
           const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '' };
+          const categoria = r.Categoria || '-';
+          const autor = r.RegistradoPor || '-';
           return `
             <tr class="border-b hover:bg-gray-50">
               <td class="p-2">
@@ -127,6 +151,8 @@
               <td class="p-2">${dataTexto}</td>
               <td class="p-2">${escapeHtml(r.Descrição)}</td>
               <td class="p-2">${formatarMoeda(valor)}</td>
+              <td class="p-2">${escapeHtml(categoria)}</td>
+              <td class="p-2">${escapeHtml(autor)}</td>
               <td class="p-2">${r.ComprovanteURL ? `<a href="${escapeHtml(r.ComprovanteURL)}" target="_blank">📎 Ver</a>` : '-'}</td>
             </tr>`;
         }).join('');
