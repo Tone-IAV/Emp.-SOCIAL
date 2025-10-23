@@ -141,12 +141,36 @@
   <script>
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', () => {
+        const secaoAnterior = document.querySelector('.section.active');
+        const botaoAnterior = document.querySelector('.nav-item.active');
+
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+
         const target = btn.dataset.target;
         document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-        document.getElementById(target).classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const secao = document.getElementById(target);
+
+        if (secao) {
+          secao.classList.add('active');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+
+        console.error(`Seção "${target}" não encontrada. Verifique se o include correspondente está disponível.`);
+
+        if (secaoAnterior) {
+          secaoAnterior.classList.add('active');
+        }
+
+        if (botaoAnterior) {
+          botaoAnterior.classList.add('active');
+        } else {
+          const botaoDashboard = document.querySelector('.nav-item[data-target="dashboard"]');
+          const secaoDashboard = document.getElementById('dashboard');
+          if (botaoDashboard) botaoDashboard.classList.add('active');
+          if (secaoDashboard) secaoDashboard.classList.add('active');
+        }
       });
     });
 
