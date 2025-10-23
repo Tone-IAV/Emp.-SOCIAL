@@ -110,6 +110,11 @@ function carregarRelatorio(id) {
 
     // Atualiza gráfico
     if (!window.Highcharts) return;
+    const graficoContainer = document.getElementById('graficoPoco');
+    if (!graficoContainer) {
+      console.warn('Contêiner do gráfico não encontrado. Renderização adiada.');
+      return;
+    }
     if (grafico) grafico.destroy();
     const saldoPositivo = saldo > 0 ? saldo : 0;
     const excedente = saldo < 0 ? Math.abs(saldo) : 0;
