@@ -141,6 +141,14 @@
     const chartsImpacto = {};
     const { formatarNumero, formatarMoeda, escapeHtml } = window;
 
+    const STATUS_CORES = {
+      'Solicitado': '#f97316',
+      'Orçamento previsto': '#facc15',
+      'Instalação': '#2563eb',
+      'Concluído': '#16a34a',
+      'Pago': '#047857'
+    };
+
   function renderMetricas(metricas) {
     const cards = [
       { label: 'Beneficiários alcançados', valor: formatarNumero(metricas.beneficiariosTotais || 0), detalhe: 'Pessoas com acesso à água' },
@@ -251,7 +259,11 @@
       tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
       series: [{
         name: 'Poços',
-        data: status.map(s => ({ name: s.status, y: Number(s.total || 0) }))
+        data: status.map(s => ({
+          name: s.status,
+          y: Number(s.total || 0),
+          color: STATUS_CORES[s.status] || undefined
+        }))
       }]
     });
 

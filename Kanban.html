@@ -1,62 +1,171 @@
-<div class="p-4">
-  <h2 class="text-xl font-bold mb-4">🗂️ Kanban de Acompanhamento</h2>
-  <p class="text-gray-600 mb-4">Arraste os cartões entre colunas para atualizar o status dos poços.</p>
+<div class="p-4 space-y-4">
+  <div class="flex flex-col gap-2">
+    <h2 class="text-xl font-bold text-blue-700">🗂️ Fluxo operacional dos poços</h2>
+    <p class="text-sm text-gray-600">Arraste os cartões entre as colunas para atualizar a etapa do processo. Os marcos alimentam automaticamente o cronograma, o kanban e o relatório financeiro.</p>
+  </div>
 
-  <div class="grid md:grid-cols-3 gap-4" id="kanbanBoard">
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-blue-800 mb-2">Planejado</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Planejado"></div>
+  <div class="bg-white rounded-lg shadow p-4 flex items-center gap-4 flex-wrap">
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span class="w-3 h-3 rounded-full bg-orange-300"></span> Solicitação
     </div>
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-yellow-700 mb-2">Em execução</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Em execução"></div>
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span class="w-3 h-3 rounded-full bg-yellow-300"></span> Orçamento previsto
     </div>
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-green-700 mb-2">Concluído</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Concluído"></div>
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span class="w-3 h-3 rounded-full bg-blue-400"></span> Instalação
+    </div>
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span class="w-3 h-3 rounded-full bg-green-400"></span> Concluído
+    </div>
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Pago
     </div>
   </div>
+
+  <div id="kanbanBoard" class="grid lg:grid-cols-5 gap-4"></div>
 </div>
 
+<style>
+  .kanban-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 320px;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px dashed transparent;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .kanban-col.drag-over {
+    border-color: #2563eb;
+    background: rgba(191, 219, 254, 0.3);
+  }
+  .kanban-card {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.06);
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+  }
+  .kanban-card strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+  }
+  .kanban-card small {
+    display: block;
+    font-size: 0.75rem;
+    color: #475569;
+  }
+</style>
+
 <script>
-function carregarKanban() {
-  google.script.run.withSuccessHandler(pocos => {
-    document.querySelectorAll('.kanban-col').forEach(c => c.innerHTML = '');
-    pocos.forEach(p => {
+(() => {
+  const COLUNAS = [
+    { id: 'solicitado', titulo: 'Solicitado', status: 'Solicitado', descricao: 'Dados iniciais aguardando análise.' },
+    { id: 'orcamento', titulo: 'Orçamento previsto', status: 'Orçamento previsto', descricao: 'Aguardando validação financeira e vínculo com doadores.' },
+    { id: 'instalacao', titulo: 'Instalação', status: 'Instalação', descricao: 'Execução em campo e mobilização técnica.' },
+    { id: 'concluido', titulo: 'Concluído', status: 'Concluído', descricao: 'Poço em operação, pendente pagamento.' },
+    { id: 'pago', titulo: 'Pago', status: 'Pago', descricao: 'Prestação de contas finalizada.' }
+  ];
+
+  const board = document.getElementById('kanbanBoard');
+  const coresColuna = {
+    'Solicitado': '#fed7aa',
+    'Orçamento previsto': '#fef3c7',
+    'Instalação': '#dbeafe',
+    'Concluído': '#dcfce7',
+    'Pago': '#d1fae5'
+  };
+
+  const criarColunas = () => {
+    board.innerHTML = COLUNAS.map(col => `
+      <div class="flex flex-col gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-700">${col.titulo}</h3>
+          <p class="text-xs text-slate-500">${col.descricao}</p>
+        </div>
+        <div class="kanban-col" data-status="${col.status}"></div>
+      </div>`).join('');
+  };
+
+  const formatarMoeda = (valor) => {
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const montarCartoes = (pocos) => {
+    const colunas = board.querySelectorAll('.kanban-col');
+    colunas.forEach(col => col.innerHTML = '');
+
+    pocos.forEach(poco => {
+      const coluna = board.querySelector(`.kanban-col[data-status="${poco.status || 'Solicitado'}"]`);
+      if (!coluna) return;
       const card = document.createElement('div');
-      card.className = 'bg-blue-50 border rounded p-2 mb-2 cursor-grab';
+      card.className = 'kanban-card';
       card.draggable = true;
-      card.dataset.id = p.ID;
+      card.dataset.id = poco.id;
+      card.dataset.status = poco.status;
       card.innerHTML = `
-        <strong>${p.Comunidade || p.Município}</strong><br>
-        <small>${p.Base || p.Estado}</small><br>
-        <small class="text-gray-500">${p.Status}</small>
-      `;
-      const col = document.querySelector(`.kanban-col[data-status="${p.Status}"]`);
-      if (col) col.appendChild(card);
+        <strong>${escapeHtml(poco.titulo)}</strong>
+        <small>${escapeHtml(poco.local || 'Local não informado')}</small>
+        <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500">
+          <span>Previsto:<br><b>${formatarMoeda(poco.previsto)}</b></span>
+          <span>Executado:<br><b>${formatarMoeda(poco.executado)}</b></span>
+        </div>
+        <div class="mt-2 text-xs text-slate-500">Beneficiários: <b>${poco.beneficiarios || 0}</b></div>
+        <div class="mt-1 text-xs text-slate-500">Responsável: <b>${escapeHtml(poco.responsavel || '—')}</b></div>`;
+      card.style.borderTop = `4px solid ${coresColuna[poco.status] || '#e5e7eb'}`;
+      coluna.appendChild(card);
     });
+
     configurarDrag();
-  }).listarPocos();
-}
+  };
 
-function configurarDrag() {
-  document.querySelectorAll('.kanban-col').forEach(col => {
-    col.addEventListener('dragover', e => e.preventDefault());
-    col.addEventListener('drop', e => {
-      const id = e.dataTransfer.getData('id');
-      const status = col.dataset.status;
-      const card = document.querySelector(`[data-id="${id}"]`);
-      col.appendChild(card);
-      google.script.run.atualizarStatusPoco(id, status);
+  const configurarDrag = () => {
+    const cards = board.querySelectorAll('.kanban-card');
+    cards.forEach(card => {
+      card.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('id', card.dataset.id);
+        setTimeout(() => card.classList.add('opacity-40'));
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('opacity-40');
+      });
     });
-  });
 
-  document.querySelectorAll('.kanban-col div[draggable]').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('id', card.dataset.id);
+    board.querySelectorAll('.kanban-col').forEach(coluna => {
+      coluna.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        coluna.classList.add('drag-over');
+      });
+      coluna.addEventListener('dragleave', () => coluna.classList.remove('drag-over'));
+      coluna.addEventListener('drop', (event) => {
+        event.preventDefault();
+        coluna.classList.remove('drag-over');
+        const id = event.dataTransfer.getData('id');
+        const card = board.querySelector(`.kanban-card[data-id="${id}"]`);
+        if (!card) return;
+        coluna.appendChild(card);
+        const novoStatus = coluna.dataset.status;
+        card.dataset.status = novoStatus;
+        google.script.run.atualizarStatusPoco(id, novoStatus);
+      });
     });
-  });
-}
+  };
 
-carregarKanban();
+  const carregarKanban = () => {
+    google.script.run.withSuccessHandler(montarCartoes).obterKanbanProcesso();
+  };
+
+  criarColunas();
+  carregarKanban();
+})();
 </script>

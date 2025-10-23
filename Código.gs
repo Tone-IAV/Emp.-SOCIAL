@@ -5,14 +5,53 @@ const SPREADSHEET_ID = '1ajlFoT0kkAwOYVFymFMs5ipiEkmvQdNZzwVJx6B98FM';
 const DRIVE_FOLDER_ID = '1g_8lgL55WAb32E6XQ4dl2KMX-AfhvXMY';
 
 const COLUNAS_POCOS = [
-  'ID', 'Estado', 'Município', 'Comunidade', 'Latitude', 'Longitude',
-  'Beneficiários', 'Investimento', 'Vazão (L/H)', 'Profundidade (m)',
-  'Perfuração', 'Instalação', 'Doador', 'Status',
-  'Valor Previsto Perfuração', 'Valor Previsto Instalação',
-  'Empresa Responsável', 'Observações', 'Valor Realizado', 'Doadores', 'DataCadastro',
-  'ResponsavelContato', 'ContatoInstalacao', 'TelefoneContato', 'StatusContato',
-  'ProximaAcao', 'UltimoContato', 'ImpactoNoStatus',
-  'TipoPoco', 'SituacaoHidrica', 'AcoesPosInstalacao', 'UsoAguaComunitario'
+  'ID',
+  'Estado',
+  'Município',
+  'Comunidade',
+  'Região',
+  'Latitude',
+  'Longitude',
+  'Beneficiários',
+  'Investimento',
+  'Vazão (L/H)',
+  'Profundidade (m)',
+  'Status',
+  'ResumoStatus',
+  'Solicitante',
+  'ContatoSolicitante',
+  'DataSolicitacao',
+  'DataOrcamentoPrevisto',
+  'DataInstalacao',
+  'DataConclusao',
+  'DataPagamento',
+  'OrcamentoPrevisto',
+  'OrcamentoAprovado',
+  'OrcamentoExecutado',
+  'Valor Previsto Perfuração',
+  'Valor Previsto Instalação',
+  'Valor Realizado',
+  'TermoAutorizacaoURL',
+  'NotaFiscalURL',
+  'ContatosJSON',
+  'EvidenciasJSON',
+  'LinhaDoTempoJSON',
+  'Doadores',
+  'Empresa Responsável',
+  'Observações',
+  'DataCadastro',
+  'DataUltimaAtualizacao',
+  'ResponsavelContato',
+  'ContatoInstalacao',
+  'TelefoneContato',
+  'StatusContato',
+  'ProximaAcao',
+  'UltimoContato',
+  'ImpactoNoStatus',
+  'TipoPoco',
+  'SituacaoHidrica',
+  'AcoesPosInstalacao',
+  'UsoAguaComunitario'
 ];
 
 // ===========================
@@ -52,6 +91,202 @@ function extrairStatusDaEtapa(texto) {
   if (lower.includes('previst')) return 'Prevista';
   if (lower.includes('licen') || lower.includes('document')) return 'Documentação';
   return 'Planejado';
+}
+
+const PROCESS_STAGES = [
+  {
+    id: 'solicitado',
+    label: 'Solicitação registrada',
+    status: 'Solicitado',
+    field: 'DataSolicitacao',
+    description: 'Dados iniciais do poço enviados pela equipe de campo.'
+  },
+  {
+    id: 'orcamento',
+    label: 'Orçamento previsto',
+    status: 'Orçamento previsto',
+    field: 'DataOrcamentoPrevisto',
+    description: 'Análise orçamentária concluída e vinculada aos doadores.'
+  },
+  {
+    id: 'instalacao',
+    label: 'Instalação em andamento',
+    status: 'Instalação',
+    field: 'DataInstalacao',
+    description: 'Equipe técnica mobilizada para executar a instalação do poço.'
+  },
+  {
+    id: 'conclusao',
+    label: 'Poço em operação',
+    status: 'Concluído',
+    field: 'DataConclusao',
+    description: 'Infraestrutura entregue e validada junto à comunidade.'
+  },
+  {
+    id: 'pagamento',
+    label: 'Pagamento finalizado',
+    status: 'Pago',
+    field: 'DataPagamento',
+    description: 'Prestação de contas encerrada com pagamento do fornecedor.'
+  }
+];
+
+function normalizarTextoStatus(valor) {
+  if (valor == null) return '';
+  return String(valor)
+    .normalize('NFD')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+const STATUS_ALIAS_MAP = (() => {
+  const mapa = {};
+  const registrar = (texto, etapaId) => {
+    const chave = normalizarTextoStatus(texto);
+    if (chave) {
+      mapa[chave] = etapaId;
+    }
+  };
+  PROCESS_STAGES.forEach(stage => {
+    registrar(stage.status, stage.id);
+    registrar(stage.label, stage.id);
+    registrar(stage.id, stage.id);
+  });
+  registrar('planejado', 'orcamento');
+  registrar('planejamento', 'orcamento');
+  registrar('previsto', 'orcamento');
+  registrar('orcamento', 'orcamento');
+  registrar('analise orcamentaria', 'orcamento');
+  registrar('em andamento', 'instalacao');
+  registrar('instalando', 'instalacao');
+  registrar('execucao', 'instalacao');
+  registrar('executando', 'instalacao');
+  registrar('realizado', 'conclusao');
+  registrar('finalizado', 'conclusao');
+  registrar('concluido', 'conclusao');
+  registrar('concluido pago', 'pagamento');
+  registrar('concluido/pago', 'pagamento');
+  registrar('pagamento', 'pagamento');
+  registrar('quitado', 'pagamento');
+  registrar('solicitacao', 'solicitado');
+  registrar('solicitacao registrada', 'solicitado');
+  registrar('pedido', 'solicitado');
+  registrar('solicitado', 'solicitado');
+  registrar('orçamento previsto', 'orcamento');
+  registrar('instalação', 'instalacao');
+  registrar('concluído', 'conclusao');
+  registrar('pago', 'pagamento');
+  return mapa;
+})();
+
+function obterEtapaPorStatusInformado(status) {
+  const chave = normalizarTextoStatus(status);
+  if (!chave) return null;
+  const etapaId = STATUS_ALIAS_MAP[chave];
+  if (!etapaId) return null;
+  return PROCESS_STAGES.find(stage => stage.id === etapaId) || null;
+}
+
+function padronizarStatusProcessual(status) {
+  const texto = status == null ? '' : String(status).trim();
+  const etapa = obterEtapaPorStatusInformado(texto);
+  return etapa ? etapa.status : texto;
+}
+
+function obterIdEtapaPorStatus(status) {
+  const etapa = obterEtapaPorStatusInformado(status);
+  return etapa ? etapa.id : '';
+}
+
+function converterParaData(valor) {
+  if (!valor) return '';
+  if (valor instanceof Date) {
+    return isNaN(valor.getTime()) ? '' : valor;
+  }
+  if (typeof valor === 'number') {
+    const d = new Date(valor);
+    return isNaN(d.getTime()) ? '' : d;
+  }
+  if (typeof valor === 'string') {
+    const texto = valor.trim();
+    if (!texto) return '';
+    const dataTexto = extrairDataDeTexto(texto);
+    if (dataTexto) return dataTexto;
+    const tentativa = new Date(texto);
+    return isNaN(tentativa.getTime()) ? '' : tentativa;
+  }
+  return '';
+}
+
+function formatarDataISO(valor) {
+  const data = converterParaData(valor);
+  if (!data) return '';
+  return new Date(data.getTime() - data.getTimezoneOffset() * 60000).toISOString();
+}
+
+function parseJSONSeguro(texto, padrao) {
+  if (!texto) return padrao;
+  try {
+    if (typeof texto === 'object') return texto;
+    return JSON.parse(texto);
+  } catch (err) {
+    return padrao;
+  }
+}
+
+function determinarStatusProcessual(registro) {
+  if (!registro) return 'Solicitado';
+  for (let i = PROCESS_STAGES.length - 1; i >= 0; i--) {
+    const etapa = PROCESS_STAGES[i];
+    const data = registro[etapa.field];
+    if (data) {
+      const dataConvertida = converterParaData(data);
+      if (dataConvertida) {
+        return etapa.status;
+      }
+    }
+  }
+  return 'Solicitado';
+}
+
+function gerarLinhaDoTempoBase(registro, extras = []) {
+  const statusAtual = registro.Status || determinarStatusProcessual(registro);
+  const indiceAtual = Math.max(0, PROCESS_STAGES.findIndex(e => e.status === statusAtual));
+  const linhaBase = PROCESS_STAGES.map((etapa, index) => {
+    const data = converterParaData(registro[etapa.field]);
+    let situacao = 'pendente';
+    if (index < indiceAtual) situacao = 'concluido';
+    else if (index === indiceAtual) situacao = data ? 'concluido' : 'andamento';
+    return {
+      id: etapa.id,
+      titulo: etapa.label,
+      descricao: etapa.description,
+      status: situacao,
+      data: data ? data : ''
+    };
+  });
+
+  const extrasValidos = Array.isArray(extras) ? extras.filter(item => item && item.titulo) : [];
+  return linhaBase.concat(extrasValidos.map(item => ({
+    id: item.id || Utilities.getUuid(),
+    titulo: item.titulo,
+    descricao: item.descricao || '',
+    status: item.status || 'pendente',
+    data: converterParaData(item.data) || ''
+  })));
+}
+
+function mapearRegistroPoco(dados) {
+  const registro = Object.assign({}, dados);
+  registro.Contatos = parseJSONSeguro(registro.ContatosJSON, []);
+  registro.Evidencias = parseJSONSeguro(registro.EvidenciasJSON, []);
+  const extrasTimeline = parseJSONSeguro(registro.LinhaDoTempoJSON, []);
+  const statusPadrao = padronizarStatusProcessual(registro.Status);
+  registro.Status = statusPadrao || determinarStatusProcessual(registro);
+  registro.LinhaDoTempo = gerarLinhaDoTempoBase(registro, extrasTimeline);
+  return registro;
 }
 
 function garantirColunas(sheet, colunasDesejadas) {
@@ -104,7 +339,75 @@ function listarPocos() {
   const values = sh.getDataRange().getValues();
   if (values.length <= 1) return [];
   const headers = values.shift();
-  return values.map(r => Object.fromEntries(headers.map((h, i) => [h, r[i]])));
+  return values.map(row => {
+    const bruto = Object.fromEntries(headers.map((h, i) => [h, row[i]]));
+    const registro = mapearRegistroPoco(bruto);
+    const statusAtual = registro.Status || determinarStatusProcessual(registro);
+    let indiceEtapa = PROCESS_STAGES.findIndex(stage => stage.status === statusAtual);
+    if (indiceEtapa < 0) indiceEtapa = 0;
+    const etapa = PROCESS_STAGES[indiceEtapa];
+
+    return Object.assign({}, registro, {
+      Status: statusAtual,
+      EtapaId: etapa.id,
+      EtapaIndice: indiceEtapa,
+      EtapaNome: etapa.label,
+      StatusProcessual: etapa.status
+    });
+  });
+}
+
+function obterKanbanProcesso() {
+  return listarPocos().map(p => ({
+    id: p.ID,
+    titulo: p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem identificação',
+    local: [p['Município'], p['Estado']].filter(Boolean).join(' • '),
+    status: p.Status,
+    previsto: Number(p.OrcamentoPrevisto || p['Valor Previsto Perfuração'] || 0),
+    executado: Number(p.OrcamentoExecutado || p['Valor Realizado'] || 0),
+    beneficiarios: Number(p['Beneficiários'] || 0),
+    responsavel: p.ResponsavelContato || ''
+  }));
+}
+
+function obterCronogramaPocos() {
+  const mapaCampos = {
+    DataSolicitacao: 'solicitacao',
+    DataOrcamentoPrevisto: 'orcamento',
+    DataInstalacao: 'instalacao',
+    DataConclusao: 'conclusao',
+    DataPagamento: 'pagamento'
+  };
+
+  return listarPocos().map(p => {
+    const datas = {};
+    PROCESS_STAGES.forEach(stage => {
+      const chave = mapaCampos[stage.field];
+      if (!chave) return;
+      const dataConvertida = converterParaData(p[stage.field]);
+      datas[chave] = dataConvertida ? formatarDataISO(dataConvertida) : '';
+    });
+
+    const inicio = converterParaData(p.DataSolicitacao) || converterParaData(p.DataCadastro) || new Date();
+    const fim = converterParaData(p.DataPagamento) || converterParaData(p.DataConclusao) || converterParaData(p.DataInstalacao) || inicio;
+    const previsto = Number(p.OrcamentoPrevisto || p['Valor Previsto Perfuração'] || 0);
+    const executado = Number(p.OrcamentoExecutado || p['Valor Realizado'] || 0);
+    const progresso = previsto > 0 ? Math.min(executado / previsto, 1) : 0;
+
+    return {
+      id: p.ID,
+      nome: p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem identificação',
+      estado: p['Estado'] || '',
+      status: p.Status || 'Solicitado',
+      datas,
+      inicio: formatarDataISO(inicio),
+      fim: formatarDataISO(fim),
+      previsto,
+      executado,
+      progresso,
+      beneficiarios: Number(p['Beneficiários'] || 0)
+    };
+  });
 }
 
 // Salvar novo poço
@@ -113,34 +416,55 @@ function salvarPoco(poco) {
   const sh = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Poços');
   garantirColunas(sh, COLUNAS_POCOS);
   const id = Utilities.getUuid();
+  const agora = new Date();
+
+  const contatos = Array.isArray(poco.contatos) ? poco.contatos : [];
+  const evidencias = Array.isArray(poco.evidencias) ? poco.evidencias : [];
+  const extrasTimeline = Array.isArray(poco.timeline) ? poco.timeline : [];
+
   const registro = {
     ID: id,
-    Estado: poco.estado,
-    Município: poco.municipio,
-    Comunidade: poco.comunidade,
-    Latitude: poco.latitude,
-    Longitude: poco.longitude,
-    Beneficiários: poco.beneficiarios,
-    Investimento: poco.investimento,
-    'Vazão (L/H)': poco.vazao,
-    'Profundidade (m)': poco.profundidade,
-    Perfuração: poco.perfuracao,
-    Instalação: poco.instalacao,
-    Doador: poco.doador,
-    Status: poco.status,
-    'Valor Previsto Perfuração': poco.valorPerf,
-    'Valor Previsto Instalação': poco.valorInst,
-    'Empresa Responsável': poco.empresa,
-    Observações: poco.obs,
-    'Valor Realizado': Number(poco.valorRealizado) || 0,
+    Estado: poco.estado || '',
+    Município: poco.municipio || '',
+    Comunidade: poco.comunidade || '',
+    Região: poco.regiao || '',
+    Latitude: poco.latitude || '',
+    Longitude: poco.longitude || '',
+    Beneficiários: Number(poco.beneficiarios) || 0,
+    Investimento: Number(poco.investimento) || 0,
+    'Vazão (L/H)': poco.vazao || '',
+    'Profundidade (m)': poco.profundidade || '',
+    Status: poco.status || '',
+    ResumoStatus: poco.resumoStatus || '',
+    Solicitante: poco.solicitante || '',
+    ContatoSolicitante: poco.contatoSolicitante || '',
+    DataSolicitacao: converterParaData(poco.dataSolicitacao) || agora,
+    DataOrcamentoPrevisto: converterParaData(poco.dataOrcamentoPrevisto) || '',
+    DataInstalacao: converterParaData(poco.dataInstalacao) || '',
+    DataConclusao: converterParaData(poco.dataConclusao) || '',
+    DataPagamento: converterParaData(poco.dataPagamento) || '',
+    OrcamentoPrevisto: Number(poco.orcamentoPrevisto) || 0,
+    OrcamentoAprovado: Number(poco.orcamentoAprovado) || 0,
+    OrcamentoExecutado: Number(poco.orcamentoExecutado) || 0,
+    'Valor Previsto Perfuração': Number(poco.valorPrevPerf) || Number(poco.orcamentoPrevisto) || 0,
+    'Valor Previsto Instalação': Number(poco.valorPrevInst) || 0,
+    'Valor Realizado': Number(poco.orcamentoExecutado) || 0,
+    TermoAutorizacaoURL: poco.termoAutorizacaoURL || '',
+    NotaFiscalURL: poco.notaFiscalURL || '',
+    ContatosJSON: JSON.stringify(contatos),
+    EvidenciasJSON: JSON.stringify(evidencias),
+    LinhaDoTempoJSON: JSON.stringify(extrasTimeline),
     Doadores: poco.doadores || '',
-    DataCadastro: new Date(),
+    'Empresa Responsável': poco.empresaResponsavel || '',
+    Observações: poco.observacoes || '',
+    DataCadastro: agora,
+    DataUltimaAtualizacao: agora,
     ResponsavelContato: poco.responsavelContato || '',
     ContatoInstalacao: poco.contatoInstalacao || '',
     TelefoneContato: poco.telefoneContato || '',
     StatusContato: poco.statusContato || '',
     ProximaAcao: poco.proximaAcao || '',
-    UltimoContato: poco.ultimoContato ? new Date(poco.ultimoContato) : '',
+    UltimoContato: converterParaData(poco.ultimoContato) || '',
     ImpactoNoStatus: poco.impactoNoStatus || '',
     TipoPoco: poco.tipoPoco || '',
     SituacaoHidrica: poco.situacaoHidrica || '',
@@ -148,13 +472,108 @@ function salvarPoco(poco) {
     UsoAguaComunitario: poco.usoAguaComunitario || ''
   };
 
+  registro.Status = determinarStatusProcessual(registro);
+  const linhaTempoCompleta = gerarLinhaDoTempoBase(registro, extrasTimeline);
+  registro.LinhaDoTempoJSON = JSON.stringify(linhaTempoCompleta.slice(PROCESS_STAGES.length));
+
   const data = COLUNAS_POCOS.map(coluna => {
     const valor = registro[coluna];
-    if (valor === undefined) return '';
-    return valor;
+    return valor === undefined ? '' : valor;
   });
   sh.appendRow(data);
   return { success: true, id };
+}
+
+function atualizarPoco(poco) {
+  if (!poco || !poco.id) throw new Error('ID do poço não informado.');
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sh = ss.getSheetByName('Poços');
+  garantirColunas(sh, COLUNAS_POCOS);
+
+  const valores = sh.getDataRange().getValues();
+  if (valores.length <= 1) throw new Error('Nenhum poço cadastrado.');
+  const headers = valores.shift();
+  const idIndex = headers.indexOf('ID');
+  if (idIndex === -1) throw new Error('Estrutura da planilha de poços inválida.');
+
+  let rowIndex = -1;
+  let registroAtual = null;
+  for (let i = 0; i < valores.length; i++) {
+    if (valores[i][idIndex] === poco.id) {
+      rowIndex = i + 2; // considerar cabeçalho
+      registroAtual = {};
+      headers.forEach((h, idx) => registroAtual[h] = valores[i][idx]);
+      break;
+    }
+  }
+
+  if (rowIndex === -1) throw new Error('Poço não encontrado para atualização.');
+
+  const atualMapeado = mapearRegistroPoco(registroAtual);
+  const agora = new Date();
+
+  const contatos = Array.isArray(poco.contatos) ? poco.contatos : atualMapeado.Contatos;
+  const evidencias = Array.isArray(poco.evidencias) ? poco.evidencias : atualMapeado.Evidencias;
+  const extrasTimeline = Array.isArray(poco.timeline) ? poco.timeline : (registroAtual.LinhaDoTempoJSON ? parseJSONSeguro(registroAtual.LinhaDoTempoJSON, []) : []);
+
+  const registro = {
+    ID: registroAtual.ID,
+    Estado: poco.estado !== undefined ? poco.estado : registroAtual.Estado,
+    Município: poco.municipio !== undefined ? poco.municipio : registroAtual['Município'],
+    Comunidade: poco.comunidade !== undefined ? poco.comunidade : registroAtual.Comunidade,
+    Região: poco.regiao !== undefined ? poco.regiao : (registroAtual['Região'] || ''),
+    Latitude: poco.latitude !== undefined ? poco.latitude : registroAtual.Latitude,
+    Longitude: poco.longitude !== undefined ? poco.longitude : registroAtual.Longitude,
+    Beneficiários: poco.beneficiarios !== undefined ? Number(poco.beneficiarios) || 0 : (Number(registroAtual['Beneficiários']) || 0),
+    Investimento: poco.investimento !== undefined ? Number(poco.investimento) || 0 : (Number(registroAtual.Investimento) || 0),
+    'Vazão (L/H)': poco.vazao !== undefined ? poco.vazao : registroAtual['Vazão (L/H)'],
+    'Profundidade (m)': poco.profundidade !== undefined ? poco.profundidade : registroAtual['Profundidade (m)'],
+    Status: poco.status !== undefined ? poco.status : (registroAtual.Status || ''),
+    ResumoStatus: poco.resumoStatus !== undefined ? poco.resumoStatus : (registroAtual.ResumoStatus || ''),
+    Solicitante: poco.solicitante !== undefined ? poco.solicitante : (registroAtual.Solicitante || ''),
+    ContatoSolicitante: poco.contatoSolicitante !== undefined ? poco.contatoSolicitante : (registroAtual.ContatoSolicitante || ''),
+    DataSolicitacao: poco.dataSolicitacao !== undefined ? converterParaData(poco.dataSolicitacao) || '' : converterParaData(registroAtual.DataSolicitacao) || '',
+    DataOrcamentoPrevisto: poco.dataOrcamentoPrevisto !== undefined ? converterParaData(poco.dataOrcamentoPrevisto) || '' : converterParaData(registroAtual.DataOrcamentoPrevisto) || '',
+    DataInstalacao: poco.dataInstalacao !== undefined ? converterParaData(poco.dataInstalacao) || '' : converterParaData(registroAtual.DataInstalacao) || '',
+    DataConclusao: poco.dataConclusao !== undefined ? converterParaData(poco.dataConclusao) || '' : converterParaData(registroAtual.DataConclusao) || '',
+    DataPagamento: poco.dataPagamento !== undefined ? converterParaData(poco.dataPagamento) || '' : converterParaData(registroAtual.DataPagamento) || '',
+    OrcamentoPrevisto: poco.orcamentoPrevisto !== undefined ? Number(poco.orcamentoPrevisto) || 0 : (Number(registroAtual.OrcamentoPrevisto) || 0),
+    OrcamentoAprovado: poco.orcamentoAprovado !== undefined ? Number(poco.orcamentoAprovado) || 0 : (Number(registroAtual.OrcamentoAprovado) || 0),
+    OrcamentoExecutado: poco.orcamentoExecutado !== undefined ? Number(poco.orcamentoExecutado) || 0 : (Number(registroAtual.OrcamentoExecutado) || 0),
+    'Valor Previsto Perfuração': poco.valorPrevPerf !== undefined ? Number(poco.valorPrevPerf) || 0 : (Number(registroAtual['Valor Previsto Perfuração']) || 0),
+    'Valor Previsto Instalação': poco.valorPrevInst !== undefined ? Number(poco.valorPrevInst) || 0 : (Number(registroAtual['Valor Previsto Instalação']) || 0),
+    'Valor Realizado': poco.orcamentoExecutado !== undefined ? Number(poco.orcamentoExecutado) || 0 : (Number(registroAtual['Valor Realizado']) || 0),
+    TermoAutorizacaoURL: poco.termoAutorizacaoURL !== undefined ? poco.termoAutorizacaoURL : (registroAtual.TermoAutorizacaoURL || ''),
+    NotaFiscalURL: poco.notaFiscalURL !== undefined ? poco.notaFiscalURL : (registroAtual.NotaFiscalURL || ''),
+    ContatosJSON: JSON.stringify(contatos),
+    EvidenciasJSON: JSON.stringify(evidencias),
+    LinhaDoTempoJSON: JSON.stringify(extrasTimeline),
+    Doadores: poco.doadores !== undefined ? poco.doadores : (registroAtual.Doadores || ''),
+    'Empresa Responsável': poco.empresaResponsavel !== undefined ? poco.empresaResponsavel : (registroAtual['Empresa Responsável'] || ''),
+    Observações: poco.observacoes !== undefined ? poco.observacoes : (registroAtual.Observações || ''),
+    DataCadastro: converterParaData(registroAtual.DataCadastro) || converterParaData(registroAtual['DataCadastro']) || new Date(),
+    DataUltimaAtualizacao: agora,
+    ResponsavelContato: poco.responsavelContato !== undefined ? poco.responsavelContato : (registroAtual.ResponsavelContato || ''),
+    ContatoInstalacao: poco.contatoInstalacao !== undefined ? poco.contatoInstalacao : (registroAtual.ContatoInstalacao || ''),
+    TelefoneContato: poco.telefoneContato !== undefined ? poco.telefoneContato : (registroAtual.TelefoneContato || ''),
+    StatusContato: poco.statusContato !== undefined ? poco.statusContato : (registroAtual.StatusContato || ''),
+    ProximaAcao: poco.proximaAcao !== undefined ? poco.proximaAcao : (registroAtual.ProximaAcao || ''),
+    UltimoContato: poco.ultimoContato !== undefined ? converterParaData(poco.ultimoContato) || '' : converterParaData(registroAtual.UltimoContato) || '',
+    ImpactoNoStatus: poco.impactoNoStatus !== undefined ? poco.impactoNoStatus : (registroAtual.ImpactoNoStatus || ''),
+    TipoPoco: poco.tipoPoco !== undefined ? poco.tipoPoco : (registroAtual.TipoPoco || ''),
+    SituacaoHidrica: poco.situacaoHidrica !== undefined ? poco.situacaoHidrica : (registroAtual.SituacaoHidrica || ''),
+    AcoesPosInstalacao: poco.acoesPosInstalacao !== undefined ? poco.acoesPosInstalacao : (registroAtual.AcoesPosInstalacao || ''),
+    UsoAguaComunitario: poco.usoAguaComunitario !== undefined ? poco.usoAguaComunitario : (registroAtual.UsoAguaComunitario || '')
+  };
+
+  registro.Status = determinarStatusProcessual(registro);
+  const linhaTempoCompleta = gerarLinhaDoTempoBase(registro, extrasTimeline);
+  registro.LinhaDoTempoJSON = JSON.stringify(linhaTempoCompleta.slice(PROCESS_STAGES.length));
+
+  const data = COLUNAS_POCOS.map(coluna => registro[coluna] === undefined ? '' : registro[coluna]);
+  sh.getRange(rowIndex, 1, 1, COLUNAS_POCOS.length).setValues([data]);
+  return { success: true, id: poco.id };
 }
 
 // Upload de arquivo (imagem, pdf etc.)
@@ -266,12 +685,19 @@ function salvarPrestacao(despesa) {
   const values = shPocos.getDataRange().getValues();
   const headers = values.shift();
   const idIndex = headers.indexOf('ID');
-  const valRealIndex = headers.indexOf('Valor Realizado');
+  const orcamentoExecutadoIndex = headers.indexOf('OrcamentoExecutado');
 
   for (let i = 0; i < values.length; i++) {
     if (values[i][idIndex] === despesa.pocoId) {
-      const atual = Number(values[i][valRealIndex]) || 0;
-      shPocos.getRange(i + 2, valRealIndex + 1).setValue(atual + Number(despesa.valor));
+      const executadoAtual = orcamentoExecutadoIndex !== -1 ? Number(values[i][orcamentoExecutadoIndex]) || 0 : 0;
+      const novoExecutado = executadoAtual + (Number(despesa.valor) || 0);
+      const categoria = (despesa.categoria || '').toLowerCase();
+      const dataPagamento = categoria.includes('pag') ? (despesa.data ? new Date(despesa.data) : new Date()) : undefined;
+      atualizarPoco({
+        id: despesa.pocoId,
+        orcamentoExecutado: novoExecutado,
+        dataPagamento: dataPagamento
+      });
       break;
     }
   }
@@ -387,31 +813,59 @@ function obterRelatorioPoco(pocoId) {
   const shPocos = ss.getSheetByName('Poços');
   const shPrest = ss.getSheetByName('PrestaçãoContas');
 
-  const pocos = shPocos.getDataRange().getValues();
-  const headersPocos = pocos.shift();
-  const poco = pocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])))
-                    .find(p => p.ID === pocoId);
+  const valoresPocos = shPocos.getDataRange().getValues();
+  if (valoresPocos.length <= 1) return { poco: null, despesas: [], timeline: [], evidencias: [], contatos: [] };
+  const headersPocos = valoresPocos.shift();
+  const registrosPocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
+  const bruto = registrosPocos.find(p => p.ID === pocoId);
+  if (!bruto) {
+    return { poco: null, despesas: [], timeline: [], evidencias: [], contatos: [] };
+  }
+
+  const poco = mapearRegistroPoco(bruto);
 
   const prestacoes = shPrest.getDataRange().getValues();
   const headersPrest = prestacoes.shift();
   const despesas = prestacoes.map(r => Object.fromEntries(headersPrest.map((h, i) => [h, r[i]])))
-                             .filter(d => d.PoçoID === pocoId);
+                             .filter(d => d.PoçoID === pocoId)
+                             .map(d => Object.assign({}, d, {
+                               DataISO: formatarDataISO(d.Data)
+                             }));
 
-  return { poco, despesas };
+  return {
+    poco,
+    despesas,
+    timeline: poco.LinhaDoTempo,
+    evidencias: poco.Evidencias,
+    contatos: poco.Contatos
+  };
 }
 
 function atualizarStatusPoco(id, novoStatus) {
-  const sh = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Poços');
-  const values = sh.getDataRange().getValues();
-  const headers = values.shift();
-  const idIndex = headers.indexOf('ID');
-  const statusIndex = headers.indexOf('Status');
-  for (let i = 0; i < values.length; i++) {
-    if (values[i][idIndex] === id) {
-      sh.getRange(i + 2, statusIndex + 1).setValue(novoStatus);
-      break;
+  const etapa = PROCESS_STAGES.find(stage => stage.status === novoStatus);
+  if (!etapa) return 'Status inválido';
+
+  const campoParaPropriedade = {
+    DataSolicitacao: 'dataSolicitacao',
+    DataOrcamentoPrevisto: 'dataOrcamentoPrevisto',
+    DataInstalacao: 'dataInstalacao',
+    DataConclusao: 'dataConclusao',
+    DataPagamento: 'dataPagamento'
+  };
+
+  const payload = { id };
+  const indiceAlvo = PROCESS_STAGES.findIndex(stage => stage.status === novoStatus);
+  PROCESS_STAGES.forEach((stage, indice) => {
+    const propriedade = campoParaPropriedade[stage.field];
+    if (!propriedade) return;
+    if (indice === indiceAlvo) {
+      payload[propriedade] = new Date();
+    } else if (indice > indiceAlvo) {
+      payload[propriedade] = '';
     }
-  }
+  });
+
+  atualizarPoco(payload);
   return 'Status atualizado';
 }
 
@@ -426,9 +880,25 @@ function obterDashboardAnalitico() {
   const headersPocos = valoresPocos.shift();
   const pocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
 
+  const contagemEtapas = PROCESS_STAGES.reduce((acc, stage) => {
+    acc[stage.id] = 0;
+    return acc;
+  }, {});
+  const contagemOutros = {};
   const mapIdParaNome = {};
   const mapIdParaPoco = {};
   pocos.forEach(p => {
+    const statusPadrao = padronizarStatusProcessual(p['Status']);
+    const statusFinal = statusPadrao || determinarStatusProcessual(p);
+    const etapa = obterEtapaPorStatusInformado(statusFinal);
+    p['Status'] = statusFinal;
+    p.__etapaId = etapa ? etapa.id : '';
+    if (etapa) {
+      contagemEtapas[etapa.id] += 1;
+    } else {
+      const chave = statusFinal && statusFinal !== '' ? statusFinal : 'Sem status';
+      contagemOutros[chave] = (contagemOutros[chave] || 0) + 1;
+    }
     const nome = p['Comunidade'] || p['Município'] || p['Estado'] || p.ID;
     mapIdParaNome[p.ID] = nome;
     mapIdParaPoco[p.ID] = p;
@@ -460,14 +930,13 @@ function obterDashboardAnalitico() {
   const numero = normalizarNumero;
 
   const totalPocos = pocos.length;
-  const concluidos = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'concluído').length;
-  const emExecucao = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'em execução').length;
-  const planejados = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'planejado').length;
-  const outros = totalPocos - (concluidos + emExecucao + planejados);
+  const concluidos = (contagemEtapas.conclusao || 0) + (contagemEtapas.pagamento || 0);
+  const emExecucao = contagemEtapas.instalacao || 0;
+  const planejados = (contagemEtapas.solicitado || 0) + (contagemEtapas.orcamento || 0);
 
-  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']), 0);
-  const investimentoPlanejado = pocos.reduce((acc, p) => acc + numero(p['Investimento']), 0);
-  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p['Valor Realizado']), 0);
+  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']), 0);
+  const investimentoPlanejado = pocos.reduce((acc, p) => acc + numero(p.OrcamentoAprovado || p['Investimento']), 0);
+  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p.OrcamentoExecutado || p['Valor Realizado']), 0);
   const beneficiariosTotal = pocos.reduce((acc, p) => acc + Number(p['Beneficiários'] || 0), 0);
 
   const porEstadoMapa = {};
@@ -501,8 +970,9 @@ function obterDashboardAnalitico() {
   };
 
   const obterDataReferencia = poco => {
-    return parseData(poco['Instalação'])
-      || parseData(poco['Perfuração'])
+    return parseData(poco['DataConclusao'])
+      || parseData(poco['DataInstalacao'])
+      || parseData(poco['DataSolicitacao'])
       || parseData(poco['DataCadastro']);
   };
 
@@ -543,8 +1013,8 @@ function obterDashboardAnalitico() {
 
     const dataReferencia = obterDataReferencia(p);
     const anoReferencia = dataReferencia ? dataReferencia.getFullYear() : null;
-    const statusLower = (p['Status'] || '').toLowerCase();
-    if (anoReferencia !== null && statusLower === 'concluído') {
+    const etapaId = p.__etapaId || obterIdEtapaPorStatus(p['Status']);
+    if (anoReferencia !== null && (etapaId === 'conclusao' || etapaId === 'pagamento')) {
       if (!dadosPorAno[anoReferencia]) {
         dadosPorAno[anoReferencia] = {
           totalInstalacoes: 0,
@@ -555,9 +1025,9 @@ function obterDashboardAnalitico() {
         };
       }
       const referencia = dadosPorAno[anoReferencia];
-      const valorExecutado = numero(p['Valor Realizado']);
+      const valorExecutado = numero(p.OrcamentoExecutado || p['Valor Realizado']);
       referencia.totalInstalacoes += 1;
-      referencia.investimento += valorExecutado || numero(p['Investimento']);
+      referencia.investimento += valorExecutado || numero(p.OrcamentoAprovado || p['Investimento']);
       referencia.beneficiarios += Number(p['Beneficiários'] || 0);
       referencia.metros += metros;
       referencia.vazaoDia += vazaoHora * 24;
@@ -580,11 +1050,12 @@ function obterDashboardAnalitico() {
     .map(p => {
       const ultimoContato = p['UltimoContato'] ? new Date(p['UltimoContato']) : null;
       const diasSemContato = ultimoContato ? Math.max(Math.floor((new Date().getTime() - ultimoContato.getTime()) / 86400000), 0) : null;
-      const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
-      const valorExecutado = numero(p['Valor Realizado']);
+      const valorPrevisto = numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']);
+      const valorExecutado = numero(p.OrcamentoExecutado || p['Valor Realizado']);
       const gapFinanceiro = valorPrevisto - valorExecutado;
-      const statusLower = (p['Status'] || '').toLowerCase();
-      if ((diasSemContato != null && diasSemContato > 12) || (statusLower !== 'concluído' && gapFinanceiro > 40000)) {
+      const etapaId = p.__etapaId || obterIdEtapaPorStatus(p['Status']);
+      const statusFinalizado = etapaId === 'conclusao' || etapaId === 'pagamento';
+      if ((diasSemContato != null && diasSemContato > 12) || (!statusFinalizado && gapFinanceiro > 40000)) {
         adicionarAlerta({
           poco: nomeDoPoco(p),
           motivo: diasSemContato != null && diasSemContato > 12
@@ -681,12 +1152,13 @@ function obterDashboardAnalitico() {
       return a.poco.localeCompare(b.poco);
     });
 
-  const distribuicaoStatus = [
-    { status: 'Planejado', total: planejados },
-    { status: 'Em execução', total: emExecucao },
-    { status: 'Concluído', total: concluidos }
-  ];
-  if (outros > 0) distribuicaoStatus.push({ status: 'Outros', total: outros });
+  const distribuicaoStatus = PROCESS_STAGES.map(stage => ({
+    status: stage.status,
+    total: contagemEtapas[stage.id] || 0
+  }));
+  Object.keys(contagemOutros).forEach(status => {
+    distribuicaoStatus.push({ status, total: contagemOutros[status] });
+  });
 
   const doacoesTotais = doadores.reduce((acc, d) => acc + numero(d['ValorDoado']), 0);
 
@@ -754,6 +1226,21 @@ function obterResumoGestao() {
 
   const numero = normalizarNumero;
 
+  const contagemEtapas = PROCESS_STAGES.reduce((acc, stage) => {
+    acc[stage.id] = 0;
+    return acc;
+  }, {});
+  pocos.forEach(p => {
+    const statusPadrao = padronizarStatusProcessual(p['Status']);
+    const statusFinal = statusPadrao || determinarStatusProcessual(p);
+    const etapa = obterEtapaPorStatusInformado(statusFinal);
+    p['Status'] = statusFinal;
+    p.__etapaId = etapa ? etapa.id : '';
+    if (etapa) {
+      contagemEtapas[etapa.id] += 1;
+    }
+  });
+
   let contatos = [];
   if (shContatos) {
     const valoresContatos = shContatos.getDataRange().getValues();
@@ -771,20 +1258,22 @@ function obterResumoGestao() {
   });
 
   const totalPocos = pocos.length;
-  const concluidos = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'concluído').length;
-  const emExecucao = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'em execução').length;
-  const planejados = pocos.filter(p => (p['Status'] || '').toLowerCase() === 'planejado').length;
-  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']), 0);
-  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p['Valor Realizado']), 0);
+  const concluidos = (contagemEtapas.conclusao || 0) + (contagemEtapas.pagamento || 0);
+  const emExecucao = contagemEtapas.instalacao || 0;
+  const planejados = (contagemEtapas.solicitado || 0) + (contagemEtapas.orcamento || 0);
+  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']), 0);
+  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p.OrcamentoExecutado || p['Valor Realizado']), 0);
 
   const alertas = [];
   const andamento = pocos.map(p => {
-    const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
-    const valorExecutado = numero(p['Valor Realizado']);
+    const valorPrevisto = numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']);
+    const valorExecutado = numero(p.OrcamentoExecutado || p['Valor Realizado']);
     const gapFinanceiro = valorPrevisto - valorExecutado;
     const ultimoContato = p['UltimoContato'] ? new Date(p['UltimoContato']) : null;
     const diasSemContato = ultimoContato ? Math.max(Math.floor((new Date().getTime() - ultimoContato.getTime()) / 86400000), 0) : null;
-    if ((diasSemContato != null && diasSemContato > 12) || (gapFinanceiro > 40000 && (p['Status'] || '').toLowerCase() !== 'concluído')) {
+    const etapaId = p.__etapaId || obterIdEtapaPorStatus(p['Status']);
+    const statusFinalizado = etapaId === 'conclusao' || etapaId === 'pagamento';
+    if ((diasSemContato != null && diasSemContato > 12) || (gapFinanceiro > 40000 && !statusFinalizado)) {
       alertas.push({
         poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
         motivo: diasSemContato != null && diasSemContato > 12
@@ -810,8 +1299,8 @@ function obterResumoGestao() {
       statusContato: p['StatusContato'] || 'Sem registro',
       ultimoContato: ultimoRegistro ? new Date(ultimoRegistro['DataContato']).toISOString() : (ultimoContato ? ultimoContato.toISOString() : ''),
       diasSemContato,
-      perfuracao: p['Perfuração'] || '-',
-      instalacao: p['Instalação'] || '-',
+      perfuracao: p['DataSolicitacao'] ? new Date(p['DataSolicitacao']).toISOString() : '-',
+      instalacao: p['DataInstalacao'] ? new Date(p['DataInstalacao']).toISOString() : '-',
       valorPrevisto,
       valorExecutado,
       gapFinanceiro,
@@ -861,24 +1350,24 @@ function obterResumoGestao() {
 
   const cronograma = [];
   andamento.forEach(item => {
-    if (item.perfuracao) {
-      const data = extrairDataDeTexto(item.perfuracao);
+    if (item.perfuracao && item.perfuracao !== '-') {
+      const data = new Date(item.perfuracao);
       cronograma.push({
         poco: item.nome,
-        etapa: 'Perfuração',
-        descricao: item.perfuracao,
-        data: data ? data.toISOString() : '',
-        status: extrairStatusDaEtapa(item.perfuracao)
+        etapa: 'Solicitação',
+        descricao: 'Solicitação registrada',
+        data: !isNaN(data.getTime()) ? data.toISOString() : '',
+        status: 'Concluída'
       });
     }
-    if (item.instalacao) {
-      const data = extrairDataDeTexto(item.instalacao);
+    if (item.instalacao && item.instalacao !== '-') {
+      const data = new Date(item.instalacao);
       cronograma.push({
         poco: item.nome,
         etapa: 'Instalação',
-        descricao: item.instalacao,
-        data: data ? data.toISOString() : '',
-        status: extrairStatusDaEtapa(item.instalacao)
+        descricao: 'Execução do sistema de abastecimento',
+        data: !isNaN(data.getTime()) ? data.toISOString() : '',
+        status: 'Concluída'
       });
     }
   });
@@ -917,6 +1406,25 @@ function obterAnaliseImpacto() {
   const headersPocos = valoresPocos.shift();
   const pocos = valoresPocos.map(r => Object.fromEntries(headersPocos.map((h, i) => [h, r[i]])));
 
+  const contagemEtapas = PROCESS_STAGES.reduce((acc, stage) => {
+    acc[stage.id] = 0;
+    return acc;
+  }, {});
+  const contagemOutros = {};
+  pocos.forEach(p => {
+    const statusPadrao = padronizarStatusProcessual(p['Status']);
+    const statusFinal = statusPadrao || determinarStatusProcessual(p);
+    const etapa = obterEtapaPorStatusInformado(statusFinal);
+    p['Status'] = statusFinal;
+    p.__etapaId = etapa ? etapa.id : '';
+    if (etapa) {
+      contagemEtapas[etapa.id] += 1;
+    } else {
+      const chave = statusFinal && statusFinal !== '' ? statusFinal : 'Sem status';
+      contagemOutros[chave] = (contagemOutros[chave] || 0) + 1;
+    }
+  });
+
   let doadores = [];
   if (shDoadores) {
     const valoresDoadores = shDoadores.getDataRange().getValues();
@@ -937,8 +1445,8 @@ function obterAnaliseImpacto() {
 
   const numero = normalizarNumero;
   const totalBeneficiarios = pocos.reduce((acc, p) => acc + Number(p['Beneficiários'] || 0), 0);
-  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p['Valor Realizado']), 0);
-  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']), 0);
+  const investimentoRealizado = pocos.reduce((acc, p) => acc + numero(p.OrcamentoExecutado || p['Valor Realizado']), 0);
+  const investimentoPrevisto = pocos.reduce((acc, p) => acc + numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']), 0);
   const volumeDiario = pocos.reduce((acc, p) => acc + Number(p['Vazão (L/H)'] || 0) * 12, 0);
 
   const mapDoador = {};
@@ -962,8 +1470,8 @@ function obterAnaliseImpacto() {
     .sort((a, b) => b.valor - a.valor);
 
   const pocoImpacto = pocos.map(p => {
-    const valorPrevisto = numero(p['Valor Previsto Perfuração']) + numero(p['Valor Previsto Instalação']);
-    const valorExecutado = numero(p['Valor Realizado']);
+    const valorPrevisto = numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']);
+    const valorExecutado = numero(p.OrcamentoExecutado || p['Valor Realizado']);
     const doadoresIds = (p['Doadores'] || '').split(',').map(id => id.trim()).filter(Boolean);
     const doadoresNomes = doadoresIds.map(id => (mapDoador[id] ? mapDoador[id]['Nome'] : '')).filter(Boolean);
     return {
@@ -991,16 +1499,13 @@ function obterAnaliseImpacto() {
     .sort((a, b) => new Date(b.data) - new Date(a.data))
     .slice(0, 8);
 
-  const distribuicaoStatusMapa = {};
-  pocos.forEach(p => {
-    const status = p['Status'] || 'Sem status';
-    distribuicaoStatusMapa[status] = (distribuicaoStatusMapa[status] || 0) + 1;
-  });
-
-  const distribuicaoStatus = Object.keys(distribuicaoStatusMapa).map(status => ({
-    status,
-    total: distribuicaoStatusMapa[status]
+  const distribuicaoStatus = PROCESS_STAGES.map(stage => ({
+    status: stage.status,
+    total: contagemEtapas[stage.id] || 0
   }));
+  Object.keys(contagemOutros).forEach(status => {
+    distribuicaoStatus.push({ status, total: contagemOutros[status] });
+  });
 
   const regioesMapa = {};
   pocos.forEach(p => {
