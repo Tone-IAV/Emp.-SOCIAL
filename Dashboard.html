@@ -42,6 +42,32 @@
       margin-bottom: 1rem;
     }
 
+    .mini-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(14, 165, 233, 0.12));
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-height: 92px;
+    }
+    .mini-card .mini-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #2563eb;
+      font-weight: 600;
+    }
+    .mini-card .mini-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .mini-card .mini-detail {
+      font-size: 0.8rem;
+      color: #475569;
+    }
+
     .table-dashboard {
       width: 100%;
       border-collapse: collapse;
@@ -76,6 +102,63 @@
       font-size: 0.9rem;
     }
   </style>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="dash-card">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 class="dashboard-section-title">Poços instalados em <span id="anoReferenciaTitulo"></span></h3>
+          <p class="dash-detail">Indicadores espelhados do painel legado anual</p>
+        </div>
+        <div class="text-right">
+          <p class="dash-value" id="totalInstalacoesAno"></p>
+          <span class="dash-detail">Conclusões registradas no ano</span>
+        </div>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 mt-4" id="indicadoresAno"></div>
+    </div>
+    <div class="dash-card">
+      <h3 class="dashboard-section-title">Panorama hídrico e tipologia</h3>
+      <div class="grid gap-3 sm:grid-cols-2" id="indicadoresHidricos"></div>
+    </div>
+  </div>
+
+  <div class="dash-card">
+    <h3 class="dashboard-section-title">Histórico de instalações por ano</h3>
+    <div class="overflow-x-auto">
+      <table class="table-dashboard" id="tabelaHistoricoInstalacoes">
+        <thead>
+          <tr>
+            <th>Ano</th>
+            <th>Poços concluídos</th>
+            <th>Investimento realizado</th>
+            <th>Beneficiários</th>
+            <th>Metros perfurados</th>
+            <th>Vazão estimada/dia</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dash-card">
+    <h3 class="dashboard-section-title">Ações pós-instalação e usos comunitários da água</h3>
+    <div class="overflow-x-auto">
+      <table class="table-dashboard" id="tabelaAcoesPosInstalacao">
+        <thead>
+          <tr>
+            <th>Poço / Comunidade</th>
+            <th>Estado</th>
+            <th>Situação hídrica</th>
+            <th>Ações pós-instalação</th>
+            <th>Usos da água</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
   <div class="dash-card">
     <h3 class="dashboard-section-title">Resumo geral dos projetos</h3>
@@ -206,6 +289,24 @@
       `;
     }
 
+    function criarMiniCard(titulo, valor, detalhe) {
+      return `
+        <div class="mini-card">
+          <span class="mini-title">${titulo}</span>
+          <span class="mini-value">${valor}</span>
+          <span class="mini-detail">${detalhe || ''}</span>
+        </div>
+      `;
+    }
+
+    function formatarLitrosDia(valor) {
+      const numeroValor = Number(valor || 0);
+      if (numeroValor >= 1e9) return `${(numeroValor / 1e9).toFixed(2)} bi L/dia`;
+      if (numeroValor >= 1e6) return `${(numeroValor / 1e6).toFixed(2)} mi L/dia`;
+      if (numeroValor >= 1e3) return `${(numeroValor / 1e3).toFixed(1)} mil L/dia`;
+      return `${formatarNumero(numeroValor, 0)} L/dia`;
+    }
+
     function renderTabela(elementId, linhas, template, colunas = 5) {
       const corpo = document.querySelector(`#${elementId} tbody`);
       if (!linhas || !linhas.length) {
@@ -224,6 +325,42 @@
 
     function renderDashboard(dados) {
       const totais = dados.totais || {};
+      const indicadoresLegado = dados.indicadoresLegado || {};
+      const hidricos = dados.hidricos || {};
+      const historico = indicadoresLegado.historico || [];
+      const acoesPos = dados.acoesPosInstalacao || [];
+
+      const anoAtual = indicadoresLegado.anoReferencia || new Date().getFullYear();
+      const totalAno = indicadoresLegado.totalInstaladoAno || 0;
+
+      const elAnoReferencia = document.getElementById('anoReferenciaTitulo');
+      const elTotalAno = document.getElementById('totalInstalacoesAno');
+      if (elAnoReferencia) elAnoReferencia.textContent = anoAtual;
+      if (elTotalAno) elTotalAno.textContent = formatarNumero(totalAno || 0);
+
+      const containerIndicadoresAno = document.getElementById('indicadoresAno');
+      if (containerIndicadoresAno) {
+        if (totalAno) {
+          containerIndicadoresAno.innerHTML = [
+            criarMiniCard('Investimento realizado', formatarMoeda(indicadoresLegado.investimentoAno || 0), 'Somatório dos poços entregues'),
+            criarMiniCard('Beneficiários alcançados', formatarNumero(indicadoresLegado.beneficiariosAno || 0), 'Pessoas beneficiadas em campo'),
+            criarMiniCard('Metros perfurados', formatarNumero(indicadoresLegado.metrosPerfuradosAno || 0), 'Extensão perfurada no ano'),
+            criarMiniCard('Vazão estimada por dia', formatarLitrosDia(indicadoresLegado.vazaoDiaAno || 0), 'Capacidade combinada dos poços concluídos')
+          ].join('');
+        } else {
+          containerIndicadoresAno.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Nenhum poço foi concluído neste ano até o momento.</div>';
+        }
+      }
+
+      const containerHidricos = document.getElementById('indicadoresHidricos');
+      if (containerHidricos) {
+        containerHidricos.innerHTML = [
+          criarMiniCard('Poços secos identificados', formatarNumero(hidricos.pocosSecos || 0), 'Prioridade para revisão técnica'),
+          criarMiniCard('Poços artesianos', formatarNumero(hidricos.pocosArtesianos || 0), `Do total monitorado (${formatarNumero(hidricos.totalMonitorados || 0)})`),
+          criarMiniCard('Metros perfurados (total)', formatarNumero(hidricos.totalMetrosPerfurados || 0), 'Somatório do portfólio'),
+          criarMiniCard('Vazão estimada/dia', formatarLitrosDia(hidricos.totalVazaoDia || 0), `Média ${formatarLitrosDia(hidricos.mediaVazaoDia || 0)} por poço`)
+        ].join('');
+      }
 
       document.getElementById('indicadoresPrincipais').innerHTML = [
         criarCard('Poços monitorados', formatarNumero(totais.totalPocos || 0), `${formatarNumero(totais.concluidos || 0)} concluídos`),
@@ -389,6 +526,7 @@
             <td>
               <div>${escapeHtml(item.proximaAcao || '-')}</div>
               ${item.impacto ? `<small style="color:#64748b;">Impacto: ${escapeHtml(item.impacto)}</small>` : ''}
+              ${item.situacaoHidrica ? `<small style="color:#0f172a;">Situação hídrica: ${escapeHtml(item.situacaoHidrica)}</small>` : ''}
             </td>
             <td>
               <div>${escapeHtml(item.contato || '-')}</div>
@@ -417,6 +555,33 @@
           </tr>
         `;
       });
+
+      renderTabela('tabelaHistoricoInstalacoes', historico, item => {
+        return `
+          <tr>
+            <td>${escapeHtml(String(item.ano || '-'))}</td>
+            <td>${formatarNumero(item.total || 0)}</td>
+            <td>${formatarMoeda(item.investimento || 0)}</td>
+            <td>${formatarNumero(item.beneficiarios || 0)}</td>
+            <td>${formatarNumero(item.metros || 0)}</td>
+            <td>${formatarLitrosDia(item.vazaoDia || 0)}</td>
+          </tr>
+        `;
+      }, 6);
+
+      renderTabela('tabelaAcoesPosInstalacao', acoesPos, item => {
+        const acoes = item.acoes ? escapeHtml(item.acoes).replace(/\n/g, '<br>') : '-';
+        const usos = item.usos ? escapeHtml(item.usos).replace(/\n/g, '<br>') : '-';
+        return `
+          <tr>
+            <td>${escapeHtml(item.poco)}</td>
+            <td>${escapeHtml(item.estado || '-')}</td>
+            <td>${escapeHtml(item.situacaoHidrica || '-')}</td>
+            <td>${acoes}</td>
+            <td>${usos}</td>
+          </tr>
+        `;
+      }, 5);
     }
 
     google.script.run.withSuccessHandler(renderDashboard).obterDashboardAnalitico();

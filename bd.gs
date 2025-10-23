@@ -1,14 +1,7 @@
 function criarBaseDeDados() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const abas = {
-    "Poços": [
-      'ID','Estado','Município','Comunidade','Latitude','Longitude','Beneficiários','Investimento',
-      'Vazão (L/H)','Profundidade (m)','Perfuração','Instalação','Doador','Status',
-      'Valor Previsto Perfuração','Valor Previsto Instalação','Empresa Responsável',
-      'Observações','Valor Realizado','Doadores','DataCadastro',
-      'ResponsavelContato','ContatoInstalacao','TelefoneContato','StatusContato',
-      'ProximaAcao','UltimoContato','ImpactoNoStatus'
-    ],
+    "Poços": COLUNAS_POCOS,
     "Doadores": [
       'ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados'
     ],
@@ -65,14 +58,7 @@ function popularDadosDeExemplo() {
     if (sh) sh.clearContents();
   });
 
-  shPocos.appendRow([
-    'ID','Estado','Município','Comunidade','Latitude','Longitude','Beneficiários','Investimento',
-    'Vazão (L/H)','Profundidade (m)','Perfuração','Instalação','Doador','Status',
-    'Valor Previsto Perfuração','Valor Previsto Instalação','Empresa Responsável',
-    'Observações','Valor Realizado','Doadores','DataCadastro',
-    'ResponsavelContato','ContatoInstalacao','TelefoneContato','StatusContato',
-    'ProximaAcao','UltimoContato','ImpactoNoStatus'
-  ]);
+  shPocos.appendRow(COLUNAS_POCOS);
 
   shDoadores.appendRow(['ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados']);
   shPrest.appendRow(['PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor']);
@@ -97,7 +83,8 @@ function popularDadosDeExemplo() {
     3200,140,'Concluída em 18/05/2024','Instalada e testada em 22/05/2024','Fundação Esperança','Concluído',
     95000,85000,'Águas do Sertão','Poço entregue e em monitoramento',185000,`${doador1},${doador4}`,new Date('2024-04-02'),
     'Maria Silva','João Pereira','(88) 99999-0000','Monitoramento','Organizar treinamento da comunidade',new Date('2024-06-02'),
-    'Operação estável, comunidade abastecida diariamente'
+    'Operação estável, comunidade abastecida diariamente','Artesiano','Produzindo normalmente',
+    'Realizar capacitação para gestão comunitária e irrigação de hortas','Consumo humano, irrigação comunitária'
   ]);
 
   shPocos.appendRow([
@@ -105,7 +92,8 @@ function popularDadosDeExemplo() {
     2800,120,'Perfuração em andamento - término 08/06/2024','Instalação prevista para 15/06/2024','Igreja Luz Viva','Em execução',
     90000,72000,'Poços Brasil','Equipe em campo ajustando cronograma',68000,`${doador2}`,new Date('2024-04-18'),
     'Carlos Nunes','Eng. Ana Ramos','(86) 98888-1234','Em negociação','Validar plano de instalação revisado',new Date('2024-05-28'),
-    'Instalação depende da confirmação do fornecedor local'
+    'Instalação depende da confirmação do fornecedor local','Semiartesiano','Vazão reduzida',
+    'Engajar comunidade para proteção da infraestrutura e capacitar operadores locais','Consumo doméstico e apoio à escola'
   ]);
 
   shPocos.appendRow([
@@ -113,7 +101,8 @@ function popularDadosDeExemplo() {
     3500,155,'Estudo hidrogeológico concluído','Instalação aguardando viabilização logística','Instituto Água Viva','Planejado',
     110000,85000,'Fonte Limpa Engenharia','Comunidade mobilizada aguardando início',25000,`${doador3}`,new Date('2024-05-05'),
     'Luciana Prado','Carlos Menezes','(74) 97777-4567','Aguardando liberação','Confirmar disponibilidade do perfuratriz',new Date('2024-05-20'),
-    'Risco de atraso por janela curta de perfuração'
+    'Risco de atraso por janela curta de perfuração','Artesiano','Em análise técnica',
+    'Preparar treinamento de governança da água e mapeamento de usos produtivos','Produção agrícola familiar e consumo humano'
   ]);
 
   shPocos.appendRow([
@@ -121,7 +110,8 @@ function popularDadosDeExemplo() {
     2500,110,'Licenciamento protocolado em 27/05/2024','Instalação condicionada ao licenciamento','Cooperativa Sementes do Bem','Planejado',
     70000,54000,'Nordeste Perfurações','Documentação complementar em análise',0,`${doador4}`,new Date('2024-05-25'),
     'Roberto Lima','Eng. Paula Duarte','(98) 95555-9988','Documentação','Enviar certidões atualizadas ao órgão ambiental',new Date('2024-05-27'),
-    'Licença pendente pode atrasar início da perfuração'
+    'Licença pendente pode atrasar início da perfuração','Raso','Em análise técnica',
+    'Planejar ações educativas de uso responsável da água após liberação','Consumo humano e apoio a pequenos criadores'
   ]);
 
   shDoadores.appendRow([doador1,'Fundação Esperança','contato@fundesperanca.org','(11) 3000-0000',250000,new Date('2024-04-10'),idPoco1]);

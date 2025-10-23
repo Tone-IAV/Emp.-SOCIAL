@@ -42,6 +42,31 @@
     </div>
 
     <div class="grid md:grid-cols-3 gap-3">
+      <div>
+        <label>Tipo de poço</label>
+        <select id="tipoPoco" class="border p-2 w-full rounded">
+          <option value="">Selecionar</option>
+          <option>Artesiano</option>
+          <option>Semiartesiano</option>
+          <option>Raso</option>
+          <option>Amazonas / Escavado</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label>Situação hídrica</label>
+        <select id="situacaoHidrica" class="border p-2 w-full rounded">
+          <option value="">Selecionar</option>
+          <option>Produzindo normalmente</option>
+          <option>Poço seco / sem vazão</option>
+          <option>Vazão reduzida</option>
+          <option>Em análise técnica</option>
+        </select>
+      </div>
+      <div><label>Uso comunitário prioritário da água</label><input id="usoAguaComunitario" class="border p-2 w-full rounded" placeholder="Ex.: Consumo humano, irrigação"></div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
       <div><label>Responsável interno pelo contato</label><input id="responsavelContato" class="border p-2 w-full rounded"></div>
       <div><label>Contato para instalação</label><input id="contatoInstalacao" class="border p-2 w-full rounded"></div>
       <div><label>Telefone / WhatsApp</label><input id="telefoneContato" class="border p-2 w-full rounded"></div>
@@ -68,6 +93,11 @@
     </div>
 
     <div>
+      <label>Ações pós-instalação planejadas</label>
+      <textarea id="acoesPosInstalacao" rows="3" class="border p-2 w-full rounded" placeholder="Descreva iniciativas como hortas comunitárias, treinamentos, reuso produtivo etc."></textarea>
+    </div>
+
+    <div>
       <label>Observações gerais</label>
       <textarea id="obs" rows="2" class="border p-2 w-full rounded"></textarea>
     </div>
@@ -86,6 +116,8 @@
           <th class="p-2 text-left">Município</th>
           <th class="p-2 text-left">Comunidade</th>
           <th class="p-2 text-left">Estado</th>
+          <th class="p-2 text-left">Tipo</th>
+          <th class="p-2 text-left">Situação hídrica</th>
           <th class="p-2 text-left">Beneficiários</th>
           <th class="p-2 text-left">Status</th>
           <th class="p-2 text-left">Responsável</th>
@@ -93,6 +125,8 @@
           <th class="p-2 text-left">Status contato</th>
           <th class="p-2 text-left">Próxima ação</th>
           <th class="p-2 text-left">Último contato</th>
+          <th class="p-2 text-left">Ações pós-instalação</th>
+          <th class="p-2 text-left">Uso comunitário</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -103,6 +137,8 @@
 </div>
 
 <script>
+const { escapeHtml } = window;
+
 document.getElementById('formPoco').addEventListener('submit', e => {
   e.preventDefault();
 
@@ -130,7 +166,11 @@ document.getElementById('formPoco').addEventListener('submit', e => {
     statusContato: statusContato.value,
     ultimoContato: ultimoContato.value,
     proximaAcao: proximaAcao.value,
-    impactoNoStatus: impactoNoStatus.value
+    impactoNoStatus: impactoNoStatus.value,
+    tipoPoco: tipoPoco.value,
+    situacaoHidrica: situacaoHidrica.value,
+    usoAguaComunitario: usoAguaComunitario.value,
+    acoesPosInstalacao: acoesPosInstalacao.value
   };
 
   google.script.run.withSuccessHandler(() => {
@@ -143,6 +183,10 @@ document.getElementById('formPoco').addEventListener('submit', e => {
 function carregarPocos() {
   google.script.run.withSuccessHandler(pocos => {
     const tbody = document.querySelector('#tabelaPocos tbody');
+    const formatMultiline = valor => {
+      if (!valor) return '-';
+      return escapeHtml(String(valor)).replace(/\n/g, '<br>');
+    };
     const formatDate = valor => {
       if (!valor) return '-';
       const data = new Date(valor);
@@ -155,6 +199,8 @@ function carregarPocos() {
         <td class="p-2">${p['Município'] || '-'}</td>
         <td class="p-2">${p['Comunidade'] || '-'}</td>
         <td class="p-2">${p['Estado'] || '-'}</td>
+        <td class="p-2">${p['TipoPoco'] || '-'}</td>
+        <td class="p-2">${p['SituacaoHidrica'] || '-'}</td>
         <td class="p-2">${p['Beneficiários'] || '-'}</td>
         <td class="p-2">${p['Status'] || '-'}</td>
         <td class="p-2">${p['ResponsavelContato'] || '-'}</td>
@@ -162,6 +208,8 @@ function carregarPocos() {
         <td class="p-2">${p['StatusContato'] || '-'}</td>
         <td class="p-2">${p['ProximaAcao'] || '-'}</td>
         <td class="p-2">${formatDate(p['UltimoContato'])}</td>
+        <td class="p-2">${formatMultiline(p['AcoesPosInstalacao'])}</td>
+        <td class="p-2">${formatMultiline(p['UsoAguaComunitario'])}</td>
       </tr>
     `).join('');
   }).listarPocos();
