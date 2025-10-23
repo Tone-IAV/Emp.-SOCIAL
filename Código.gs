@@ -4,6 +4,17 @@
 const SPREADSHEET_ID = '1ajlFoT0kkAwOYVFymFMs5ipiEkmvQdNZzwVJx6B98FM';
 const DRIVE_FOLDER_ID = '1g_8lgL55WAb32E6XQ4dl2KMX-AfhvXMY';
 
+const COLUNAS_POCOS = [
+  'ID', 'Estado', 'Município', 'Comunidade', 'Latitude', 'Longitude',
+  'Beneficiários', 'Investimento', 'Vazão (L/H)', 'Profundidade (m)',
+  'Perfuração', 'Instalação', 'Doador', 'Status',
+  'Valor Previsto Perfuração', 'Valor Previsto Instalação',
+  'Empresa Responsável', 'Observações', 'Valor Realizado', 'Doadores', 'DataCadastro',
+  'ResponsavelContato', 'ContatoInstalacao', 'TelefoneContato', 'StatusContato',
+  'ProximaAcao', 'UltimoContato', 'ImpactoNoStatus',
+  'TipoPoco', 'SituacaoHidrica', 'AcoesPosInstalacao', 'UsoAguaComunitario'
+];
+
 // ===========================
 // RENDER HTML
 // ===========================
@@ -43,6 +54,27 @@ function extrairStatusDaEtapa(texto) {
   return 'Planejado';
 }
 
+function garantirColunas(sheet, colunasDesejadas) {
+  if (!sheet) return [];
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(colunasDesejadas);
+    return colunasDesejadas.slice();
+  }
+  const ultimaColuna = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, Math.max(ultimaColuna, colunasDesejadas.length)).getValues()[0];
+  let alterado = false;
+  colunasDesejadas.forEach(coluna => {
+    if (!headers.includes(coluna)) {
+      headers.push(coluna);
+      alterado = true;
+    }
+  });
+  if (alterado) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+  return headers;
+}
+
 // ===========================
 // INICIALIZAÇÃO DAS GUIAS
 // ===========================
@@ -54,15 +86,7 @@ function initSheets() {
     if (!ss.getSheetByName(name)) {
       const sh = ss.insertSheet(name);
       if (name === 'Poços') {
-        sh.appendRow([
-          'ID', 'Estado', 'Município', 'Comunidade', 'Latitude', 'Longitude',
-          'Beneficiários', 'Investimento', 'Vazão (L/H)', 'Profundidade (m)',
-          'Perfuração', 'Instalação', 'Doador', 'Status',
-          'Valor Previsto Perfuração', 'Valor Previsto Instalação',
-          'Empresa Responsável', 'Observações', 'Valor Realizado', 'Doadores', 'DataCadastro',
-          'ResponsavelContato', 'ContatoInstalacao', 'TelefoneContato', 'StatusContato',
-          'ProximaAcao', 'UltimoContato', 'ImpactoNoStatus'
-        ]);
+        sh.appendRow(COLUNAS_POCOS);
       } else if (name === 'Doadores') {
         sh.appendRow(['ID', 'Nome', 'Email', 'Telefone', 'ValorDoado', 'DataDoacao', 'PoçosVinculados']);
       } else if (name === 'PrestaçãoContas') {
@@ -87,17 +111,48 @@ function listarPocos() {
 
 function salvarPoco(poco) {
   const sh = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Poços');
+  garantirColunas(sh, COLUNAS_POCOS);
   const id = Utilities.getUuid();
-  const data = [
-    id, poco.estado, poco.municipio, poco.comunidade, poco.latitude, poco.longitude,
-    poco.beneficiarios, poco.investimento, poco.vazao, poco.profundidade,
-    poco.perfuracao, poco.instalacao, poco.doador, poco.status,
-    poco.valorPerf, poco.valorInst, poco.empresa, poco.obs,
-    Number(poco.valorRealizado) || 0, poco.doadores || '', new Date(),
-    poco.responsavelContato || '', poco.contatoInstalacao || '', poco.telefoneContato || '',
-    poco.statusContato || '', poco.proximaAcao || '', poco.ultimoContato ? new Date(poco.ultimoContato) : '',
-    poco.impactoNoStatus || ''
-  ];
+  const registro = {
+    ID: id,
+    Estado: poco.estado,
+    Município: poco.municipio,
+    Comunidade: poco.comunidade,
+    Latitude: poco.latitude,
+    Longitude: poco.longitude,
+    Beneficiários: poco.beneficiarios,
+    Investimento: poco.investimento,
+    'Vazão (L/H)': poco.vazao,
+    'Profundidade (m)': poco.profundidade,
+    Perfuração: poco.perfuracao,
+    Instalação: poco.instalacao,
+    Doador: poco.doador,
+    Status: poco.status,
+    'Valor Previsto Perfuração': poco.valorPerf,
+    'Valor Previsto Instalação': poco.valorInst,
+    'Empresa Responsável': poco.empresa,
+    Observações: poco.obs,
+    'Valor Realizado': Number(poco.valorRealizado) || 0,
+    Doadores: poco.doadores || '',
+    DataCadastro: new Date(),
+    ResponsavelContato: poco.responsavelContato || '',
+    ContatoInstalacao: poco.contatoInstalacao || '',
+    TelefoneContato: poco.telefoneContato || '',
+    StatusContato: poco.statusContato || '',
+    ProximaAcao: poco.proximaAcao || '',
+    UltimoContato: poco.ultimoContato ? new Date(poco.ultimoContato) : '',
+    ImpactoNoStatus: poco.impactoNoStatus || '',
+    TipoPoco: poco.tipoPoco || '',
+    SituacaoHidrica: poco.situacaoHidrica || '',
+    AcoesPosInstalacao: poco.acoesPosInstalacao || '',
+    UsoAguaComunitario: poco.usoAguaComunitario || ''
+  };
+
+  const data = COLUNAS_POCOS.map(coluna => {
+    const valor = registro[coluna];
+    if (valor === undefined) return '';
+    return valor;
+  });
   sh.appendRow(data);
   return { success: true, id };
 }
@@ -413,6 +468,43 @@ function obterDashboardAnalitico() {
   const beneficiariosTotal = pocos.reduce((acc, p) => acc + Number(p['Beneficiários'] || 0), 0);
 
   const porEstadoMapa = {};
+  const pipelineContatosMapa = {};
+  const dadosPorAno = {};
+  const acoesPosInstalacao = [];
+  const alertas = [];
+  const alertasSet = new Set();
+  const adicionarAlerta = alerta => {
+    const chave = `${alerta.poco}__${alerta.motivo}`;
+    if (alertasSet.has(chave)) return;
+    alertasSet.add(chave);
+    alertas.push(alerta);
+  };
+
+  let metrosPerfuradosTotal = 0;
+  let vazaoHoraTotal = 0;
+  let pocosSecos = 0;
+  let pocosArtesianos = 0;
+
+  const parseData = valor => {
+    if (!valor) return null;
+    if (valor instanceof Date) return isNaN(valor.getTime()) ? null : valor;
+    if (typeof valor === 'string') {
+      const dataTexto = extrairDataDeTexto(valor);
+      if (dataTexto) return dataTexto;
+      const dataLivre = new Date(valor);
+      if (!isNaN(dataLivre.getTime())) return dataLivre;
+    }
+    return null;
+  };
+
+  const obterDataReferencia = poco => {
+    return parseData(poco['Instalação'])
+      || parseData(poco['Perfuração'])
+      || parseData(poco['DataCadastro']);
+  };
+
+  const nomeDoPoco = poco => poco['Comunidade'] ? `${poco['Comunidade']} - ${poco['Município']}` : poco['Município'] || poco['Estado'] || 'Sem identificação';
+
   pocos.forEach(p => {
     const estado = p['Estado'] || 'Não informado';
     if (!porEstadoMapa[estado]) {
@@ -420,15 +512,66 @@ function obterDashboardAnalitico() {
     }
     porEstadoMapa[estado].pocos += 1;
     porEstadoMapa[estado].beneficiarios += Number(p['Beneficiários'] || 0);
+
+    const statusContato = p['StatusContato'] || 'Sem registro';
+    pipelineContatosMapa[statusContato] = (pipelineContatosMapa[statusContato] || 0) + 1;
+
+    const metros = numero(p['Profundidade (m)']);
+    const vazaoHora = numero(p['Vazão (L/H)']);
+    metrosPerfuradosTotal += metros;
+    vazaoHoraTotal += vazaoHora;
+
+    const situacaoLower = (p['SituacaoHidrica'] || '').toString().toLowerCase();
+    if (situacaoLower.includes('seco')) {
+      pocosSecos += 1;
+      adicionarAlerta({
+        poco: nomeDoPoco(p),
+        motivo: 'Poço identificado como seco (sem vazão produtiva)',
+        responsavel: p['ResponsavelContato'] || '-',
+        proximaAcao: p['AcoesPosInstalacao'] || p['ProximaAcao'] || '-',
+        status: p['Status'] || '-'
+      });
+    }
+
+    const tipoLower = (p['TipoPoco'] || '').toString().toLowerCase();
+    if (tipoLower.includes('artesian')) {
+      pocosArtesianos += 1;
+    }
+
+    const dataReferencia = obterDataReferencia(p);
+    const anoReferencia = dataReferencia ? dataReferencia.getFullYear() : null;
+    const statusLower = (p['Status'] || '').toLowerCase();
+    if (anoReferencia !== null && statusLower === 'concluído') {
+      if (!dadosPorAno[anoReferencia]) {
+        dadosPorAno[anoReferencia] = {
+          totalInstalacoes: 0,
+          investimento: 0,
+          beneficiarios: 0,
+          metros: 0,
+          vazaoDia: 0
+        };
+      }
+      const referencia = dadosPorAno[anoReferencia];
+      const valorExecutado = numero(p['Valor Realizado']);
+      referencia.totalInstalacoes += 1;
+      referencia.investimento += valorExecutado || numero(p['Investimento']);
+      referencia.beneficiarios += Number(p['Beneficiários'] || 0);
+      referencia.metros += metros;
+      referencia.vazaoDia += vazaoHora * 24;
+    }
+
+    if ((p['AcoesPosInstalacao'] && String(p['AcoesPosInstalacao']).trim()) || (p['UsoAguaComunitario'] && String(p['UsoAguaComunitario']).trim())) {
+      acoesPosInstalacao.push({
+        poco: nomeDoPoco(p),
+        estado: p['Estado'] || '-',
+        situacaoHidrica: p['SituacaoHidrica'] || 'Não informada',
+        status: p['Status'] || '-',
+        acoes: p['AcoesPosInstalacao'] || '',
+        usos: p['UsoAguaComunitario'] || ''
+      });
+    }
   });
 
-  const pipelineContatosMapa = {};
-  pocos.forEach(p => {
-    const status = p['StatusContato'] || 'Sem registro';
-    pipelineContatosMapa[status] = (pipelineContatosMapa[status] || 0) + 1;
-  });
-
-  const alertas = [];
   const proximasAcoes = pocos
     .filter(p => p['ProximaAcao'])
     .map(p => {
@@ -439,8 +582,8 @@ function obterDashboardAnalitico() {
       const gapFinanceiro = valorPrevisto - valorExecutado;
       const statusLower = (p['Status'] || '').toLowerCase();
       if ((diasSemContato != null && diasSemContato > 12) || (statusLower !== 'concluído' && gapFinanceiro > 40000)) {
-        alertas.push({
-          poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
+        adicionarAlerta({
+          poco: nomeDoPoco(p),
           motivo: diasSemContato != null && diasSemContato > 12
             ? `Sem contato há ${diasSemContato} dias`
             : `Gap financeiro de ${gapFinanceiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
@@ -450,14 +593,15 @@ function obterDashboardAnalitico() {
         });
       }
       return {
-        poco: p['Comunidade'] ? `${p['Comunidade']} - ${p['Município']}` : p['Município'] || p['Estado'] || 'Sem identificação',
+        poco: nomeDoPoco(p),
         responsavel: p['ResponsavelContato'] || '-',
         contato: p['ContatoInstalacao'] || '-',
         proximaAcao: p['ProximaAcao'],
         statusContato: p['StatusContato'] || 'Sem registro',
         ultimoContato: ultimoContato ? ultimoContato.toISOString() : '',
         diasSemContato,
-        impacto: p['ImpactoNoStatus'] || ''
+        impacto: p['ImpactoNoStatus'] || '',
+        situacaoHidrica: p['SituacaoHidrica'] || 'Não informada'
       };
     })
     .sort((a, b) => {
@@ -493,6 +637,46 @@ function obterDashboardAnalitico() {
     total: pipelineContatosMapa[status],
     percentual: totalPocos ? (pipelineContatosMapa[status] / totalPocos) * 100 : 0
   })).sort((a, b) => b.total - a.total);
+
+  const historicoInstalacoes = Object.keys(dadosPorAno).map(ano => {
+    const registro = dadosPorAno[ano];
+    return {
+      ano: Number(ano),
+      total: registro.totalInstalacoes,
+      investimento: registro.investimento,
+      beneficiarios: registro.beneficiarios,
+      metros: registro.metros,
+      vazaoDia: registro.vazaoDia
+    };
+  }).sort((a, b) => b.ano - a.ano);
+
+  const anoAtual = new Date().getFullYear();
+  const dadosAnoAtual = dadosPorAno[anoAtual] || {
+    totalInstalacoes: 0,
+    investimento: 0,
+    beneficiarios: 0,
+    metros: 0,
+    vazaoDia: 0
+  };
+
+  const hidricos = {
+    totalMonitorados: totalPocos,
+    pocosSecos,
+    pocosArtesianos,
+    totalMetrosPerfurados: metrosPerfuradosTotal,
+    totalVazaoDia: vazaoHoraTotal * 24,
+    mediaVazaoDia: totalPocos ? (vazaoHoraTotal * 24) / totalPocos : 0
+  };
+
+  const acoesPosInstalacaoOrdenadas = acoesPosInstalacao
+    .slice()
+    .sort((a, b) => {
+      const estadoA = (a.estado || '').toString();
+      const estadoB = (b.estado || '').toString();
+      const comparacaoEstado = estadoA.localeCompare(estadoB);
+      if (comparacaoEstado !== 0) return comparacaoEstado;
+      return a.poco.localeCompare(b.poco);
+    });
 
   const distribuicaoStatus = [
     { status: 'Planejado', total: planejados },
@@ -540,7 +724,18 @@ function obterDashboardAnalitico() {
       .map(cat => ({ categoria: cat, valor: gastosPorCategoria[cat] }))
       .sort((a, b) => b.valor - a.valor),
     doadoresDestaque,
-    alertas
+    alertas,
+    hidricos,
+    indicadoresLegado: {
+      anoReferencia: anoAtual,
+      totalInstaladoAno: dadosAnoAtual.totalInstalacoes || 0,
+      investimentoAno: dadosAnoAtual.investimento || 0,
+      beneficiariosAno: dadosAnoAtual.beneficiarios || 0,
+      metrosPerfuradosAno: dadosAnoAtual.metros || 0,
+      vazaoDiaAno: dadosAnoAtual.vazaoDia || 0,
+      historico: historicoInstalacoes
+    },
+    acoesPosInstalacao: acoesPosInstalacaoOrdenadas
   };
 }
 
