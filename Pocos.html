@@ -41,21 +41,23 @@
     <div class="grid md:grid-cols-4 gap-4">
       <div>
         <label class="text-sm font-medium text-gray-700">Latitude</label>
-        <input id="latitude" class="campo" placeholder="-5.167">
+        <input id="latitude" class="campo" placeholder="-5.167" inputmode="decimal" autocomplete="off">
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Longitude</label>
-        <input id="longitude" class="campo" placeholder="-40.656">
+        <input id="longitude" class="campo" placeholder="-40.656" inputmode="decimal" autocomplete="off">
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Beneficiários estimados</label>
-        <input id="beneficiarios" type="number" min="0" class="campo" placeholder="0">
+        <input id="beneficiarios" type="text" inputmode="numeric" class="campo" placeholder="0" autocomplete="off">
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Empresa responsável</label>
         <input id="empresa" class="campo" placeholder="Fornecedor responsável">
       </div>
     </div>
+
+    <div class="md:col-span-4 text-xs text-gray-500" id="feedbackCoordenadas"></div>
 
     <div class="grid md:grid-cols-3 gap-4">
       <div>
@@ -108,19 +110,19 @@
       <div class="grid md:grid-cols-4 gap-4">
         <div>
           <label class="texto-legenda">Previsto (R$)</label>
-          <input type="number" id="orcamentoPrevisto" class="campo" step="0.01">
+          <input type="text" id="orcamentoPrevisto" class="campo" inputmode="decimal" autocomplete="off">
         </div>
         <div>
           <label class="texto-legenda">Aprovado (R$)</label>
-          <input type="number" id="orcamentoAprovado" class="campo" step="0.01">
+          <input type="text" id="orcamentoAprovado" class="campo" inputmode="decimal" autocomplete="off">
         </div>
         <div>
           <label class="texto-legenda">Executado (R$)</label>
-          <input type="number" id="orcamentoExecutado" class="campo" step="0.01">
+          <input type="text" id="orcamentoExecutado" class="campo" inputmode="decimal" autocomplete="off">
         </div>
         <div>
           <label class="texto-legenda">Investimento previsto em planilha (R$)</label>
-          <input type="number" id="investimento" class="campo" step="0.01">
+          <input type="text" id="investimento" class="campo" inputmode="decimal" autocomplete="off">
         </div>
       </div>
     </fieldset>
@@ -132,7 +134,7 @@
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
-        <input id="contatoTelefone" class="campo" placeholder="(00) 90000-0000">
+        <input id="contatoTelefone" class="campo" placeholder="(00) 90000-0000" inputmode="tel" autocomplete="off">
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">E-mail</label>
@@ -386,6 +388,7 @@
   const btnEditar = document.getElementById('btnEditarPoco');
   const btnLimpar = document.getElementById('btnLimparFormulario');
   const mensagemFormulario = document.getElementById('mensagemFormulario');
+  const feedbackCoordenadas = document.getElementById('feedbackCoordenadas');
   const form = document.getElementById('formPoco');
 
   const hiddenId = document.getElementById('pocoId');
@@ -431,6 +434,321 @@
     evidencias: document.getElementById('arquivoEvidencias')
   };
 
+  const numericMaskHelpers = new Map();
+
+  const parseValorNumerico = (valor) => {
+    if (valor === undefined || valor === null) return null;
+    if (typeof valor === 'number') {
+      return Number.isNaN(valor) ? null : valor;
+    }
+    const texto = String(valor).trim();
+    if (!texto) return null;
+    let normalizado = texto.replace(/\s+/g, '');
+    if (normalizado.includes(',')) {
+      normalizado = normalizado.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalizado = normalizado.replace(/[^0-9.-]/g, '');
+    }
+    const numero = Number(normalizado);
+    return Number.isNaN(numero) ? null : numero;
+  };
+
+  const configurarMascaraNumerica = (campo, decimais = 0) => {
+    if (!campo) return;
+    const formatador = new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: decimais,
+      maximumFractionDigits: decimais
+    });
+
+    const helper = {
+      decimais,
+      definirValor: (valor) => {
+        const numero = parseValorNumerico(valor);
+        if (numero === null) {
+          campo.dataset.raw = '';
+          campo.value = '';
+          return;
+        }
+        const raw = decimais > 0 ? numero.toFixed(decimais) : numero.toString();
+        campo.dataset.raw = raw;
+        campo.value = formatador.format(Number(raw));
+      }
+    };
+
+    numericMaskHelpers.set(campo.id, helper);
+
+    campo.addEventListener('focus', () => {
+      campo.value = campo.dataset.raw || '';
+    });
+
+    campo.addEventListener('input', () => {
+      const texto = campo.value.replace(/[^0-9,.-]/g, '');
+      campo.value = texto;
+      const numero = parseValorNumerico(texto);
+      campo.dataset.raw = numero === null ? '' : (helper.decimais > 0 ? numero.toFixed(helper.decimais) : numero.toString());
+    });
+
+    campo.addEventListener('blur', () => {
+      const numero = obterNumeroNormalizado(campo);
+      if (numero === '' && numero !== 0) {
+        campo.dataset.raw = '';
+        campo.value = '';
+        return;
+      }
+      helper.definirValor(numero);
+    });
+
+    helper.definirValor(campo.value);
+  };
+
+  const definirValorNumerico = (campo, valor) => {
+    const helper = campo ? numericMaskHelpers.get(campo.id) : null;
+    if (helper) {
+      helper.definirValor(valor);
+    } else if (campo) {
+      campo.value = valor || '';
+    }
+  };
+
+  const obterNumeroNormalizado = (campo) => {
+    if (!campo) return '';
+    const helper = numericMaskHelpers.get(campo.id);
+    if (helper) {
+      const raw = campo.dataset.raw;
+      if (raw === undefined || raw === null || raw === '') return '';
+      const numero = parseValorNumerico(raw);
+      if (numero === null) return '';
+      return helper.decimais === 0 ? Math.round(numero) : Number(numero.toFixed(helper.decimais));
+    }
+    const texto = (campo.value || '').trim();
+    if (!texto) return '';
+    const numero = parseValorNumerico(texto);
+    return numero === null ? '' : numero;
+  };
+
+  const formatarTelefoneParaExibicao = (valor) => {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 11);
+    if (!digitos) return '';
+    if (digitos.length <= 10) {
+      return digitos.replace(/(\d{0,2})(\d{0,4})(\d{0,4})/, (match, ddd, parte1, parte2) => {
+        if (!parte1) return ddd;
+        if (!parte2) return `(${ddd}) ${parte1}`;
+        return `(${ddd}) ${parte1}-${parte2}`;
+      });
+    }
+    return digitos.replace(/(\d{0,2})(\d{0,5})(\d{0,4})/, (match, ddd, parte1, parte2) => {
+      if (!parte1) return ddd;
+      if (!parte2) return `(${ddd}) ${parte1}`;
+      return `(${ddd}) ${parte1}-${parte2}`;
+    });
+  };
+
+  const configurarMascaraTelefone = (campo) => {
+    if (!campo) return;
+    campo.addEventListener('input', () => {
+      const digitos = campo.value.replace(/\D/g, '').slice(0, 11);
+      campo.dataset.raw = digitos;
+      campo.value = formatarTelefoneParaExibicao(digitos);
+    });
+    campo.addEventListener('blur', () => {
+      campo.value = formatarTelefoneParaExibicao(obterTelefoneNormalizado(campo));
+    });
+    campo.dataset.raw = (campo.value || '').replace(/\D/g, '').slice(0, 11);
+    campo.value = formatarTelefoneParaExibicao(campo.dataset.raw);
+  };
+
+  const obterTelefoneNormalizado = (campo) => {
+    if (!campo) return '';
+    const raw = campo.dataset ? campo.dataset.raw : null;
+    if (raw !== undefined && raw !== null) return raw;
+    return (campo.value || '').replace(/\D/g, '').slice(0, 11);
+  };
+
+  const definirTelefone = (campo, valor) => {
+    if (!campo) return;
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 11);
+    campo.dataset.raw = digitos;
+    campo.value = formatarTelefoneParaExibicao(digitos);
+  };
+
+  [
+    { campo: campos.beneficiarios, decimais: 0 },
+    { campo: campos.investimento, decimais: 2 },
+    { campo: campos.orcamentoPrevisto, decimais: 2 },
+    { campo: campos.orcamentoAprovado, decimais: 2 },
+    { campo: campos.orcamentoExecutado, decimais: 2 }
+  ].forEach(({ campo, decimais }) => configurarMascaraNumerica(campo, decimais));
+
+  configurarMascaraTelefone(campos.contatoTelefone);
+
+  let geocodificacaoAtual = null;
+  let geocodeTimeout = null;
+
+  const atualizarFeedbackCoordenadas = (mensagem, tipo = 'neutro') => {
+    if (!feedbackCoordenadas) return;
+    const cores = {
+      sucesso: 'text-green-600',
+      erro: 'text-red-600',
+      info: 'text-blue-600',
+      neutro: 'text-gray-500'
+    };
+    feedbackCoordenadas.textContent = mensagem;
+    feedbackCoordenadas.className = `md:col-span-4 text-xs mt-1 ${cores[tipo] || cores.neutro}`;
+  };
+
+  const analisarCoordenada = (valor, limite) => {
+    const texto = valor == null ? '' : String(valor).trim();
+    if (!texto) return { valor: null, vazio: true, mensagem: '' };
+    const numero = Number(texto.replace(/\s+/g, '').replace(',', '.'));
+    if (!Number.isFinite(numero)) {
+      return { valor: null, vazio: false, mensagem: 'Use apenas números e separador decimal.' };
+    }
+    if (numero < -limite || numero > limite) {
+      return { valor: null, vazio: false, mensagem: `Valor deve estar entre ${-limite} e ${limite}.` };
+    }
+    return { valor: Number(numero.toFixed(6)), vazio: false, mensagem: '' };
+  };
+
+  const atualizarValidacaoCoordenadas = () => {
+    const lat = analisarCoordenada(campos.latitude.value, 90);
+    const lon = analisarCoordenada(campos.longitude.value, 180);
+
+    if (lat.mensagem) {
+      atualizarFeedbackCoordenadas(`Latitude inválida: ${lat.mensagem}`, 'erro');
+      return { valido: false, latitude: null, longitude: null };
+    }
+    if (lon.mensagem) {
+      atualizarFeedbackCoordenadas(`Longitude inválida: ${lon.mensagem}`, 'erro');
+      return { valido: false, latitude: null, longitude: null };
+    }
+
+    if (lat.valor !== null && lon.valor !== null) {
+      const geocodeOk = geocodificacaoAtual && geocodificacaoAtual.sucesso && geocodificacaoAtual.latitude === lat.valor && geocodificacaoAtual.longitude === lon.valor;
+      atualizarFeedbackCoordenadas(geocodeOk ? 'Coordenadas validadas com sucesso.' : 'Coordenadas válidas. Validando endereço automaticamente...', geocodeOk ? 'sucesso' : 'info');
+      return { valido: true, latitude: lat.valor, longitude: lon.valor };
+    }
+
+    if (!lat.vazio || !lon.vazio) {
+      atualizarFeedbackCoordenadas('Informe os dois valores de coordenadas para validar.', 'info');
+      return { valido: false, latitude: lat.valor, longitude: lon.valor };
+    }
+
+    atualizarFeedbackCoordenadas('Informe latitude e longitude para validar as coordenadas.', 'neutro');
+    return { valido: true, latitude: null, longitude: null };
+  };
+
+  const solicitarGeocodificacao = (latitude, longitude) => {
+    if (geocodeTimeout) {
+      clearTimeout(geocodeTimeout);
+      geocodeTimeout = null;
+    }
+    geocodificacaoAtual = { sucesso: false, latitude, longitude, status: 'AGUARDANDO' };
+    atualizarFeedbackCoordenadas('Validando coordenadas com serviço de geocodificação...', 'info');
+
+    google.script.run
+      .withSuccessHandler(res => {
+        const latAtual = analisarCoordenada(campos.latitude.value, 90);
+        const lonAtual = analisarCoordenada(campos.longitude.value, 180);
+        const coordenadasMantidas = latAtual.valor === latitude && lonAtual.valor === longitude;
+        if (!coordenadasMantidas) return;
+
+        if (!res || !res.sucesso) {
+          geocodificacaoAtual = null;
+          atualizarFeedbackCoordenadas((res && res.mensagem) ? res.mensagem : 'Não foi possível validar as coordenadas.', 'erro');
+          return;
+        }
+
+        geocodificacaoAtual = {
+          sucesso: true,
+          estado: res.estado || '',
+          municipio: res.municipio || res.cidade || '',
+          fonte: res.fonte || '',
+          precisao: res.precisao || '',
+          status: res.status || 'OK',
+          timestamp: res.timestamp || new Date().toISOString(),
+          latitude,
+          longitude
+        };
+
+        if (!campos.estado.value && geocodificacaoAtual.estado) campos.estado.value = geocodificacaoAtual.estado;
+        if (!campos.municipio.value && geocodificacaoAtual.municipio) campos.municipio.value = geocodificacaoAtual.municipio;
+        atualizarFeedbackCoordenadas('Coordenadas validadas e endereço identificado automaticamente.', 'sucesso');
+      })
+      .withFailureHandler(err => {
+        const latAtual = analisarCoordenada(campos.latitude.value, 90);
+        const lonAtual = analisarCoordenada(campos.longitude.value, 180);
+        const coordenadasMantidas = latAtual.valor === latitude && lonAtual.valor === longitude;
+        if (!coordenadasMantidas) return;
+
+        geocodificacaoAtual = null;
+        const mensagem = err && err.message ? err.message : 'Erro inesperado na geocodificação.';
+        atualizarFeedbackCoordenadas(`Não foi possível validar as coordenadas: ${mensagem}`, 'erro');
+      })
+      .geocodificarCoordenadas(latitude, longitude);
+  };
+
+  const agendarGeocodificacao = (latitude, longitude) => {
+    if (geocodeTimeout) clearTimeout(geocodeTimeout);
+    geocodeTimeout = window.setTimeout(() => solicitarGeocodificacao(latitude, longitude), 600);
+  };
+
+  const monitorarCoordenadas = () => {
+    const resultado = atualizarValidacaoCoordenadas();
+    if (!resultado.valido) {
+      geocodificacaoAtual = null;
+      if (geocodeTimeout) {
+        clearTimeout(geocodeTimeout);
+        geocodeTimeout = null;
+      }
+      return;
+    }
+
+    const { latitude, longitude } = resultado;
+    if (latitude !== null && longitude !== null) {
+      if (geocodificacaoAtual && geocodificacaoAtual.sucesso && geocodificacaoAtual.latitude === latitude && geocodificacaoAtual.longitude === longitude) {
+        return;
+      }
+      geocodificacaoAtual = null;
+      agendarGeocodificacao(latitude, longitude);
+    } else {
+      geocodificacaoAtual = null;
+      if (geocodeTimeout) {
+        clearTimeout(geocodeTimeout);
+        geocodeTimeout = null;
+      }
+    }
+  };
+
+  campos.latitude.addEventListener('input', monitorarCoordenadas);
+  campos.longitude.addEventListener('input', monitorarCoordenadas);
+  campos.latitude.addEventListener('blur', atualizarValidacaoCoordenadas);
+  campos.longitude.addEventListener('blur', atualizarValidacaoCoordenadas);
+
+  atualizarFeedbackCoordenadas('Informe latitude e longitude para validar as coordenadas.', 'neutro');
+
+  const limparFormulario = () => {
+    form.reset();
+    hiddenId.value = '';
+    hiddenEvidencias.value = '[]';
+    hiddenTimeline.value = '[]';
+    hiddenTermo.value = '';
+    hiddenNota.value = '';
+    mensagemFormulario.textContent = '';
+    mensagemFormulario.className = 'text-sm font-medium';
+    definirValorNumerico(campos.beneficiarios, '');
+    definirValorNumerico(campos.investimento, '');
+    definirValorNumerico(campos.orcamentoPrevisto, '');
+    definirValorNumerico(campos.orcamentoAprovado, '');
+    definirValorNumerico(campos.orcamentoExecutado, '');
+    definirTelefone(campos.contatoTelefone, '');
+    geocodificacaoAtual = null;
+    if (geocodeTimeout) {
+      clearTimeout(geocodeTimeout);
+      geocodeTimeout = null;
+    }
+    atualizarFeedbackCoordenadas('Informe latitude e longitude para validar as coordenadas.', 'neutro');
+  };
+
   const STATUS_CORES = {
     'solicitado': 'bg-orange-100 text-orange-700',
     'orçamento previsto': 'bg-yellow-100 text-yellow-700',
@@ -459,17 +777,6 @@
   const formataMoeda = (valor) => {
     const numero = Number(valor || 0);
     return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  const limparFormulario = () => {
-    form.reset();
-    hiddenId.value = '';
-    hiddenEvidencias.value = '[]';
-    hiddenTimeline.value = '[]';
-    hiddenTermo.value = '';
-    hiddenNota.value = '';
-    mensagemFormulario.textContent = '';
-    mensagemFormulario.className = 'text-sm font-medium';
   };
 
   const statusClasses = (status) => {
@@ -596,7 +903,7 @@
           <li class="border border-gray-200 rounded-lg p-3">
             <p class="text-sm font-semibold text-gray-800">${escapeHtml(contato.nome || contato.ResponsavelContato || 'Contato')}</p>
             <p class="text-xs text-gray-500">${escapeHtml(contato.papel || contato.OrganizacaoContato || '')}</p>
-            <p class="text-xs text-gray-500">${escapeHtml(contato.telefone || contato.ContatoExterno || '')}</p>
+            <p class="text-xs text-gray-500">${escapeHtml(formatarTelefoneParaExibicao(contato.telefoneNormalizado || contato.telefone || contato.ContatoExterno || ''))}</p>
             <p class="text-xs text-gray-500">${escapeHtml(contato.email || '')}</p>
           </li>`).join('')
       : '<li class="text-sm text-gray-500">Nenhum contato estruturado.</li>';
@@ -648,10 +955,12 @@
     campos.municipio.value = poco['Município'] || '';
     campos.comunidade.value = poco.Comunidade || '';
     campos.regiao.value = poco['Região'] || '';
-    campos.latitude.value = poco.Latitude || '';
-    campos.longitude.value = poco.Longitude || '';
-    campos.beneficiarios.value = poco['Beneficiários'] || '';
-    campos.investimento.value = poco.Investimento || '';
+    const latitudeExistente = poco.Latitude !== undefined && poco.Latitude !== null ? poco.Latitude : '';
+    const longitudeExistente = poco.Longitude !== undefined && poco.Longitude !== null ? poco.Longitude : '';
+    campos.latitude.value = latitudeExistente;
+    campos.longitude.value = longitudeExistente;
+    definirValorNumerico(campos.beneficiarios, poco['Beneficiários'] || '');
+    definirValorNumerico(campos.investimento, poco.Investimento || '');
     campos.solicitante.value = poco.Solicitante || '';
     campos.contatoSolicitante.value = poco.ContatoSolicitante || '';
     campos.doadores.value = poco.Doadores || '';
@@ -661,9 +970,9 @@
     campos.dataInstalacao.value = dataParaInput(poco.DataInstalacao);
     campos.dataConclusao.value = dataParaInput(poco.DataConclusao);
     campos.dataPagamento.value = dataParaInput(poco.DataPagamento);
-    campos.orcamentoPrevisto.value = poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração'] || '';
-    campos.orcamentoAprovado.value = poco.OrcamentoAprovado || '';
-    campos.orcamentoExecutado.value = poco.OrcamentoExecutado || poco['Valor Realizado'] || '';
+    definirValorNumerico(campos.orcamentoPrevisto, poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração'] || '');
+    definirValorNumerico(campos.orcamentoAprovado, poco.OrcamentoAprovado || '');
+    definirValorNumerico(campos.orcamentoExecutado, poco.OrcamentoExecutado || poco['Valor Realizado'] || '');
     campos.empresa.value = poco['Empresa Responsável'] || '';
     campos.situacaoHidrica.value = poco.SituacaoHidrica || '';
     campos.usoAgua.value = poco.UsoAguaComunitario || '';
@@ -672,8 +981,36 @@
 
     const contatoPrincipal = Array.isArray(contatos) && contatos.length ? contatos[0] : {};
     campos.contatoNome.value = contatoPrincipal.nome || contatoPrincipal.ResponsavelContato || '';
-    campos.contatoTelefone.value = contatoPrincipal.telefone || contatoPrincipal.ContatoExterno || '';
+    definirTelefone(campos.contatoTelefone, contatoPrincipal.telefoneNormalizado || contatoPrincipal.telefone || contatoPrincipal.ContatoExterno || '');
     campos.contatoEmail.value = contatoPrincipal.email || '';
+
+    const statusGeocode = (poco.GeocodificacaoStatus || '').toString().toUpperCase();
+    geocodificacaoAtual = null;
+    if (statusGeocode === 'OK') {
+      const latAnalise = analisarCoordenada(latitudeExistente, 90);
+      const lonAnalise = analisarCoordenada(longitudeExistente, 180);
+      if (latAnalise.valor !== null && lonAnalise.valor !== null) {
+        let timestampISO = '';
+        if (poco.GeocodificacaoTimestamp) {
+          const ts = new Date(poco.GeocodificacaoTimestamp);
+          if (!Number.isNaN(ts.getTime())) {
+            timestampISO = ts.toISOString();
+          }
+        }
+        geocodificacaoAtual = {
+          sucesso: true,
+          estado: poco.Estado || '',
+          municipio: poco['Município'] || '',
+          fonte: poco.GeocodificacaoFonte || '',
+          precisao: poco.GeocodificacaoPrecisao || '',
+          status: poco.GeocodificacaoStatus || 'OK',
+          timestamp: timestampISO,
+          latitude: latAnalise.valor,
+          longitude: lonAnalise.valor
+        };
+      }
+    }
+    atualizarValidacaoCoordenadas();
 
     hiddenEvidencias.value = JSON.stringify(detalheAtual.evidencias || []);
     hiddenTimeline.value = hiddenTimeline.value || '[]';
@@ -724,11 +1061,44 @@
         notaURL = await enviarArquivo(arquivos.nota.files[0]);
       }
 
+      const validacaoCoordenadas = atualizarValidacaoCoordenadas();
+      if (!validacaoCoordenadas.valido) {
+        throw new Error('Corrija os valores de latitude e longitude antes de salvar.');
+      }
+      const latitudeValor = validacaoCoordenadas.latitude;
+      const longitudeValor = validacaoCoordenadas.longitude;
+      const coordenadasInformadas = latitudeValor !== null && longitudeValor !== null;
+      if (coordenadasInformadas) {
+        if (!geocodificacaoAtual || !geocodificacaoAtual.sucesso || geocodificacaoAtual.latitude !== latitudeValor || geocodificacaoAtual.longitude !== longitudeValor) {
+          throw new Error('Valide as coordenadas antes de salvar o formulário.');
+        }
+      }
+
+      const beneficiariosNormalizado = obterNumeroNormalizado(campos.beneficiarios);
+      const investimentoNormalizado = obterNumeroNormalizado(campos.investimento);
+      const orcPrevistoNormalizado = obterNumeroNormalizado(campos.orcamentoPrevisto);
+      const orcAprovadoNormalizado = obterNumeroNormalizado(campos.orcamentoAprovado);
+      const orcExecutadoNormalizado = obterNumeroNormalizado(campos.orcamentoExecutado);
+      const telefoneNormalizado = obterTelefoneNormalizado(campos.contatoTelefone);
+      const telefoneFormatado = formatarTelefoneParaExibicao(telefoneNormalizado);
+      const geocodificacaoPayload = coordenadasInformadas && geocodificacaoAtual ? {
+        sucesso: true,
+        estado: geocodificacaoAtual.estado || '',
+        municipio: geocodificacaoAtual.municipio || '',
+        fonte: geocodificacaoAtual.fonte || '',
+        precisao: geocodificacaoAtual.precisao || '',
+        status: geocodificacaoAtual.status || 'OK',
+        timestamp: geocodificacaoAtual.timestamp || new Date().toISOString(),
+        latitude: latitudeValor,
+        longitude: longitudeValor
+      } : null;
+
       const contatos = [];
-      if (campos.contatoNome.value || campos.contatoTelefone.value || campos.contatoEmail.value) {
+      if (campos.contatoNome.value || telefoneNormalizado || campos.contatoEmail.value) {
         contatos.push({
           nome: campos.contatoNome.value,
-          telefone: campos.contatoTelefone.value,
+          telefone: telefoneFormatado,
+          telefoneNormalizado,
           email: campos.contatoEmail.value,
           papel: 'Contato principal'
         });
@@ -739,10 +1109,10 @@
         municipio: campos.municipio.value,
         comunidade: campos.comunidade.value,
         regiao: campos.regiao.value,
-        latitude: campos.latitude.value,
-        longitude: campos.longitude.value,
-        beneficiarios: campos.beneficiarios.value,
-        investimento: campos.investimento.value,
+        latitude: coordenadasInformadas ? latitudeValor : '',
+        longitude: coordenadasInformadas ? longitudeValor : '',
+        beneficiarios: beneficiariosNormalizado === '' ? '' : beneficiariosNormalizado,
+        investimento: investimentoNormalizado === '' ? '' : investimentoNormalizado,
         solicitante: campos.solicitante.value,
         contatoSolicitante: campos.contatoSolicitante.value,
         doadores: campos.doadores.value,
@@ -752,9 +1122,9 @@
         dataInstalacao: campos.dataInstalacao.value,
         dataConclusao: campos.dataConclusao.value,
         dataPagamento: campos.dataPagamento.value,
-        orcamentoPrevisto: campos.orcamentoPrevisto.value,
-        orcamentoAprovado: campos.orcamentoAprovado.value,
-        orcamentoExecutado: campos.orcamentoExecutado.value,
+        orcamentoPrevisto: orcPrevistoNormalizado === '' ? '' : orcPrevistoNormalizado,
+        orcamentoAprovado: orcAprovadoNormalizado === '' ? '' : orcAprovadoNormalizado,
+        orcamentoExecutado: orcExecutadoNormalizado === '' ? '' : orcExecutadoNormalizado,
         empresaResponsavel: campos.empresa.value,
         contatos,
         evidencias: evidenciasExistentes.concat(novasEvidencias),
@@ -767,7 +1137,9 @@
         observacoes: campos.observacoes.value,
         responsavelContato: campos.contatoNome.value,
         contatoInstalacao: campos.contatoNome.value,
-        telefoneContato: campos.contatoTelefone.value
+        telefoneContato: telefoneFormatado,
+        telefoneContatoNormalizado: telefoneNormalizado,
+        geocodificacao: geocodificacaoPayload
       };
 
       const idExistente = hiddenId.value;
