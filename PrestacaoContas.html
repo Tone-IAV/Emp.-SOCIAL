@@ -57,6 +57,7 @@
     <thead class="bg-blue-100">
       <tr>
         <th class="p-2 text-left">Poço</th>
+        <th class="p-2 text-left">Status</th>
         <th class="p-2 text-left">Data</th>
         <th class="p-2 text-left">Descrição</th>
         <th class="p-2 text-left">Valor</th>
@@ -82,8 +83,15 @@
         const options = pocos.map(p => {
           const nome = p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem nome';
           const local = [p['Município'], p['Estado']].filter(Boolean).join(' - ');
-          mapaPocos[p.ID] = { nome, local };
-          return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(local || 'Local não informado')})</option>`;
+          mapaPocos[p.ID] = {
+            nome,
+            local,
+            status: p.Status || 'Sem status',
+            previsto: Number(p.OrcamentoPrevisto || p['Valor Previsto Perfuração'] || 0),
+            executado: Number(p.OrcamentoExecutado || p['Valor Realizado'] || 0)
+          };
+          const status = mapaPocos[p.ID].status;
+          return `<option value="${p.ID}">${escapeHtml(nome)} (${escapeHtml(status)})</option>`;
         });
         select.innerHTML = options.join('');
         carregarPrestacoes();
@@ -130,7 +138,7 @@
         const tbody = document.querySelector('#tabelaPrestacoes tbody');
         let total = 0;
         if (!registros.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-4">Nenhum lançamento registrado.</td></tr>';
           document.getElementById('totalizador').textContent = '💰 Total lançado: R$ 0,00';
           return;
         }
@@ -139,7 +147,7 @@
           total += valor;
           const data = r.Data ? new Date(r.Data) : null;
           const dataTexto = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : '-';
-          const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '' };
+          const infoPoco = mapaPocos[r.PoçoID] || { nome: r.PoçoID, local: '', status: '-' };
           const categoria = r.Categoria || '-';
           const autor = r.RegistradoPor || '-';
           return `
@@ -148,6 +156,7 @@
                 <div class="font-semibold text-gray-900">${escapeHtml(infoPoco.nome)}</div>
                 <small class="text-gray-500">${escapeHtml(infoPoco.local)}</small>
               </td>
+              <td class="p-2"><span class="inline-flex px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">${escapeHtml(infoPoco.status)}</span></td>
               <td class="p-2">${dataTexto}</td>
               <td class="p-2">${escapeHtml(r.Descrição)}</td>
               <td class="p-2">${formatarMoeda(valor)}</td>
@@ -156,7 +165,14 @@
               <td class="p-2">${r.ComprovanteURL ? `<a href="${escapeHtml(r.ComprovanteURL)}" target="_blank">📎 Ver</a>` : '-'}</td>
             </tr>`;
         }).join('');
-        document.getElementById('totalizador').textContent = `💰 Total lançado: ${formatarMoeda(total)}`;
+        const selecionado = document.getElementById('pocoId').value;
+        const info = mapaPocos[selecionado];
+        if (info) {
+          const saldo = info.previsto - info.executado;
+          document.getElementById('totalizador').textContent = `💰 Executado neste poço: ${formatarMoeda(info.executado)} | Previsto: ${formatarMoeda(info.previsto)} | Saldo: ${formatarMoeda(saldo)}`;
+        } else {
+          document.getElementById('totalizador').textContent = `💰 Total lançado: ${formatarMoeda(total)}`;
+        }
       }).listarPrestacoes();
     }
 

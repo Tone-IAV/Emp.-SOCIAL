@@ -1,218 +1,811 @@
-<div class="p-4">
-  <h2 class="text-xl font-bold mb-4">💧 Cadastro e Gerenciamento de Poços</h2>
+<div class="space-y-6">
+  <header class="bg-white rounded-lg shadow p-5 flex flex-col gap-2">
+    <h2 class="text-xl font-semibold text-blue-700">💧 Jornada completa dos poços</h2>
+    <p class="text-sm text-gray-600">Centralize as informações desde a solicitação regional até o pagamento final. Anexe evidências, acompanhe a linha do tempo e mantenha os dados financeiros alinhados com doadores e fornecedores.</p>
+  </header>
 
-  <!-- FORMULÁRIO DE CADASTRO -->
-  <form id="formPoco" class="bg-white rounded-lg shadow p-4 mb-6 space-y-4">
-    <div class="grid md:grid-cols-3 gap-3">
-      <div><label>Estado</label><input id="estado" class="border p-2 w-full rounded" required></div>
-      <div><label>Município</label><input id="municipio" class="border p-2 w-full rounded" required></div>
-      <div><label>Comunidade</label><input id="comunidade" class="border p-2 w-full rounded"></div>
-    </div>
+  <form id="formPoco" class="bg-white rounded-lg shadow p-5 space-y-4">
+    <input type="hidden" id="pocoId">
+    <input type="hidden" id="dadosEvidencias">
+    <input type="hidden" id="dadosTimeline">
+    <input type="hidden" id="dadosTermo">
+    <input type="hidden" id="dadosNota">
 
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label>Latitude</label><input id="latitude" class="border p-2 w-full rounded"></div>
-      <div><label>Longitude</label><input id="longitude" class="border p-2 w-full rounded"></div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label>Beneficiários</label><input id="beneficiarios" type="number" class="border p-2 w-full rounded"></div>
-      <div><label>Investimento (R$)</label><input id="investimento" type="number" class="border p-2 w-full rounded"></div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-3">
-      <div><label>Vazão (L/H)</label><input id="vazao" class="border p-2 w-full rounded"></div>
-      <div><label>Profundidade (m)</label><input id="profundidade" class="border p-2 w-full rounded"></div>
-      <div><label>Status</label>
-        <select id="status" class="border p-2 w-full rounded">
-          <option>Planejado</option>
-          <option>Em execução</option>
-          <option>Concluído</option>
-        </select>
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h3 class="font-semibold text-lg text-gray-800">📋 Cadastro e atualização</h3>
+      <div class="flex gap-3">
+        <button type="button" id="btnLimparFormulario" class="px-4 py-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">Limpar</button>
+        <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700">Salvar informações</button>
       </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label>Valor Previsto Perfuração (R$)</label><input id="valorPerf" type="number" class="border p-2 w-full rounded"></div>
-      <div><label>Valor Previsto Instalação (R$)</label><input id="valorInst" type="number" class="border p-2 w-full rounded"></div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-3">
-      <div><label>Empresa Responsável</label><input id="empresa" class="border p-2 w-full rounded"></div>
-      <div><label>Doador</label><input id="doador" class="border p-2 w-full rounded"></div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-3">
+    <div class="grid md:grid-cols-4 gap-4">
       <div>
-        <label>Tipo de poço</label>
-        <select id="tipoPoco" class="border p-2 w-full rounded">
-          <option value="">Selecionar</option>
-          <option>Artesiano</option>
-          <option>Semiartesiano</option>
-          <option>Raso</option>
-          <option>Amazonas / Escavado</option>
-          <option>Outro</option>
-        </select>
+        <label class="text-sm font-medium text-gray-700">Estado</label>
+        <input id="estado" class="campo" required>
       </div>
       <div>
-        <label>Situação hídrica</label>
-        <select id="situacaoHidrica" class="border p-2 w-full rounded">
-          <option value="">Selecionar</option>
-          <option>Produzindo normalmente</option>
-          <option>Poço seco / sem vazão</option>
-          <option>Vazão reduzida</option>
-          <option>Em análise técnica</option>
-        </select>
+        <label class="text-sm font-medium text-gray-700">Município</label>
+        <input id="municipio" class="campo" required>
       </div>
-      <div><label>Uso comunitário prioritário da água</label><input id="usoAguaComunitario" class="border p-2 w-full rounded" placeholder="Ex.: Consumo humano, irrigação"></div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-3">
-      <div><label>Responsável interno pelo contato</label><input id="responsavelContato" class="border p-2 w-full rounded"></div>
-      <div><label>Contato para instalação</label><input id="contatoInstalacao" class="border p-2 w-full rounded"></div>
-      <div><label>Telefone / WhatsApp</label><input id="telefoneContato" class="border p-2 w-full rounded"></div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-3">
       <div>
-        <label>Status do contato</label>
-        <select id="statusContato" class="border p-2 w-full rounded">
-          <option>Não iniciado</option>
-          <option>Em negociação</option>
-          <option>Aguardando resposta</option>
-          <option>Confirmado</option>
-          <option>Concluído</option>
-        </select>
+        <label class="text-sm font-medium text-gray-700">Comunidade / Nome do poço</label>
+        <input id="comunidade" class="campo" placeholder="Ex.: Comunidade Vida">
       </div>
-      <div><label>Último contato</label><input id="ultimoContato" type="date" class="border p-2 w-full rounded"></div>
-      <div><label>Próxima ação</label><input id="proximaAcao" class="border p-2 w-full rounded" placeholder="Ex.: enviar orçamento"></div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Região</label>
+        <input id="regiao" class="campo" placeholder="Ex.: Sertão dos Inhamuns">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Latitude</label>
+        <input id="latitude" class="campo" placeholder="-5.167">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Longitude</label>
+        <input id="longitude" class="campo" placeholder="-40.656">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Beneficiários estimados</label>
+        <input id="beneficiarios" type="number" min="0" class="campo" placeholder="0">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Empresa responsável</label>
+        <input id="empresa" class="campo" placeholder="Fornecedor responsável">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Solicitante / líder local</label>
+        <input id="solicitante" class="campo" placeholder="Nome da pessoa referência">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Contato do solicitante</label>
+        <input id="contatoSolicitante" class="campo" placeholder="E-mail, telefone ou WhatsApp">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Doadores vinculados</label>
+        <input id="doadores" class="campo" placeholder="IDs ou nomes separados por vírgula">
+      </div>
     </div>
 
     <div>
-      <label>Impacto na situação do poço</label>
-      <textarea id="impactoNoStatus" rows="2" class="border p-2 w-full rounded" placeholder="Resumo do impacto do contato"></textarea>
+      <label class="text-sm font-medium text-gray-700">Resumo da situação</label>
+      <textarea id="resumoStatus" rows="2" class="campo" placeholder="Explique em poucas linhas em que etapa o poço está"></textarea>
+    </div>
+
+    <fieldset class="border border-blue-100 rounded-lg p-4">
+      <legend class="px-2 text-blue-700 font-semibold">Datas do processo</legend>
+      <div class="grid md:grid-cols-5 gap-4">
+        <div>
+          <label class="texto-legenda">Solicitação</label>
+          <input type="date" id="dataSolicitacao" class="campo">
+        </div>
+        <div>
+          <label class="texto-legenda">Orçamento previsto</label>
+          <input type="date" id="dataOrcamentoPrevisto" class="campo">
+        </div>
+        <div>
+          <label class="texto-legenda">Instalação</label>
+          <input type="date" id="dataInstalacao" class="campo">
+        </div>
+        <div>
+          <label class="texto-legenda">Conclusão</label>
+          <input type="date" id="dataConclusao" class="campo">
+        </div>
+        <div>
+          <label class="texto-legenda">Pagamento</label>
+          <input type="date" id="dataPagamento" class="campo">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="border border-blue-100 rounded-lg p-4">
+      <legend class="px-2 text-blue-700 font-semibold">Orçamento</legend>
+      <div class="grid md:grid-cols-4 gap-4">
+        <div>
+          <label class="texto-legenda">Previsto (R$)</label>
+          <input type="number" id="orcamentoPrevisto" class="campo" step="0.01">
+        </div>
+        <div>
+          <label class="texto-legenda">Aprovado (R$)</label>
+          <input type="number" id="orcamentoAprovado" class="campo" step="0.01">
+        </div>
+        <div>
+          <label class="texto-legenda">Executado (R$)</label>
+          <input type="number" id="orcamentoExecutado" class="campo" step="0.01">
+        </div>
+        <div>
+          <label class="texto-legenda">Investimento previsto em planilha (R$)</label>
+          <input type="number" id="investimento" class="campo" step="0.01">
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Contato principal</label>
+        <input id="contatoNome" class="campo" placeholder="Nome do responsável">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
+        <input id="contatoTelefone" class="campo" placeholder="(00) 90000-0000">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">E-mail</label>
+        <input id="contatoEmail" class="campo" placeholder="contato@email.com">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Termo de autorização (PDF ou imagem)</label>
+        <input type="file" id="arquivoTermo" accept=".pdf,image/*" class="campo">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Nota fiscal (PDF ou imagem)</label>
+        <input type="file" id="arquivoNota" accept=".pdf,image/*" class="campo">
+      </div>
     </div>
 
     <div>
-      <label>Ações pós-instalação planejadas</label>
-      <textarea id="acoesPosInstalacao" rows="3" class="border p-2 w-full rounded" placeholder="Descreva iniciativas como hortas comunitárias, treinamentos, reuso produtivo etc."></textarea>
+      <label class="text-sm font-medium text-gray-700">Evidências (imagens, vídeos ou documentos)</label>
+      <input type="file" id="arquivoEvidencias" class="campo" multiple>
+      <p class="text-xs text-gray-500 mt-1">Os arquivos serão enviados para o Google Drive configurado e vinculados ao poço.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-700">Situação hídrica</label>
+        <input id="situacaoHidrica" class="campo" placeholder="Produzindo normalmente, em análise técnica...">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-gray-700">Uso prioritário da água</label>
+        <input id="usoAgua" class="campo" placeholder="Consumo humano, irrigação, apoio à escola...">
+      </div>
     </div>
 
     <div>
-      <label>Observações gerais</label>
-      <textarea id="obs" rows="2" class="border p-2 w-full rounded"></textarea>
+      <label class="text-sm font-medium text-gray-700">Ações pós-instalação</label>
+      <textarea id="acoesPosInstalacao" rows="2" class="campo" placeholder="Capacitações, hortas comunitárias, monitoramento..."></textarea>
     </div>
 
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-      💾 Salvar Poço
-    </button>
+    <div>
+      <label class="text-sm font-medium text-gray-700">Observações gerais</label>
+      <textarea id="observacoes" rows="3" class="campo"></textarea>
+    </div>
+
+    <p id="mensagemFormulario" class="text-sm font-medium"></p>
   </form>
 
-  <!-- TABELA -->
-  <h3 class="font-semibold mb-2">Poços Cadastrados</h3>
-  <div class="overflow-x-auto">
-    <table id="tabelaPocos" class="min-w-full bg-white rounded shadow text-sm">
-      <thead class="bg-blue-100">
-        <tr>
-          <th class="p-2 text-left">Município</th>
-          <th class="p-2 text-left">Comunidade</th>
-          <th class="p-2 text-left">Estado</th>
-          <th class="p-2 text-left">Tipo</th>
-          <th class="p-2 text-left">Situação hídrica</th>
-          <th class="p-2 text-left">Beneficiários</th>
-          <th class="p-2 text-left">Status</th>
-          <th class="p-2 text-left">Responsável</th>
-          <th class="p-2 text-left">Contato instalação</th>
-          <th class="p-2 text-left">Status contato</th>
-          <th class="p-2 text-left">Próxima ação</th>
-          <th class="p-2 text-left">Último contato</th>
-          <th class="p-2 text-left">Ações pós-instalação</th>
-          <th class="p-2 text-left">Uso comunitário</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <section class="grid lg:grid-cols-12 gap-6">
+    <aside class="lg:col-span-5 space-y-3">
+      <div class="bg-white rounded-lg shadow p-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="font-semibold text-gray-800">Poços cadastrados</h3>
+          <span id="contadorPocos" class="text-sm text-gray-500"></span>
+        </div>
+        <input id="buscaPocos" class="campo" placeholder="Buscar por estado, município ou status">
+      </div>
+      <ul id="listaPocos" class="space-y-3"></ul>
+    </aside>
 
-  <div id="mensagem" class="mt-4 text-green-700 font-semibold"></div>
+    <div class="lg:col-span-7">
+      <div id="painelDetalhes" class="bg-white rounded-lg shadow p-6 hidden flex-col gap-5">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 id="detalheTitulo" class="text-xl font-semibold text-gray-900"></h3>
+              <p id="detalheLocal" class="text-sm text-gray-500"></p>
+            </div>
+            <span id="detalheStatus" class="px-3 py-1 rounded-full text-sm font-medium"></span>
+          </div>
+          <p id="detalheResumo" class="text-sm text-gray-600"></p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-3">
+          <article class="resumo-card">
+            <p class="titulo">Beneficiários</p>
+            <strong id="detalheBeneficiarios" class="valor">-</strong>
+          </article>
+          <article class="resumo-card">
+            <p class="titulo">Previsto</p>
+            <strong id="detalhePrevisto" class="valor">-</strong>
+          </article>
+          <article class="resumo-card">
+            <p class="titulo">Executado</p>
+            <strong id="detalheExecutado" class="valor">-</strong>
+          </article>
+        </div>
+
+        <section>
+          <h4 class="subtitulo">Linha do tempo do poço</h4>
+          <ol id="timelineEtapas" class="timeline"></ol>
+        </section>
+
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="subtitulo">Evidências</h4>
+            <div class="flex gap-3 text-sm">
+              <a id="linkTermo" class="link-doc" target="_blank" rel="noopener">Termo de autorização</a>
+              <a id="linkNota" class="link-doc" target="_blank" rel="noopener">Nota fiscal</a>
+            </div>
+          </div>
+          <div id="galeriaEvidencias" class="grid sm:grid-cols-2 gap-3"></div>
+        </section>
+
+        <section class="space-y-2">
+          <h4 class="subtitulo">Contatos e responsáveis</h4>
+          <ul id="listaContatos" class="space-y-2"></ul>
+        </section>
+
+        <div class="flex justify-end">
+          <button id="btnEditarPoco" class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700">Editar informações</button>
+        </div>
+      </div>
+      <div id="mensagemDetalhes" class="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+        Selecione um poço para visualizar a linha do tempo e as evidências.
+      </div>
+    </div>
+  </section>
 </div>
 
+<style>
+  .campo {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+  .campo:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+  .texto-legenda {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .resumo-card {
+    border: 1px solid #e0e7ff;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.6), rgba(191, 219, 254, 0.3));
+  }
+  .resumo-card .titulo {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1d4ed8;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .resumo-card .valor {
+    font-size: 1.2rem;
+    color: #1e3a8a;
+  }
+  .subtitulo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  .timeline {
+    position: relative;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #bfdbfe;
+  }
+  .timeline-item {
+    position: relative;
+    padding-left: 0.75rem;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.05rem;
+    top: 0.4rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background: #93c5fd;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.4);
+  }
+  .timeline-item[data-status="concluido"]::before {
+    background: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+  }
+  .timeline-item[data-status="andamento"]::before {
+    background: #facc15;
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.35);
+  }
+  .timeline-item[data-status="pendente"]::before {
+    background: #9ca3af;
+    box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.35);
+  }
+  .timeline-titulo {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1f2937;
+  }
+  .timeline-data {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+  .timeline-descricao {
+    font-size: 0.75rem;
+    color: #4b5563;
+    margin-top: 0.25rem;
+  }
+  .link-doc {
+    color: #2563eb;
+    text-decoration: none;
+  }
+  .link-doc:hover {
+    text-decoration: underline;
+  }
+</style>
+
 <script>
-const { escapeHtml } = window;
+(() => {
+  const listaPocosEl = document.getElementById('listaPocos');
+  const contadorPocosEl = document.getElementById('contadorPocos');
+  const buscaEl = document.getElementById('buscaPocos');
+  const painelDetalhes = document.getElementById('painelDetalhes');
+  const mensagemDetalhes = document.getElementById('mensagemDetalhes');
+  const timelineEl = document.getElementById('timelineEtapas');
+  const evidenciasEl = document.getElementById('galeriaEvidencias');
+  const contatosEl = document.getElementById('listaContatos');
+  const detalheTitulo = document.getElementById('detalheTitulo');
+  const detalheLocal = document.getElementById('detalheLocal');
+  const detalheResumo = document.getElementById('detalheResumo');
+  const detalheStatus = document.getElementById('detalheStatus');
+  const detalheBeneficiarios = document.getElementById('detalheBeneficiarios');
+  const detalhePrevisto = document.getElementById('detalhePrevisto');
+  const detalheExecutado = document.getElementById('detalheExecutado');
+  const linkTermo = document.getElementById('linkTermo');
+  const linkNota = document.getElementById('linkNota');
+  const btnEditar = document.getElementById('btnEditarPoco');
+  const btnLimpar = document.getElementById('btnLimparFormulario');
+  const mensagemFormulario = document.getElementById('mensagemFormulario');
+  const form = document.getElementById('formPoco');
 
-document.getElementById('formPoco').addEventListener('submit', e => {
-  e.preventDefault();
+  const hiddenId = document.getElementById('pocoId');
+  const hiddenEvidencias = document.getElementById('dadosEvidencias');
+  const hiddenTimeline = document.getElementById('dadosTimeline');
+  const hiddenTermo = document.getElementById('dadosTermo');
+  const hiddenNota = document.getElementById('dadosNota');
 
-  const data = {
-    estado: estado.value,
-    municipio: municipio.value,
-    comunidade: comunidade.value,
-    latitude: latitude.value,
-    longitude: longitude.value,
-    beneficiarios: beneficiarios.value,
-    investimento: investimento.value,
-    vazao: vazao.value,
-    profundidade: profundidade.value,
-    perfuracao: '', // opcional para preencher depois
-    instalacao: '', // idem
-    doador: doador.value,
-    status: status.value,
-    valorPerf: valorPerf.value,
-    valorInst: valorInst.value,
-    empresa: empresa.value,
-    obs: obs.value,
-    responsavelContato: responsavelContato.value,
-    contatoInstalacao: contatoInstalacao.value,
-    telefoneContato: telefoneContato.value,
-    statusContato: statusContato.value,
-    ultimoContato: ultimoContato.value,
-    proximaAcao: proximaAcao.value,
-    impactoNoStatus: impactoNoStatus.value,
-    tipoPoco: tipoPoco.value,
-    situacaoHidrica: situacaoHidrica.value,
-    usoAguaComunitario: usoAguaComunitario.value,
-    acoesPosInstalacao: acoesPosInstalacao.value
+  const campos = {
+    estado: document.getElementById('estado'),
+    municipio: document.getElementById('municipio'),
+    comunidade: document.getElementById('comunidade'),
+    regiao: document.getElementById('regiao'),
+    latitude: document.getElementById('latitude'),
+    longitude: document.getElementById('longitude'),
+    beneficiarios: document.getElementById('beneficiarios'),
+    investimento: document.getElementById('investimento'),
+    solicitante: document.getElementById('solicitante'),
+    contatoSolicitante: document.getElementById('contatoSolicitante'),
+    doadores: document.getElementById('doadores'),
+    resumoStatus: document.getElementById('resumoStatus'),
+    dataSolicitacao: document.getElementById('dataSolicitacao'),
+    dataOrcamentoPrevisto: document.getElementById('dataOrcamentoPrevisto'),
+    dataInstalacao: document.getElementById('dataInstalacao'),
+    dataConclusao: document.getElementById('dataConclusao'),
+    dataPagamento: document.getElementById('dataPagamento'),
+    orcamentoPrevisto: document.getElementById('orcamentoPrevisto'),
+    orcamentoAprovado: document.getElementById('orcamentoAprovado'),
+    orcamentoExecutado: document.getElementById('orcamentoExecutado'),
+    empresa: document.getElementById('empresa'),
+    contatoNome: document.getElementById('contatoNome'),
+    contatoTelefone: document.getElementById('contatoTelefone'),
+    contatoEmail: document.getElementById('contatoEmail'),
+    situacaoHidrica: document.getElementById('situacaoHidrica'),
+    usoAgua: document.getElementById('usoAgua'),
+    acoesPosInstalacao: document.getElementById('acoesPosInstalacao'),
+    observacoes: document.getElementById('observacoes')
   };
 
-  google.script.run.withSuccessHandler(() => {
-    mensagem.textContent = "✅ Poço salvo com sucesso!";
-    e.target.reset();
-    carregarPocos();
-  }).salvarPoco(data);
-});
+  const arquivos = {
+    termo: document.getElementById('arquivoTermo'),
+    nota: document.getElementById('arquivoNota'),
+    evidencias: document.getElementById('arquivoEvidencias')
+  };
 
-function carregarPocos() {
-  google.script.run.withSuccessHandler(pocos => {
-    const tbody = document.querySelector('#tabelaPocos tbody');
-    const formatMultiline = valor => {
-      if (!valor) return '-';
-      return escapeHtml(String(valor)).replace(/\n/g, '<br>');
-    };
-    const formatDate = valor => {
-      if (!valor) return '-';
-      const data = new Date(valor);
-      if (isNaN(data.getTime())) return '-';
-      return data.toLocaleDateString('pt-BR');
-    };
+  const STATUS_CORES = {
+    'solicitado': 'bg-orange-100 text-orange-700',
+    'orçamento previsto': 'bg-yellow-100 text-yellow-700',
+    'instalação': 'bg-blue-100 text-blue-700',
+    'concluído': 'bg-green-100 text-green-700',
+    'pago': 'bg-emerald-100 text-emerald-700'
+  };
 
-    tbody.innerHTML = pocos.map(p => `
-      <tr class="border-b hover:bg-gray-50">
-        <td class="p-2">${p['Município'] || '-'}</td>
-        <td class="p-2">${p['Comunidade'] || '-'}</td>
-        <td class="p-2">${p['Estado'] || '-'}</td>
-        <td class="p-2">${p['TipoPoco'] || '-'}</td>
-        <td class="p-2">${p['SituacaoHidrica'] || '-'}</td>
-        <td class="p-2">${p['Beneficiários'] || '-'}</td>
-        <td class="p-2">${p['Status'] || '-'}</td>
-        <td class="p-2">${p['ResponsavelContato'] || '-'}</td>
-        <td class="p-2">${p['ContatoInstalacao'] || '-'}</td>
-        <td class="p-2">${p['StatusContato'] || '-'}</td>
-        <td class="p-2">${p['ProximaAcao'] || '-'}</td>
-        <td class="p-2">${formatDate(p['UltimoContato'])}</td>
-        <td class="p-2">${formatMultiline(p['AcoesPosInstalacao'])}</td>
-        <td class="p-2">${formatMultiline(p['UsoAguaComunitario'])}</td>
-      </tr>
-    `).join('');
-  }).listarPocos();
-}
-carregarPocos();
+  let listaPocos = [];
+  let detalheAtual = null;
+
+  const formataData = (valor) => {
+    if (!valor) return '';
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return '';
+    return data.toLocaleDateString('pt-BR');
+  };
+
+  const dataParaInput = (valor) => {
+    if (!valor) return '';
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return '';
+    return data.toISOString().split('T')[0];
+  };
+
+  const formataMoeda = (valor) => {
+    const numero = Number(valor || 0);
+    return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const limparFormulario = () => {
+    form.reset();
+    hiddenId.value = '';
+    hiddenEvidencias.value = '[]';
+    hiddenTimeline.value = '[]';
+    hiddenTermo.value = '';
+    hiddenNota.value = '';
+    mensagemFormulario.textContent = '';
+    mensagemFormulario.className = 'text-sm font-medium';
+  };
+
+  const statusClasses = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-600';
+    const chave = status.toLowerCase();
+    return STATUS_CORES[chave] || 'bg-gray-100 text-gray-600';
+  };
+
+  const renderizarLista = (pocos) => {
+    contadorPocosEl.textContent = `${pocos.length} registro${pocos.length === 1 ? '' : 's'}`;
+    if (!pocos.length) {
+      listaPocosEl.innerHTML = '<li class="bg-white rounded-lg shadow p-4 text-center text-gray-500">Nenhum poço cadastrado.</li>';
+      return;
+    }
+    const html = pocos.map(p => {
+      const status = (p.Status || '').toLowerCase();
+      const local = [p['Comunidade'], p['Município'], p['Estado']].filter(Boolean).join(' • ');
+      const previsto = Number(p.OrcamentoPrevisto || p['Valor Previsto Perfuração'] || 0);
+      const executado = Number(p.OrcamentoExecutado || p['Valor Realizado'] || 0);
+      return `
+        <li class="bg-white rounded-lg shadow hover:shadow-md transition cursor-pointer border border-transparent hover:border-blue-200" data-id="${p.ID}">
+          <div class="p-4 space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h4 class="font-semibold text-gray-900">${escapeHtml(p['Comunidade'] || p['Município'] || 'Poço sem identificação')}</h4>
+                <p class="text-xs text-gray-500">${escapeHtml(local)}</p>
+              </div>
+              <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusClasses(status)}">${escapeHtml(p.Status || 'Sem status')}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+              <div>Beneficiários: <strong>${Number(p['Beneficiários'] || 0)}</strong></div>
+              <div>Executado: <strong>${formataMoeda(executado)}</strong></div>
+            </div>
+          </div>
+        </li>`;
+    }).join('');
+    listaPocosEl.innerHTML = html;
+    listaPocosEl.querySelectorAll('li').forEach(item => {
+      item.addEventListener('click', () => selecionarPoco(item.dataset.id));
+    });
+  };
+
+  const selecionarPoco = (id) => {
+    google.script.run.withSuccessHandler(detalhe => {
+      detalheAtual = detalhe;
+      preencherDetalhes();
+    }).obterRelatorioPoco(id);
+  };
+
+  const preencherDetalhes = () => {
+    if (!detalheAtual || !detalheAtual.poco) {
+      painelDetalhes.classList.add('hidden');
+      mensagemDetalhes.classList.remove('hidden');
+      return;
+    }
+    const { poco, timeline, evidencias, contatos } = detalheAtual;
+    painelDetalhes.classList.remove('hidden');
+    mensagemDetalhes.classList.add('hidden');
+
+    const nome = poco['Comunidade'] || poco['Município'] || poco['Estado'] || 'Poço sem identificação';
+    const local = [poco['Município'], poco['Estado']].filter(Boolean).join(' • ');
+    detalheTitulo.textContent = nome;
+    detalheLocal.textContent = local || 'Local não informado';
+    detalheResumo.textContent = poco.ResumoStatus || 'Sem descrição';
+    detalheStatus.textContent = poco.Status || 'Sem status';
+    detalheStatus.className = `px-3 py-1 rounded-full text-sm font-medium ${statusClasses((poco.Status || '').toLowerCase())}`;
+
+    detalheBeneficiarios.textContent = Number(poco['Beneficiários'] || 0);
+    detalhePrevisto.textContent = formataMoeda(poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração']);
+    detalheExecutado.textContent = formataMoeda(poco.OrcamentoExecutado || poco['Valor Realizado']);
+
+    const idsBase = new Set(['solicitado','orcamento','instalacao','conclusao','pagamento']);
+    const timelineExtras = (timeline || []).filter(item => item && !idsBase.has(String(item.id || '').toLowerCase()));
+    hiddenTimeline.value = JSON.stringify(timelineExtras);
+
+    timelineEl.innerHTML = (timeline || []).map(item => {
+      const status = item.status || 'pendente';
+      const data = formataData(item.data);
+      return `
+        <li class="timeline-item" data-status="${status}">
+          <div class="timeline-titulo">${escapeHtml(item.titulo || 'Etapa')}</div>
+          <div class="timeline-data">${data || 'Sem data registrada'}</div>
+          ${item.descricao ? `<p class="timeline-descricao">${escapeHtml(item.descricao)}</p>` : ''}
+        </li>`;
+    }).join('');
+
+    if (!timelineEl.innerHTML) {
+      timelineEl.innerHTML = '<li class="text-sm text-gray-500">Nenhuma etapa registrada.</li>';
+    }
+
+    const evidenciasAtuais = Array.isArray(evidencias) ? evidencias : [];
+    hiddenEvidencias.value = JSON.stringify(evidenciasAtuais);
+    evidenciasEl.innerHTML = evidenciasAtuais.length
+      ? evidenciasAtuais.map(ev => {
+          const tipo = (ev.tipo || '').toLowerCase();
+          const isImagem = tipo.includes('imagem');
+          if (isImagem) {
+            return `
+              <figure class="rounded-lg overflow-hidden border">
+                <img src="${escapeHtml(ev.url)}" alt="${escapeHtml(ev.titulo || 'Evidência do poço')}" class="w-full h-40 object-cover">
+                <figcaption class="p-2 text-xs text-gray-600">${escapeHtml(ev.titulo || 'Imagem')}</figcaption>
+              </figure>`;
+          }
+          return `
+            <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener" class="flex items-center gap-2 border rounded-lg p-3 hover:bg-gray-50">
+              <span class="material-icons text-blue-600">description</span>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">${escapeHtml(ev.titulo || 'Documento')}</p>
+                <p class="text-xs text-gray-500">${tipo || 'arquivo'}</p>
+              </div>
+            </a>`;
+        }).join('')
+      : '<p class="text-sm text-gray-500">Nenhuma evidência enviada.</p>';
+
+    linkTermo.href = poco.TermoAutorizacaoURL || '#';
+    linkTermo.classList.toggle('opacity-60', !poco.TermoAutorizacaoURL);
+    linkNota.href = poco.NotaFiscalURL || '#';
+    linkNota.classList.toggle('opacity-60', !poco.NotaFiscalURL);
+    hiddenTermo.value = poco.TermoAutorizacaoURL || '';
+    hiddenNota.value = poco.NotaFiscalURL || '';
+
+    contatosEl.innerHTML = (contatos && contatos.length)
+      ? contatos.map(contato => `
+          <li class="border border-gray-200 rounded-lg p-3">
+            <p class="text-sm font-semibold text-gray-800">${escapeHtml(contato.nome || contato.ResponsavelContato || 'Contato')}</p>
+            <p class="text-xs text-gray-500">${escapeHtml(contato.papel || contato.OrganizacaoContato || '')}</p>
+            <p class="text-xs text-gray-500">${escapeHtml(contato.telefone || contato.ContatoExterno || '')}</p>
+            <p class="text-xs text-gray-500">${escapeHtml(contato.email || '')}</p>
+          </li>`).join('')
+      : '<li class="text-sm text-gray-500">Nenhum contato estruturado.</li>';
+  };
+
+  const carregarPocos = () => {
+    google.script.run.withSuccessHandler(pocos => {
+      listaPocos = pocos;
+      const filtro = (buscaEl.value || '').toLowerCase();
+      const filtrados = filtro
+        ? pocos.filter(p => {
+            const texto = [p['Comunidade'], p['Município'], p['Estado'], p.Status, p['Região']]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
+            return texto.includes(filtro);
+          })
+        : pocos;
+      renderizarLista(filtrados);
+      if (detalheAtual && detalheAtual.poco) {
+        const existe = pocos.find(p => p.ID === detalheAtual.poco.ID);
+        if (!existe) {
+          detalheAtual = null;
+          preencherDetalhes();
+        }
+      }
+    }).listarPocos();
+  };
+
+  buscaEl.addEventListener('input', () => {
+    const filtro = buscaEl.value.toLowerCase();
+    const filtrados = listaPocos.filter(p => {
+      const texto = [p['Comunidade'], p['Município'], p['Estado'], p.Status, p['Região']]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return texto.includes(filtro);
+    });
+    renderizarLista(filtrados);
+  });
+
+  btnLimpar.addEventListener('click', limparFormulario);
+
+  btnEditar.addEventListener('click', () => {
+    if (!detalheAtual || !detalheAtual.poco) return;
+    const { poco, contatos } = detalheAtual;
+    hiddenId.value = poco.ID;
+    campos.estado.value = poco.Estado || '';
+    campos.municipio.value = poco['Município'] || '';
+    campos.comunidade.value = poco.Comunidade || '';
+    campos.regiao.value = poco['Região'] || '';
+    campos.latitude.value = poco.Latitude || '';
+    campos.longitude.value = poco.Longitude || '';
+    campos.beneficiarios.value = poco['Beneficiários'] || '';
+    campos.investimento.value = poco.Investimento || '';
+    campos.solicitante.value = poco.Solicitante || '';
+    campos.contatoSolicitante.value = poco.ContatoSolicitante || '';
+    campos.doadores.value = poco.Doadores || '';
+    campos.resumoStatus.value = poco.ResumoStatus || '';
+    campos.dataSolicitacao.value = dataParaInput(poco.DataSolicitacao);
+    campos.dataOrcamentoPrevisto.value = dataParaInput(poco.DataOrcamentoPrevisto);
+    campos.dataInstalacao.value = dataParaInput(poco.DataInstalacao);
+    campos.dataConclusao.value = dataParaInput(poco.DataConclusao);
+    campos.dataPagamento.value = dataParaInput(poco.DataPagamento);
+    campos.orcamentoPrevisto.value = poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração'] || '';
+    campos.orcamentoAprovado.value = poco.OrcamentoAprovado || '';
+    campos.orcamentoExecutado.value = poco.OrcamentoExecutado || poco['Valor Realizado'] || '';
+    campos.empresa.value = poco['Empresa Responsável'] || '';
+    campos.situacaoHidrica.value = poco.SituacaoHidrica || '';
+    campos.usoAgua.value = poco.UsoAguaComunitario || '';
+    campos.acoesPosInstalacao.value = poco.AcoesPosInstalacao || '';
+    campos.observacoes.value = poco.Observações || '';
+
+    const contatoPrincipal = Array.isArray(contatos) && contatos.length ? contatos[0] : {};
+    campos.contatoNome.value = contatoPrincipal.nome || contatoPrincipal.ResponsavelContato || '';
+    campos.contatoTelefone.value = contatoPrincipal.telefone || contatoPrincipal.ContatoExterno || '';
+    campos.contatoEmail.value = contatoPrincipal.email || '';
+
+    hiddenEvidencias.value = JSON.stringify(detalheAtual.evidencias || []);
+    hiddenTimeline.value = hiddenTimeline.value || '[]';
+    hiddenTermo.value = poco.TermoAutorizacaoURL || '';
+    hiddenNota.value = poco.NotaFiscalURL || '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  const enviarArquivo = async (file) => {
+    const reader = new FileReader();
+    const base64 = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    return new Promise(resolve => {
+      google.script.run.withSuccessHandler(url => resolve(url)).uploadFile(base64, file.name, file.type);
+    });
+  };
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    mensagemFormulario.textContent = 'Salvando informações...';
+    mensagemFormulario.className = 'text-sm font-medium text-blue-600';
+
+    try {
+      const evidenciasExistentes = JSON.parse(hiddenEvidencias.value || '[]');
+      const timelineExtras = JSON.parse(hiddenTimeline.value || '[]');
+      const novasEvidencias = [];
+
+      for (const file of arquivos.evidencias.files) {
+        const url = await enviarArquivo(file);
+        novasEvidencias.push({
+          id: `novo-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo: file.type,
+          titulo: file.name,
+          url,
+          data: new Date().toISOString()
+        });
+      }
+
+      let termoURL = hiddenTermo.value;
+      if (arquivos.termo.files.length) {
+        termoURL = await enviarArquivo(arquivos.termo.files[0]);
+      }
+      let notaURL = hiddenNota.value;
+      if (arquivos.nota.files.length) {
+        notaURL = await enviarArquivo(arquivos.nota.files[0]);
+      }
+
+      const contatos = [];
+      if (campos.contatoNome.value || campos.contatoTelefone.value || campos.contatoEmail.value) {
+        contatos.push({
+          nome: campos.contatoNome.value,
+          telefone: campos.contatoTelefone.value,
+          email: campos.contatoEmail.value,
+          papel: 'Contato principal'
+        });
+      }
+
+      const payload = {
+        estado: campos.estado.value,
+        municipio: campos.municipio.value,
+        comunidade: campos.comunidade.value,
+        regiao: campos.regiao.value,
+        latitude: campos.latitude.value,
+        longitude: campos.longitude.value,
+        beneficiarios: campos.beneficiarios.value,
+        investimento: campos.investimento.value,
+        solicitante: campos.solicitante.value,
+        contatoSolicitante: campos.contatoSolicitante.value,
+        doadores: campos.doadores.value,
+        resumoStatus: campos.resumoStatus.value,
+        dataSolicitacao: campos.dataSolicitacao.value,
+        dataOrcamentoPrevisto: campos.dataOrcamentoPrevisto.value,
+        dataInstalacao: campos.dataInstalacao.value,
+        dataConclusao: campos.dataConclusao.value,
+        dataPagamento: campos.dataPagamento.value,
+        orcamentoPrevisto: campos.orcamentoPrevisto.value,
+        orcamentoAprovado: campos.orcamentoAprovado.value,
+        orcamentoExecutado: campos.orcamentoExecutado.value,
+        empresaResponsavel: campos.empresa.value,
+        contatos,
+        evidencias: evidenciasExistentes.concat(novasEvidencias),
+        timeline: timelineExtras,
+        termoAutorizacaoURL: termoURL,
+        notaFiscalURL: notaURL,
+        situacaoHidrica: campos.situacaoHidrica.value,
+        usoAguaComunitario: campos.usoAgua.value,
+        acoesPosInstalacao: campos.acoesPosInstalacao.value,
+        observacoes: campos.observacoes.value,
+        responsavelContato: campos.contatoNome.value,
+        contatoInstalacao: campos.contatoNome.value,
+        telefoneContato: campos.contatoTelefone.value
+      };
+
+      const idExistente = hiddenId.value;
+      const onSuccess = () => {
+        mensagemFormulario.textContent = '✅ Poço salvo com sucesso!';
+        mensagemFormulario.className = 'text-sm font-medium text-green-600';
+        arquivos.termo.value = '';
+        arquivos.nota.value = '';
+        arquivos.evidencias.value = '';
+        carregarPocos();
+        if (!idExistente) {
+          limparFormulario();
+        } else {
+          selecionarPoco(idExistente);
+        }
+      };
+
+      if (idExistente) {
+        payload.id = idExistente;
+        google.script.run.withSuccessHandler(onSuccess).withFailureHandler(err => {
+          mensagemFormulario.textContent = `❌ ${err.message || 'Erro ao atualizar o poço.'}`;
+          mensagemFormulario.className = 'text-sm font-medium text-red-600';
+        }).atualizarPoco(payload);
+      } else {
+        google.script.run.withSuccessHandler(res => {
+          hiddenId.value = res.id;
+          onSuccess();
+        }).withFailureHandler(err => {
+          mensagemFormulario.textContent = `❌ ${err.message || 'Erro ao salvar o poço.'}`;
+          mensagemFormulario.className = 'text-sm font-medium text-red-600';
+        }).salvarPoco(payload);
+      }
+    } catch (error) {
+      mensagemFormulario.textContent = `❌ ${error.message || 'Erro inesperado ao salvar o poço.'}`;
+      mensagemFormulario.className = 'text-sm font-medium text-red-600';
+    }
+  });
+
+  carregarPocos();
+})();
 </script>

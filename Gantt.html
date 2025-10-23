@@ -1,62 +1,162 @@
-<div class="p-4">
-  <h2 class="text-xl font-bold mb-4">🗂️ Kanban de Acompanhamento</h2>
-  <p class="text-gray-600 mb-4">Arraste os cartões entre colunas para atualizar o status dos poços.</p>
+<div class="p-4 space-y-4">
+  <div class="flex flex-col gap-2">
+    <h2 class="text-xl font-bold text-blue-700">📅 Cronograma integrado</h2>
+    <p class="text-sm text-gray-600">Visualize a jornada de cada poço da solicitação ao pagamento final. Os percentuais consideram o orçamento executado e os marcos consolidados alimentam os relatórios e o kanban.</p>
+  </div>
 
-  <div class="grid md:grid-cols-3 gap-4" id="kanbanBoard">
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-blue-800 mb-2">Planejado</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Planejado"></div>
-    </div>
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-yellow-700 mb-2">Em execução</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Em execução"></div>
-    </div>
-    <div class="bg-gray-100 rounded-lg p-2">
-      <h3 class="font-semibold text-green-700 mb-2">Concluído</h3>
-      <div class="kanban-col min-h-[200px] bg-white p-2 rounded" data-status="Concluído"></div>
-    </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <div id="ganttContainer" style="height: 520px;"></div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-4">
+    <h3 class="text-lg font-semibold text-gray-800 mb-3">Próximas entregas</h3>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-100 text-slate-600">
+        <tr>
+          <th class="p-2 text-left">Poço</th>
+          <th class="p-2 text-left">Etapa atual</th>
+          <th class="p-2 text-left">Previsto</th>
+          <th class="p-2 text-left">Executado</th>
+          <th class="p-2 text-left">Próximo marco</th>
+        </tr>
+      </thead>
+      <tbody id="listaEntregas"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-function carregarKanban() {
-  google.script.run.withSuccessHandler(pocos => {
-    document.querySelectorAll('.kanban-col').forEach(c => c.innerHTML = '');
-    pocos.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'bg-blue-50 border rounded p-2 mb-2 cursor-grab';
-      card.draggable = true;
-      card.dataset.id = p.ID;
-      card.innerHTML = `
-        <strong>${p.Comunidade || p.Município}</strong><br>
-        <small>${p.Base || p.Estado}</small><br>
-        <small class="text-gray-500">${p.Status}</small>
-      `;
-      const col = document.querySelector(`.kanban-col[data-status="${p.Status}"]`);
-      if (col) col.appendChild(card);
-    });
-    configurarDrag();
-  }).listarPocos();
-}
+(() => {
+  const ESTAGIOS = [
+    { chave: 'solicitacao', titulo: 'Solicitação registrada' },
+    { chave: 'orcamento', titulo: 'Orçamento previsto' },
+    { chave: 'instalacao', titulo: 'Instalação' },
+    { chave: 'conclusao', titulo: 'Concluído' },
+    { chave: 'pagamento', titulo: 'Pagamento' }
+  ];
 
-function configurarDrag() {
-  document.querySelectorAll('.kanban-col').forEach(col => {
-    col.addEventListener('dragover', e => e.preventDefault());
-    col.addEventListener('drop', e => {
-      const id = e.dataTransfer.getData('id');
-      const status = col.dataset.status;
-      const card = document.querySelector(`[data-id="${id}"]`);
-      col.appendChild(card);
-      google.script.run.atualizarStatusPoco(id, status);
-    });
-  });
+  const obterPrimeiraData = (datas, chaves) => {
+    for (const chave of chaves) {
+      if (datas[chave]) return Date.parse(datas[chave]);
+    }
+    return null;
+  };
 
-  document.querySelectorAll('.kanban-col div[draggable]').forEach(card => {
-    card.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('id', card.dataset.id);
-    });
-  });
-}
+  const proximoMarco = (datas) => {
+    for (const etapa of ESTAGIOS) {
+      if (!datas[etapa.chave]) return etapa.titulo;
+    }
+    return 'Processo concluído';
+  };
 
-carregarKanban();
+  const montarGantt = (dados) => {
+    if (!window.Highcharts || !Highcharts.ganttChart) {
+      document.getElementById('ganttContainer').innerHTML = '<p class="text-center text-gray-500">Biblioteca de gráfico não carregada.</p>';
+      return;
+    }
+
+    const seriesData = [];
+
+    dados.forEach(poco => {
+      const inicio = Date.parse(poco.inicio) || Date.now();
+      const fim = Date.parse(poco.fim) || inicio + 86400000 * 7;
+      const infoBase = {
+        status: poco.status,
+        previsto: poco.previsto,
+        executado: poco.executado,
+        beneficiarios: poco.beneficiarios,
+        estado: poco.estado
+      };
+
+      seriesData.push({
+        id: poco.id,
+        name: poco.nome,
+        start: inicio,
+        end: fim,
+        completed: { amount: poco.progresso },
+        custom: infoBase
+      });
+
+      let ultimoMarco = inicio;
+      ESTAGIOS.forEach((etapa, indice) => {
+        const dataAtual = Date.parse(poco.datas[etapa.chave]);
+        let termino = dataAtual || ultimoMarco + 86400000 * (indice < 2 ? 7 : 14);
+        if (termino < ultimoMarco) termino = ultimoMarco + 86400000 * 3;
+        const concluido = Boolean(dataAtual);
+        const infoEtapa = Object.assign({}, infoBase, { status: etapa.titulo });
+        seriesData.push({
+          id: `${poco.id}-${etapa.chave}`,
+          parent: poco.id,
+          name: etapa.titulo,
+          start: ultimoMarco,
+          end: termino,
+          completed: concluido ? { amount: 1 } : { amount: 0 },
+          custom: infoEtapa
+        });
+        if (concluido) ultimoMarco = dataAtual;
+        else ultimoMarco = termino;
+      });
+    });
+
+    Highcharts.ganttChart('ganttContainer', {
+      chart: {
+        style: { fontFamily: 'Inter, sans-serif' }
+      },
+      title: { text: 'Linha do tempo dos poços' },
+      credits: { enabled: false },
+      tooltip: {
+        pointFormatter: function () {
+          const info = this.options.custom || {};
+          const previsto = info.previsto != null ? info.previsto : null;
+          const executado = info.executado != null ? info.executado : null;
+          const previstoTxt = previsto != null ? previsto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
+          const executadoTxt = executado != null ? executado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '—';
+          const beneficiarios = info.beneficiarios != null ? info.beneficiarios : '—';
+          return `<span style="font-weight:600">${this.name}</span><br>` +
+            `Status: ${info.status || '—'}<br>` +
+            `Previsto: ${previstoTxt}<br>` +
+            `Executado: ${executadoTxt}<br>` +
+            `Beneficiários: ${beneficiarios}`;
+        }
+      },
+      xAxis: {
+        currentDateIndicator: true,
+        min: Date.now() - 86400000 * 60,
+        grid: { enabled: true }
+      },
+      yAxis: {
+        type: 'category',
+        grid: { enabled: true }
+      },
+      series: [{
+        name: 'Poços',
+        data: seriesData,
+        dataLabels: {
+          enabled: true,
+          formatter: function () {
+            return this.point.parent ? '' : this.point.name;
+          }
+        }
+      }]
+    });
+
+    const corpo = document.getElementById('listaEntregas');
+    corpo.innerHTML = dados.map(poco => {
+      const proximo = proximoMarco(poco.datas);
+      return `
+        <tr class="border-b border-slate-100">
+          <td class="p-2">
+            <div class="font-semibold text-slate-800">${escapeHtml(poco.nome)}</div>
+            <div class="text-xs text-slate-500">${escapeHtml(poco.estado || '')}</div>
+          </td>
+          <td class="p-2 text-sm text-slate-600">${escapeHtml(poco.status)}</td>
+          <td class="p-2 text-sm text-slate-600">${Number(poco.previsto || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+          <td class="p-2 text-sm text-slate-600">${Number(poco.executado || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+          <td class="p-2 text-sm text-slate-600">${escapeHtml(proximo)}</td>
+        </tr>`;
+    }).join('');
+  };
+
+  google.script.run.withSuccessHandler(montarGantt).obterCronogramaPocos();
+})();
 </script>

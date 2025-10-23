@@ -326,6 +326,14 @@
     const chartsDashboard = {};
     const { escapeHtml, formatarNumero, formatarMoeda } = window;
 
+    const STATUS_CORES = {
+      'Solicitado': '#f97316',
+      'Orçamento previsto': '#facc15',
+      'Instalação': '#2563eb',
+      'Concluído': '#16a34a',
+      'Pago': '#047857'
+    };
+
     const formatarPercentual = valor => `${Number(valor || 0).toFixed(1)}%`;
 
     function criarCard(titulo, valor, detalhe) {
@@ -569,7 +577,11 @@
         tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
         series: [{
           name: 'Poços',
-          data: distStatus.map(s => ({ name: s.status, y: Number(s.total || 0) }))
+          data: distStatus.map(s => ({
+            name: s.status,
+            y: Number(s.total || 0),
+            color: STATUS_CORES[s.status] || undefined
+          }))
         }]
       });
 
