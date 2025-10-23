@@ -59,6 +59,28 @@ const COLUNAS_POCOS = [
   'GeocodificacaoTimestamp'
 ];
 
+const COLUNAS_DOADORES = [
+  'ID',
+  'Nome',
+  'Email',
+  'Telefone',
+  'TelefoneNormalizado',
+  'Observacoes',
+  'CriadoEm',
+  'AtualizadoEm',
+  'PoçosVinculados'
+];
+
+const COLUNAS_DEPOSITOS = [
+  'ID',
+  'DoadorID',
+  'Valor',
+  'DataDeposito',
+  'Metodo',
+  'Observacoes',
+  'RegistradoEm'
+];
+
 const LOG_PREFIX = '[EmpSocial]';
 
 function registrarErro_(contexto, erro) {
@@ -208,6 +230,33 @@ function normalizarNumero(valor) {
   if (typeof valor === 'number') return valor;
   if (!valor) return 0;
   return Number(String(valor).replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
+}
+
+function normalizarTelefoneTexto(valor) {
+  if (!valor) return '';
+  return String(valor).replace(/\D+/g, '');
+}
+
+function converterParaData_(valor) {
+  if (!valor && valor !== 0) return null;
+  if (valor instanceof Date) return valor;
+  if (typeof valor === 'number') {
+    const dataNumero = new Date(valor);
+    return Number.isNaN(dataNumero.getTime()) ? null : dataNumero;
+  }
+  const texto = String(valor).trim();
+  if (!texto) return null;
+  const dataPadrao = new Date(texto);
+  if (!Number.isNaN(dataPadrao.getTime())) {
+    return dataPadrao;
+  }
+  const match = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (match) {
+    const [, dia, mes, ano] = match;
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+  return null;
 }
 
 function normalizarCoordenadaGS(valor, limite, nomeCampo) {
@@ -491,12 +540,24 @@ function garantirColunas(sheet, colunasDesejadas) {
   return headers;
 }
 
+function obterOuCriarSheet_(ss, nome, colunasDesejadas) {
+  let sheet = ss.getSheetByName(nome);
+  if (!sheet) {
+    sheet = ss.insertSheet(nome);
+    sheet.appendRow(colunasDesejadas);
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  garantirColunas(sheet, colunasDesejadas);
+  return sheet;
+}
+
 // ===========================
 // INICIALIZAÇÃO DAS GUIAS
 // ===========================
 function initSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const names = ['Poços', 'Doadores', 'PrestaçãoContas'];
+  const names = ['Poços', 'Doadores', 'PrestaçãoContas', 'Depósitos'];
 
   names.forEach(name => {
     if (!ss.getSheetByName(name)) {
@@ -504,10 +565,18 @@ function initSheets() {
       if (name === 'Poços') {
         sh.appendRow(COLUNAS_POCOS);
       } else if (name === 'Doadores') {
-        sh.appendRow(['ID', 'Nome', 'Email', 'Telefone', 'ValorDoado', 'DataDoacao', 'PoçosVinculados']);
+        sh.appendRow(COLUNAS_DOADORES);
       } else if (name === 'PrestaçãoContas') {
         sh.appendRow(['PoçoID', 'Data', 'Descrição', 'Valor', 'ComprovanteURL', 'Categoria', 'RegistradoPor']);
+      } else if (name === 'Depósitos') {
+        sh.appendRow(COLUNAS_DEPOSITOS);
       }
+      sh.setFrozenRows(1);
+    } else {
+      if (name === 'Poços') garantirColunas(ss.getSheetByName(name), COLUNAS_POCOS);
+      if (name === 'Doadores') garantirColunas(ss.getSheetByName(name), COLUNAS_DOADORES);
+      if (name === 'PrestaçãoContas') garantirColunas(ss.getSheetByName(name), ['PoçoID', 'Data', 'Descrição', 'Valor', 'ComprovanteURL', 'Categoria', 'RegistradoPor']);
+      if (name === 'Depósitos') garantirColunas(ss.getSheetByName(name), COLUNAS_DEPOSITOS);
     }
   });
   return 'Guias verificadas/criadas com sucesso.';
@@ -901,12 +970,73 @@ function uploadFile(base64, nomeArquivo, mimeType) {
 // FUNÇÕES DE DOADORES
 // ===========================
 
+function carregarDoadoresComDepositos_(ss) {
+  const numero = normalizarNumero;
+  const { objetos: doadores } = obterObjetosDaAba_(ss, 'Doadores', { optional: true });
+  const { objetos: depositos } = obterObjetosDaAba_(ss, 'Depósitos', { optional: true });
+
+  const depositosPorDoador = depositos.reduce((acc, registro) => {
+    const doadorId = registro.DoadorID || registro['DoadorID'] || '';
+    if (!doadorId) return acc;
+    const valor = numero(registro.Valor || registro['Valor']);
+    const dataDeposito = converterParaData_(registro.DataDeposito || registro['DataDeposito']);
+    const registradoEm = converterParaData_(registro.RegistradoEm || registro['RegistradoEm']);
+    const item = {
+      ID: registro.ID || registro.Id || Utilities.getUuid(),
+      Valor: valor,
+      DataDeposito: dataDeposito,
+      Metodo: registro.Metodo || registro['Metodo'] || '',
+      Observacoes: registro.Observacoes || registro['Observacoes'] || '',
+      RegistradoEm: registradoEm
+    };
+    if (!acc[doadorId]) acc[doadorId] = [];
+    acc[doadorId].push(item);
+    return acc;
+  }, {});
+
+  Object.values(depositosPorDoador).forEach(lista => {
+    lista.sort((a, b) => {
+      const dataA = a.DataDeposito instanceof Date ? a.DataDeposito.getTime() : 0;
+      const dataB = b.DataDeposito instanceof Date ? b.DataDeposito.getTime() : 0;
+      return dataB - dataA;
+    });
+  });
+
+  return doadores.map(doador => {
+    const id = doador.ID || doador.Id || doador.id;
+    const depositosDoador = (id && depositosPorDoador[id]) ? depositosPorDoador[id].map(dep => Object.assign({}, dep)) : [];
+    const total = depositosDoador.reduce((acc, dep) => acc + numero(dep.Valor), 0);
+    const copia = Object.assign({}, doador);
+    copia.ValorDoado = total;
+    copia.DataDoacao = depositosDoador.length ? depositosDoador[0].DataDeposito : '';
+    copia.Depositos = depositosDoador;
+    copia.QuantidadeDepositos = depositosDoador.length;
+    return copia;
+  });
+}
+
 // Listar doadores
 function listarDoadores() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const { objetos } = obterObjetosDaAba_(ss, 'Doadores', { optional: true });
-    return objetos;
+    const doadores = carregarDoadoresComDepositos_(ss);
+    return doadores.map(d => {
+      const dataNormalizada = d.DataDoacao instanceof Date ? d.DataDoacao.toISOString() : (d.DataDoacao || '');
+      const depositos = Array.isArray(d.Depositos)
+        ? d.Depositos.map(dep => ({
+            ID: dep.ID,
+            Valor: dep.Valor,
+            DataDeposito: dep.DataDeposito instanceof Date ? dep.DataDeposito.toISOString() : (dep.DataDeposito || ''),
+            Metodo: dep.Metodo || '',
+            Observacoes: dep.Observacoes || '',
+            RegistradoEm: dep.RegistradoEm instanceof Date ? dep.RegistradoEm.toISOString() : (dep.RegistradoEm || '')
+          }))
+        : [];
+      return Object.assign({}, d, {
+        DataDoacao: dataNormalizada,
+        Depositos: depositos
+      });
+    });
   } catch (erro) {
     registrarErro_('listarDoadores', erro);
     return [];
@@ -917,30 +1047,79 @@ function listarDoadores() {
 function salvarDoador(doador) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sh = ss.getSheetByName('Doadores');
-    if (!sh) {
-      initSheets();
-      sh = ss.getSheetByName('Doadores');
-      if (!sh) {
-        throw new Error('Planilha de doadores não encontrada.');
-      }
-    }
-
+    const sh = obterOuCriarSheet_(ss, 'Doadores', COLUNAS_DOADORES);
+    const headers = garantirColunas(sh, COLUNAS_DOADORES);
     const id = Utilities.getUuid();
-    const data = [
-      id,
-      doador.nome || '',
-      doador.email || '',
-      doador.telefone || '',
-      Number(doador.valorDoado) || 0,
-      new Date(),
-      ''
-    ];
-    sh.appendRow(data);
+    const agora = new Date();
+    const linha = new Array(headers.length).fill('');
+    const atribuir = (coluna, valor) => {
+      const indice = headers.indexOf(coluna);
+      if (indice >= 0) linha[indice] = valor;
+    };
+    atribuir('ID', id);
+    atribuir('Nome', doador.nome || '');
+    atribuir('Email', doador.email || '');
+    atribuir('Telefone', doador.telefone || '');
+    atribuir('TelefoneNormalizado', normalizarTelefoneTexto(doador.telefone));
+    atribuir('Observacoes', doador.observacoes || '');
+    atribuir('CriadoEm', agora);
+    atribuir('AtualizadoEm', agora);
+    atribuir('PoçosVinculados', '');
+    sh.appendRow(linha);
     return { success: true, id };
   } catch (erro) {
     registrarErro_('salvarDoador', erro);
     return { success: false, mensagem: erro && erro.message ? erro.message : 'Erro ao salvar doador.' };
+  }
+}
+
+function registrarDeposito(registro) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const shDepositos = obterOuCriarSheet_(ss, 'Depósitos', COLUNAS_DEPOSITOS);
+    const shDoadores = obterOuCriarSheet_(ss, 'Doadores', COLUNAS_DOADORES);
+    const headersDepositos = garantirColunas(shDepositos, COLUNAS_DEPOSITOS);
+    const id = Utilities.getUuid();
+    const agora = new Date();
+    const dataDeposito = converterParaData_(registro.data || registro.dataDeposito || registro.DataDeposito) || agora;
+    const valor = normalizarNumero(registro.valor || registro.Valor);
+    if (!registro.doadorId) {
+      throw new Error('É necessário informar o doador para registrar o depósito.');
+    }
+
+    const linhaDeposito = new Array(headersDepositos.length).fill('');
+    const atribuirDeposito = (coluna, valorCelula) => {
+      const indice = headersDepositos.indexOf(coluna);
+      if (indice >= 0) linhaDeposito[indice] = valorCelula;
+    };
+    atribuirDeposito('ID', id);
+    atribuirDeposito('DoadorID', registro.doadorId);
+    atribuirDeposito('Valor', valor);
+    atribuirDeposito('DataDeposito', dataDeposito);
+    atribuirDeposito('Metodo', registro.metodo || '');
+    atribuirDeposito('Observacoes', registro.observacoes || '');
+    atribuirDeposito('RegistradoEm', agora);
+    shDepositos.appendRow(linhaDeposito);
+
+    const valoresDoadores = shDoadores.getDataRange().getValues();
+    if (valoresDoadores.length > 1) {
+      const headersDoadores = valoresDoadores.shift();
+      const idIndex = headersDoadores.indexOf('ID');
+      const atualizadoIndex = headersDoadores.indexOf('AtualizadoEm');
+      if (idIndex >= 0 && atualizadoIndex >= 0) {
+        for (let i = 0; i < valoresDoadores.length; i++) {
+          if (valoresDoadores[i][idIndex] === registro.doadorId) {
+            shDoadores.getRange(i + 2, atualizadoIndex + 1).setValue(agora);
+            break;
+          }
+        }
+      }
+    }
+
+    return { success: true, id };
+  } catch (erro) {
+    registrarErro_('registrarDeposito', erro);
+    return { success: false, mensagem: erro && erro.message ? erro.message : 'Erro ao registrar depósito.' };
   }
 }
 
@@ -1279,7 +1458,6 @@ function obterDashboardAnalitico() {
       throw new Error('Aba "Poços" não encontrada.');
     }
     const shPrest = ss.getSheetByName('PrestaçãoContas');
-    const shDoadores = ss.getSheetByName('Doadores');
     const shContatos = ss.getSheetByName('Contatos');
 
     const valoresPocos = shPocos.getDataRange().getValues();
@@ -1325,14 +1503,10 @@ function obterDashboardAnalitico() {
     }
 
     let doadores = [];
-    if (shDoadores) {
-      const valoresDoadores = shDoadores.getDataRange().getValues();
-      if (valoresDoadores.length > 1) {
-        const headersDoadores = valoresDoadores.shift();
-        doadores = valoresDoadores.map(r => Object.fromEntries(headersDoadores.map((h, i) => [h, r[i]])));
-      }
-    } else {
-      registrarErro_('obterDashboardAnalitico', new Error('Aba "Doadores" não encontrada.'));
+    try {
+      doadores = carregarDoadoresComDepositos_(ss);
+    } catch (erroDoadores) {
+      registrarErro_('obterDashboardAnalitico#doadores', erroDoadores);
     }
 
     let contatos = [];
@@ -1850,7 +2024,6 @@ function obterAnaliseImpacto() {
     if (!shPocos) {
       throw new Error('Aba "Poços" não encontrada.');
     }
-    const shDoadores = ss.getSheetByName('Doadores');
     const shContatos = ss.getSheetByName('Contatos');
 
     const valoresPocos = shPocos.getDataRange().getValues();
@@ -1880,12 +2053,10 @@ function obterAnaliseImpacto() {
     });
 
     let doadores = [];
-    if (shDoadores) {
-      const valoresDoadores = shDoadores.getDataRange().getValues();
-      if (valoresDoadores.length > 1) {
-        const headersDoadores = valoresDoadores.shift();
-        doadores = valoresDoadores.map(r => Object.fromEntries(headersDoadores.map((h, i) => [h, r[i]])));
-      }
+    try {
+      doadores = carregarDoadoresComDepositos_(ss);
+    } catch (erroDoadores) {
+      registrarErro_('obterAnaliseImpacto#doadores', erroDoadores);
     }
 
     let contatos = [];
