@@ -2,9 +2,8 @@ function criarBaseDeDados() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const abas = {
     "Poços": COLUNAS_POCOS,
-    "Doadores": [
-      'ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados'
-    ],
+    "Doadores": COLUNAS_DOADORES,
+    "Depósitos": COLUNAS_DEPOSITOS,
     "PrestaçãoContas": [
       'PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor'
     ],
@@ -53,6 +52,7 @@ function popularDadosDeExemplo() {
   const shPrest = ss.getSheetByName('PrestaçãoContas');
   const shContatos = ss.getSheetByName('Contatos');
   const shEmpresas = ss.getSheetByName('Empresas');
+  const shDepositos = ss.getSheetByName('Depósitos');
 
   const resetSheet = (sheet, headers) => {
     if (!sheet) return;
@@ -71,7 +71,8 @@ function popularDadosDeExemplo() {
   });
 
   resetSheet(shPocos, COLUNAS_POCOS);
-  resetSheet(shDoadores, ['ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados']);
+  resetSheet(shDoadores, COLUNAS_DOADORES);
+  resetSheet(shDepositos, COLUNAS_DEPOSITOS);
   resetSheet(shPrest, ['PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor']);
   resetSheet(shContatos, ['ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato','Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor']);
   resetSheet(shEmpresas, ['ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações']);
@@ -342,10 +343,128 @@ function popularDadosDeExemplo() {
     shPocos.appendRow(linha);
   });
 
-  shDoadores.appendRow([doador1,'Fundação Esperança','contato@fundesperanca.org','(11) 3000-0000',250000,new Date('2024-04-10'),`${idPoco1}`]);
-  shDoadores.appendRow([doador2,'Igreja Luz Viva','doacoes@igrejaluzi.org','(31) 3555-5555',180000,new Date('2024-04-22'),`${idPoco1},${idPoco2}`]);
-  shDoadores.appendRow([doador3,'Instituto Água Viva','parcerias@aguaviva.org','(21) 3666-6677',150000,new Date('2024-05-12'),`${idPoco3}`]);
-  shDoadores.appendRow([doador4,'Cooperativa Sementes do Bem','relacionamento@sementesdobem.coop','(62) 3777-8899',95000,new Date('2024-05-18'),`${idPoco1},${idPoco4}`]);
+  const doadoresExemplo = [
+    {
+      ID: doador1,
+      Nome: 'Fundação Esperança',
+      Email: 'contato@fundesperanca.org',
+      Telefone: '(11) 3000-0000',
+      TelefoneNormalizado: normalizarTelefone('(11) 3000-0000'),
+      Observacoes: 'Programa Água para o Sertão com foco em comunidades rurais.',
+      CriadoEm: new Date('2024-03-10'),
+      AtualizadoEm: new Date('2024-06-01'),
+      'PoçosVinculados': `${idPoco1}`
+    },
+    {
+      ID: doador2,
+      Nome: 'Igreja Luz Viva',
+      Email: 'doacoes@igrejaluzi.org',
+      Telefone: '(31) 3555-5555',
+      TelefoneNormalizado: normalizarTelefone('(31) 3555-5555'),
+      Observacoes: 'Campanha anual de missões e apoio a perfurações.',
+      CriadoEm: new Date('2024-03-22'),
+      AtualizadoEm: new Date('2024-05-28'),
+      'PoçosVinculados': `${idPoco1},${idPoco2}`
+    },
+    {
+      ID: doador3,
+      Nome: 'Instituto Água Viva',
+      Email: 'parcerias@aguaviva.org',
+      Telefone: '(21) 3666-6677',
+      TelefoneNormalizado: normalizarTelefone('(21) 3666-6677'),
+      Observacoes: 'Investimento social privado em inovação hídrica.',
+      CriadoEm: new Date('2024-04-05'),
+      AtualizadoEm: new Date('2024-05-20'),
+      'PoçosVinculados': `${idPoco3}`
+    },
+    {
+      ID: doador4,
+      Nome: 'Cooperativa Sementes do Bem',
+      Email: 'relacionamento@sementesdobem.coop',
+      Telefone: '(62) 3777-8899',
+      TelefoneNormalizado: normalizarTelefone('(62) 3777-8899'),
+      Observacoes: 'Produtores solidários financiando água para o semiárido.',
+      CriadoEm: new Date('2024-04-18'),
+      AtualizadoEm: new Date('2024-05-30'),
+      'PoçosVinculados': `${idPoco1},${idPoco4}`
+    }
+  ];
+
+  doadoresExemplo.forEach(doador => {
+    const linha = COLUNAS_DOADORES.map(coluna => doador[coluna] !== undefined ? doador[coluna] : '');
+    shDoadores.appendRow(linha);
+  });
+
+  const depositosExemplo = [
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador1,
+      Valor: 100000,
+      DataDeposito: new Date('2024-03-20'),
+      Metodo: 'PIX',
+      Observacoes: 'Entrada do projeto Comunidade Vida',
+      RegistradoEm: new Date('2024-03-20')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador1,
+      Valor: 150000,
+      DataDeposito: new Date('2024-04-10'),
+      Metodo: 'TED',
+      Observacoes: 'Complemento para instalação',
+      RegistradoEm: new Date('2024-04-10')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador2,
+      Valor: 90000,
+      DataDeposito: new Date('2024-04-22'),
+      Metodo: 'Transferência',
+      Observacoes: 'Campanha Luz Viva 2024',
+      RegistradoEm: new Date('2024-04-22')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador2,
+      Valor: 90000,
+      DataDeposito: new Date('2024-05-18'),
+      Metodo: 'Transferência',
+      Observacoes: 'Complemento para Assentamento Paz',
+      RegistradoEm: new Date('2024-05-18')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador3,
+      Valor: 150000,
+      DataDeposito: new Date('2024-05-12'),
+      Metodo: 'PIX corporativo',
+      Observacoes: 'Projeto Vila Esperança',
+      RegistradoEm: new Date('2024-05-12')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador4,
+      Valor: 55000,
+      DataDeposito: new Date('2024-05-18'),
+      Metodo: 'PIX',
+      Observacoes: 'Campanha cooperada - primeira parcela',
+      RegistradoEm: new Date('2024-05-18')
+    },
+    {
+      ID: Utilities.getUuid(),
+      DoadorID: doador4,
+      Valor: 40000,
+      DataDeposito: new Date('2024-05-30'),
+      Metodo: 'Boleto',
+      Observacoes: 'Complemento após assembleia',
+      RegistradoEm: new Date('2024-05-30')
+    }
+  ];
+
+  depositosExemplo.forEach(deposito => {
+    const linha = COLUNAS_DEPOSITOS.map(coluna => deposito[coluna] !== undefined ? deposito[coluna] : '');
+    shDepositos.appendRow(linha);
+  });
 
   shPrest.appendRow([idPoco1,new Date('2024-04-25'),'Topografia e mobilização inicial',22000,'','Perfuração','Maria Silva']);
   shPrest.appendRow([idPoco1,new Date('2024-05-01'),'Compra de tubos e bombas',35000,'','Perfuração','Maria Silva']);
