@@ -44,6 +44,7 @@ const COLUNAS_POCOS = [
   'ResponsavelContato',
   'ContatoInstalacao',
   'TelefoneContato',
+  'TelefoneContatoNormalizado',
   'StatusContato',
   'ProximaAcao',
   'UltimoContato',
@@ -51,7 +52,11 @@ const COLUNAS_POCOS = [
   'TipoPoco',
   'SituacaoHidrica',
   'AcoesPosInstalacao',
-  'UsoAguaComunitario'
+  'UsoAguaComunitario',
+  'GeocodificacaoFonte',
+  'GeocodificacaoPrecisao',
+  'GeocodificacaoStatus',
+  'GeocodificacaoTimestamp'
 ];
 
 // ===========================
@@ -73,6 +78,52 @@ function normalizarNumero(valor) {
   if (typeof valor === 'number') return valor;
   if (!valor) return 0;
   return Number(String(valor).replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
+}
+
+function normalizarCoordenadaGS(valor, limite, nomeCampo) {
+  if (valor === undefined || valor === null) return '';
+  if (valor instanceof Date) return '';
+  const texto = typeof valor === 'number' ? valor.toString() : String(valor).trim();
+  if (!texto) return '';
+  const numero = Number(texto.replace(/\s+/g, '').replace(',', '.'));
+  if (!Number.isFinite(numero)) {
+    throw new Error(`Valor de ${nomeCampo} inválido.`);
+  }
+  if (numero < -limite || numero > limite) {
+    const nome = nomeCampo.charAt(0).toUpperCase() + nomeCampo.slice(1);
+    throw new Error(`${nome} deve estar entre ${-limite} e ${limite}.`);
+  }
+  return Number(numero.toFixed(6));
+}
+
+function prepararGeocodificacaoRegistro(geocodificacao, coordenadasInformadas, agora) {
+  if (!coordenadasInformadas) {
+    return { fonte: '', precisao: '', status: 'Sem coordenadas', timestamp: '' };
+  }
+
+  const dados = geocodificacao || {};
+  const statusInformado = dados.status || dados.Status || '';
+  const sucesso = dados.sucesso === true || String(statusInformado).toUpperCase() === 'OK';
+  if (!sucesso) {
+    throw new Error('A geocodificação das coordenadas é obrigatória antes de salvar.');
+  }
+
+  let timestamp = dados.timestamp || dados.Timestamp || '';
+  if (timestamp) {
+    if (!(timestamp instanceof Date)) {
+      const data = new Date(timestamp);
+      timestamp = Number.isNaN(data.getTime()) ? agora : data;
+    }
+  } else {
+    timestamp = agora;
+  }
+
+  return {
+    fonte: dados.fonte || dados.Fonte || '',
+    precisao: dados.precisao || dados.Precisao || '',
+    status: statusInformado || 'OK',
+    timestamp
+  };
 }
 
 function extrairDataDeTexto(texto) {
@@ -422,14 +473,19 @@ function salvarPoco(poco) {
   const evidencias = Array.isArray(poco.evidencias) ? poco.evidencias : [];
   const extrasTimeline = Array.isArray(poco.timeline) ? poco.timeline : [];
 
+  const latitudeNormalizada = normalizarCoordenadaGS(poco.latitude, 90, 'latitude');
+  const longitudeNormalizada = normalizarCoordenadaGS(poco.longitude, 180, 'longitude');
+  const coordenadasInformadas = latitudeNormalizada !== '' && longitudeNormalizada !== '';
+  const geocodificacaoDados = prepararGeocodificacaoRegistro(poco.geocodificacao, coordenadasInformadas, agora);
+
   const registro = {
     ID: id,
     Estado: poco.estado || '',
     Município: poco.municipio || '',
     Comunidade: poco.comunidade || '',
     Região: poco.regiao || '',
-    Latitude: poco.latitude || '',
-    Longitude: poco.longitude || '',
+    Latitude: coordenadasInformadas ? latitudeNormalizada : '',
+    Longitude: coordenadasInformadas ? longitudeNormalizada : '',
     Beneficiários: Number(poco.beneficiarios) || 0,
     Investimento: Number(poco.investimento) || 0,
     'Vazão (L/H)': poco.vazao || '',
@@ -462,6 +518,7 @@ function salvarPoco(poco) {
     ResponsavelContato: poco.responsavelContato || '',
     ContatoInstalacao: poco.contatoInstalacao || '',
     TelefoneContato: poco.telefoneContato || '',
+    TelefoneContatoNormalizado: poco.telefoneContatoNormalizado || '',
     StatusContato: poco.statusContato || '',
     ProximaAcao: poco.proximaAcao || '',
     UltimoContato: converterParaData(poco.ultimoContato) || '',
@@ -469,7 +526,11 @@ function salvarPoco(poco) {
     TipoPoco: poco.tipoPoco || '',
     SituacaoHidrica: poco.situacaoHidrica || '',
     AcoesPosInstalacao: poco.acoesPosInstalacao || '',
-    UsoAguaComunitario: poco.usoAguaComunitario || ''
+    UsoAguaComunitario: poco.usoAguaComunitario || '',
+    GeocodificacaoFonte: geocodificacaoDados.fonte || '',
+    GeocodificacaoPrecisao: geocodificacaoDados.precisao || '',
+    GeocodificacaoStatus: geocodificacaoDados.status || (coordenadasInformadas ? 'OK' : 'Sem coordenadas'),
+    GeocodificacaoTimestamp: geocodificacaoDados.timestamp || ''
   };
 
   registro.Status = determinarStatusProcessual(registro);
@@ -517,14 +578,46 @@ function atualizarPoco(poco) {
   const evidencias = Array.isArray(poco.evidencias) ? poco.evidencias : atualMapeado.Evidencias;
   const extrasTimeline = Array.isArray(poco.timeline) ? poco.timeline : (registroAtual.LinhaDoTempoJSON ? parseJSONSeguro(registroAtual.LinhaDoTempoJSON, []) : []);
 
+  const latitudeAtual = normalizarCoordenadaGS(registroAtual.Latitude, 90, 'latitude');
+  const longitudeAtual = normalizarCoordenadaGS(registroAtual.Longitude, 180, 'longitude');
+  const latitudeNova = poco.latitude !== undefined ? normalizarCoordenadaGS(poco.latitude, 90, 'latitude') : latitudeAtual;
+  const longitudeNova = poco.longitude !== undefined ? normalizarCoordenadaGS(poco.longitude, 180, 'longitude') : longitudeAtual;
+  const coordenadasInformadas = latitudeNova !== '' && longitudeNova !== '';
+  const coordenadasAlteradas = (poco.latitude !== undefined && latitudeNova !== latitudeAtual) || (poco.longitude !== undefined && longitudeNova !== longitudeAtual);
+  const geocodeAnteriorOk = String(registroAtual.GeocodificacaoStatus || '').toUpperCase() === 'OK';
+
+  let geocodificacaoDados;
+  if (coordenadasInformadas) {
+    if (poco.geocodificacao) {
+      geocodificacaoDados = prepararGeocodificacaoRegistro(poco.geocodificacao, true, agora);
+    } else if (coordenadasAlteradas) {
+      throw new Error('As coordenadas informadas precisam ser validadas com geocodificação antes de salvar.');
+    } else {
+      let timestampGeo = registroAtual.GeocodificacaoTimestamp || '';
+      if (timestampGeo && !(timestampGeo instanceof Date)) {
+        const dataGeo = new Date(timestampGeo);
+        timestampGeo = Number.isNaN(dataGeo.getTime()) ? agora : dataGeo;
+      }
+      const statusAnterior = registroAtual.GeocodificacaoStatus || '';
+      geocodificacaoDados = {
+        fonte: registroAtual.GeocodificacaoFonte || '',
+        precisao: registroAtual.GeocodificacaoPrecisao || '',
+        status: statusAnterior || (geocodeAnteriorOk ? 'OK' : 'Pendente'),
+        timestamp: timestampGeo || ''
+      };
+    }
+  } else {
+    geocodificacaoDados = { fonte: '', precisao: '', status: 'Sem coordenadas', timestamp: '' };
+  }
+
   const registro = {
     ID: registroAtual.ID,
     Estado: poco.estado !== undefined ? poco.estado : registroAtual.Estado,
     Município: poco.municipio !== undefined ? poco.municipio : registroAtual['Município'],
     Comunidade: poco.comunidade !== undefined ? poco.comunidade : registroAtual.Comunidade,
     Região: poco.regiao !== undefined ? poco.regiao : (registroAtual['Região'] || ''),
-    Latitude: poco.latitude !== undefined ? poco.latitude : registroAtual.Latitude,
-    Longitude: poco.longitude !== undefined ? poco.longitude : registroAtual.Longitude,
+    Latitude: latitudeNova,
+    Longitude: longitudeNova,
     Beneficiários: poco.beneficiarios !== undefined ? Number(poco.beneficiarios) || 0 : (Number(registroAtual['Beneficiários']) || 0),
     Investimento: poco.investimento !== undefined ? Number(poco.investimento) || 0 : (Number(registroAtual.Investimento) || 0),
     'Vazão (L/H)': poco.vazao !== undefined ? poco.vazao : registroAtual['Vazão (L/H)'],
@@ -557,6 +650,7 @@ function atualizarPoco(poco) {
     ResponsavelContato: poco.responsavelContato !== undefined ? poco.responsavelContato : (registroAtual.ResponsavelContato || ''),
     ContatoInstalacao: poco.contatoInstalacao !== undefined ? poco.contatoInstalacao : (registroAtual.ContatoInstalacao || ''),
     TelefoneContato: poco.telefoneContato !== undefined ? poco.telefoneContato : (registroAtual.TelefoneContato || ''),
+    TelefoneContatoNormalizado: poco.telefoneContatoNormalizado !== undefined ? poco.telefoneContatoNormalizado : (registroAtual.TelefoneContatoNormalizado || ''),
     StatusContato: poco.statusContato !== undefined ? poco.statusContato : (registroAtual.StatusContato || ''),
     ProximaAcao: poco.proximaAcao !== undefined ? poco.proximaAcao : (registroAtual.ProximaAcao || ''),
     UltimoContato: poco.ultimoContato !== undefined ? converterParaData(poco.ultimoContato) || '' : converterParaData(registroAtual.UltimoContato) || '',
@@ -564,7 +658,11 @@ function atualizarPoco(poco) {
     TipoPoco: poco.tipoPoco !== undefined ? poco.tipoPoco : (registroAtual.TipoPoco || ''),
     SituacaoHidrica: poco.situacaoHidrica !== undefined ? poco.situacaoHidrica : (registroAtual.SituacaoHidrica || ''),
     AcoesPosInstalacao: poco.acoesPosInstalacao !== undefined ? poco.acoesPosInstalacao : (registroAtual.AcoesPosInstalacao || ''),
-    UsoAguaComunitario: poco.usoAguaComunitario !== undefined ? poco.usoAguaComunitario : (registroAtual.UsoAguaComunitario || '')
+    UsoAguaComunitario: poco.usoAguaComunitario !== undefined ? poco.usoAguaComunitario : (registroAtual.UsoAguaComunitario || ''),
+    GeocodificacaoFonte: geocodificacaoDados.fonte || '',
+    GeocodificacaoPrecisao: geocodificacaoDados.precisao || '',
+    GeocodificacaoStatus: geocodificacaoDados.status || (coordenadasInformadas ? 'OK' : 'Sem coordenadas'),
+    GeocodificacaoTimestamp: geocodificacaoDados.timestamp || ''
   };
 
   registro.Status = determinarStatusProcessual(registro);
@@ -574,6 +672,52 @@ function atualizarPoco(poco) {
   const data = COLUNAS_POCOS.map(coluna => registro[coluna] === undefined ? '' : registro[coluna]);
   sh.getRange(rowIndex, 1, 1, COLUNAS_POCOS.length).setValues([data]);
   return { success: true, id: poco.id };
+}
+
+function geocodificarCoordenadas(lat, lon) {
+  try {
+    const latitude = normalizarCoordenadaGS(lat, 90, 'latitude');
+    const longitude = normalizarCoordenadaGS(lon, 180, 'longitude');
+    if (latitude === '' || longitude === '') {
+      return { sucesso: false, mensagem: 'Informe latitude e longitude válidas.' };
+    }
+
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=10&accept-language=pt-BR&addressdetails=1`;
+    const response = UrlFetchApp.fetch(url, {
+      method: 'get',
+      muteHttpExceptions: true,
+      headers: {
+        'User-Agent': 'EmpSocialGeocoder/1.0 (contato@empsocial.org)'
+      }
+    });
+
+    const statusCode = response.getResponseCode();
+    if (statusCode !== 200) {
+      return { sucesso: false, mensagem: `Serviço de geocodificação indisponível (${statusCode}).` };
+    }
+
+    const payload = JSON.parse(response.getContentText() || '{}');
+    const address = payload.address || {};
+    const estado = address.state || address.region || '';
+    const municipio = address.city || address.town || address.village || address.municipality || address.county || '';
+    if (!estado && !municipio) {
+      return { sucesso: false, mensagem: 'Não foi possível identificar estado ou município para essas coordenadas.' };
+    }
+
+    return {
+      sucesso: true,
+      estado,
+      municipio,
+      cidade: municipio,
+      fonte: 'Nominatim',
+      precisao: payload.type || '',
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      displayName: payload.display_name || ''
+    };
+  } catch (error) {
+    return { sucesso: false, mensagem: error.message || 'Falha ao processar a geocodificação.' };
+  }
 }
 
 // Upload de arquivo (imagem, pdf etc.)
