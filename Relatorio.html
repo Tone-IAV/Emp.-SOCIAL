@@ -18,7 +18,7 @@
 
   <!-- GRÁFICO -->
   <div class="bg-white p-4 rounded shadow mb-6">
-    <canvas id="graficoPoco" height="120"></canvas>
+    <div id="graficoPoco" style="min-height:220px;"></div>
   </div>
 
   <!-- TABELA -->
@@ -37,7 +37,6 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
@@ -109,18 +108,30 @@ function carregarRelatorio(id) {
       : '<tr><td colspan="4" class="text-center p-3 text-gray-500">Nenhuma despesa registrada</td></tr>';
 
     // Atualiza gráfico
-    const ctx = document.getElementById('graficoPoco');
+    if (!window.Highcharts) return;
     if (grafico) grafico.destroy();
-    grafico = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Valor Realizado', 'Saldo Restante'],
-        datasets: [{
-          data: [valorRealizado, saldo],
-          backgroundColor: ['#3b82f6', '#93c5fd']
-        }]
+    const saldoPositivo = saldo > 0 ? saldo : 0;
+    const excedente = saldo < 0 ? Math.abs(saldo) : 0;
+    const serie = [
+      { name: 'Valor realizado', y: valorRealizado }
+    ];
+    if (saldoPositivo > 0) serie.push({ name: 'Saldo restante', y: saldoPositivo });
+    if (excedente > 0) serie.push({ name: 'Excedente executado', y: excedente });
+
+    grafico = Highcharts.chart('graficoPoco', {
+      chart: { type: 'pie' },
+      title: { text: null },
+      credits: { enabled: false },
+      plotOptions: {
+        pie: {
+          innerSize: '60%',
+          dataLabels: { format: '{point.name}: <b>{point.percentage:.1f}%</b>' }
+        }
       },
-      options: { plugins: { legend: { position: 'bottom' } } }
+      series: [{
+        name: 'Investimento',
+        data: serie
+      }]
     });
   }).obterRelatorioPoco(id);
 }

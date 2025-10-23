@@ -84,6 +84,31 @@
       text-align: left;
       vertical-align: top;
     }
+    .chart-box { min-height: 240px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .toggle-card {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: none;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.85rem;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .toggle-card:hover { background: #dbeafe; transform: translateY(-1px); }
+    .collapsible {
+      overflow: hidden;
+      transition: max-height .3s ease, opacity .3s ease;
+      max-height: 1600px;
+      opacity: 1;
+    }
+    .collapsible.collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -173,28 +198,32 @@
   <div class="grid gap-4 md:grid-cols-2">
     <div class="dash-card">
       <h3 class="dashboard-section-title">Distribuição dos poços por status</h3>
-      <canvas id="graficoStatus" height="220"></canvas>
+      <div id="graficoStatus" class="chart-box"></div>
     </div>
     <div class="dash-card">
       <h3 class="dashboard-section-title">Pipeline de contatos de instalação</h3>
-      <canvas id="graficoPipeline" height="220"></canvas>
+      <div id="graficoPipeline" class="chart-box"></div>
     </div>
   </div>
 
   <div class="grid gap-4 md:grid-cols-2">
     <div class="dash-card">
       <h3 class="dashboard-section-title">Investimentos previstos x realizados</h3>
-      <canvas id="graficoFinanceiro" height="220"></canvas>
+      <div id="graficoFinanceiro" class="chart-box"></div>
     </div>
     <div class="dash-card">
       <h3 class="dashboard-section-title">Beneficiários por estado</h3>
-      <canvas id="graficoBeneficiarios" height="220"></canvas>
+      <div id="graficoBeneficiarios" class="chart-box"></div>
     </div>
   </div>
 
   <div class="grid gap-4 md:grid-cols-2">
-    <div class="dash-card">
+  <div class="dash-card">
+    <div class="card-header">
       <h3 class="dashboard-section-title">Doadores em destaque</h3>
+      <button class="toggle-card" data-target="blocoDoadores" data-start="collapsed">Mostrar detalhes</button>
+    </div>
+    <div id="blocoDoadores" class="collapsible collapsed">
       <div class="overflow-x-auto">
         <table class="table-dashboard" id="tabelaDoadoresDestaque">
           <thead>
@@ -209,69 +238,89 @@
         </table>
       </div>
     </div>
+  </div>
     <div class="dash-card">
-      <h3 class="dashboard-section-title">Alertas operacionais</h3>
-      <div class="overflow-x-auto">
-        <table class="table-dashboard" id="tabelaAlertas">
-          <thead>
-            <tr>
-              <th>Poço</th>
-              <th>Motivo</th>
-              <th>Responsável</th>
-              <th>Próxima ação</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="card-header">
+        <h3 class="dashboard-section-title">Alertas operacionais</h3>
+        <button class="toggle-card" data-target="blocoAlertas" data-start="expanded">Ocultar detalhes</button>
+      </div>
+      <div id="blocoAlertas" class="collapsible">
+        <div class="overflow-x-auto">
+          <table class="table-dashboard" id="tabelaAlertas">
+            <thead>
+              <tr>
+                <th>Poço</th>
+                <th>Motivo</th>
+                <th>Responsável</th>
+                <th>Próxima ação</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="grid gap-4 md:grid-cols-2">
     <div class="dash-card">
-      <h3 class="dashboard-section-title">Próximas ações críticas</h3>
-      <div class="overflow-x-auto">
-        <table class="table-dashboard" id="tabelaProximasAcoes">
-          <thead>
-            <tr>
-              <th>Poço / Localidade</th>
-              <th>Responsável</th>
-              <th>Próxima ação</th>
-              <th>Contato</th>
-              <th>Último contato</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="card-header">
+        <h3 class="dashboard-section-title">Próximas ações críticas</h3>
+        <button class="toggle-card" data-target="blocoAcoes" data-start="collapsed">Mostrar detalhes</button>
+      </div>
+      <div id="blocoAcoes" class="collapsible collapsed">
+        <div class="overflow-x-auto">
+          <table class="table-dashboard" id="tabelaProximasAcoes">
+            <thead>
+              <tr>
+                <th>Poço / Localidade</th>
+                <th>Responsável</th>
+                <th>Próxima ação</th>
+                <th>Contato</th>
+                <th>Último contato</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="dash-card">
-      <h3 class="dashboard-section-title">Últimos contatos registrados</h3>
-      <div class="overflow-x-auto">
-        <table class="table-dashboard" id="tabelaUltimosContatos">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Poço</th>
-              <th>Contato</th>
-              <th>Responsável</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="card-header">
+        <h3 class="dashboard-section-title">Últimos contatos registrados</h3>
+        <button class="toggle-card" data-target="blocoContatos" data-start="collapsed">Mostrar detalhes</button>
+      </div>
+      <div id="blocoContatos" class="collapsible collapsed">
+        <div class="overflow-x-auto">
+          <table class="table-dashboard" id="tabelaUltimosContatos">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Poço</th>
+                <th>Contato</th>
+                <th>Responsável</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="dash-card">
-    <h3 class="dashboard-section-title">Gastos por categoria de prestação de contas</h3>
-    <canvas id="graficoGastos" height="240"></canvas>
+    <div class="card-header">
+      <h3 class="dashboard-section-title">Gastos por categoria de prestação de contas</h3>
+      <button class="toggle-card" data-target="blocoGastos" data-start="expanded">Ocultar detalhes</button>
+    </div>
+    <div id="blocoGastos" class="collapsible">
+      <div id="graficoGastos" class="chart-box"></div>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   (() => {
     const chartsDashboard = {};
@@ -309,6 +358,7 @@
 
     function renderTabela(elementId, linhas, template, colunas = 5) {
       const corpo = document.querySelector(`#${elementId} tbody`);
+      if (!corpo) return;
       if (!linhas || !linhas.length) {
         corpo.innerHTML = `<tr><td colspan="${colunas}" class="empty-state">Sem registros até o momento.</td></tr>`;
         return;
@@ -316,11 +366,129 @@
       corpo.innerHTML = linhas.map(template).join('');
     }
 
-    function renderChart(id, config) {
-      if (chartsDashboard[id]) chartsDashboard[id].destroy();
-      const ctx = document.getElementById(id);
-      if (!ctx) return;
-      chartsDashboard[id] = new Chart(ctx, config);
+    function atualizarTextoBotao(botao, collapsed) {
+      botao.textContent = collapsed ? 'Mostrar detalhes' : 'Ocultar detalhes';
+    }
+
+    function inicializarToggles() {
+      document.querySelectorAll('.toggle-card').forEach(botao => {
+        const target = document.getElementById(botao.dataset.target);
+        if (!target) return;
+        const startCollapsed = botao.dataset.start === 'collapsed';
+        target.classList.toggle('collapsed', startCollapsed);
+        atualizarTextoBotao(botao, target.classList.contains('collapsed'));
+        botao.addEventListener('click', () => {
+          const collapsed = target.classList.toggle('collapsed');
+          atualizarTextoBotao(botao, collapsed);
+        });
+      });
+    }
+
+    inicializarToggles();
+
+    function renderChart(id, customOptions) {
+      if (!window.Highcharts) return;
+      const container = document.getElementById(id);
+      if (!container) return;
+      if (chartsDashboard[id]) {
+        chartsDashboard[id].destroy();
+      }
+      chartsDashboard[id] = Highcharts.chart(id, Highcharts.merge({
+        title: { text: null },
+        credits: { enabled: false },
+        legend: { align: 'center', verticalAlign: 'bottom' }
+      }, customOptions));
+    }
+
+    const mapaEstadosKeys = {
+      AC: 'br-ac', AL: 'br-al', AM: 'br-am', AP: 'br-ap', BA: 'br-ba', CE: 'br-ce', DF: 'br-df', ES: 'br-es', GO: 'br-go',
+      MA: 'br-ma', MT: 'br-mt', MS: 'br-ms', MG: 'br-mg', PA: 'br-pa', PB: 'br-pb', PR: 'br-pr', PE: 'br-pe', PI: 'br-pi',
+      RJ: 'br-rj', RN: 'br-rn', RO: 'br-ro', RR: 'br-rr', RS: 'br-rs', SC: 'br-sc', SE: 'br-se', SP: 'br-sp', TO: 'br-to'
+    };
+
+    function prepararMapa(dados) {
+      window.__dadosDashboard = dados;
+      window.renderMapaDistribuicao = containerId => {
+        if (!window.Highcharts) return;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const serie = (dados.porEstado || [])
+          .map(item => {
+            const key = mapaEstadosKeys[item.estado];
+            if (!key) return null;
+            return {
+              'hc-key': key,
+              value: Number(item.beneficiarios || 0),
+              pocos: Number(item.pocos || 0),
+              beneficiarios: Number(item.beneficiarios || 0)
+            };
+          })
+          .filter(Boolean);
+
+        if (!serie.length) {
+          serie.push({ 'hc-key': 'br-sp', value: 0, pocos: 0, beneficiarios: 0 });
+        }
+
+        const desenhar = geojson => {
+          if (window.__mapChart) {
+            window.__mapChart.update({ chart: { map: geojson } }, false);
+            window.__mapChart.series[0].setData(serie, true);
+            window.__mapChart.reflow();
+            return;
+          }
+          window.__mapChart = Highcharts.mapChart(containerId, {
+            chart: { map: geojson, backgroundColor: '#f8fafc' },
+            title: { text: null },
+            credits: { enabled: false },
+            mapNavigation: { enabled: true, enableMouseWheelZoom: false },
+            colorAxis: {
+              min: 0,
+              stops: [
+                [0, '#dbeafe'],
+                [0.5, '#60a5fa'],
+                [1, '#1d4ed8']
+              ]
+            },
+            legend: {
+              layout: 'horizontal',
+              align: 'center',
+              verticalAlign: 'bottom',
+              backgroundColor: 'rgba(255,255,255,0.85)'
+            },
+            tooltip: {
+              useHTML: true,
+              pointFormatter() {
+                const pocos = Highcharts.numberFormat(this.pocos || 0, 0, ',', '.');
+                const beneficiarios = Highcharts.numberFormat(this.beneficiarios || 0, 0, ',', '.');
+                return `<strong>${this.name}</strong><br/>Poços monitorados: ${pocos}<br/>Beneficiários: ${beneficiarios}`;
+              }
+            },
+            series: [{
+              type: 'map',
+              data: serie,
+              joinBy: 'hc-key',
+              name: 'Beneficiários atendidos',
+              states: { hover: { color: '#1d4ed8' } },
+              dataLabels: {
+                enabled: true,
+                format: '{point.properties.postal-code}',
+                style: { fontWeight: '600', color: '#0f172a' }
+              }
+            }]
+          });
+          window.__mapChart.reflow();
+        };
+
+        if (window.__mapaBrasilGeojson) {
+          desenhar(window.__mapaBrasilGeojson);
+        } else {
+          Highcharts.getJSON('https://code.highcharts.com/mapdata/countries/br/br-all.topo.json', geojson => {
+            window.__mapaBrasilGeojson = geojson;
+            desenhar(geojson);
+          });
+        }
+      };
     }
 
     function renderDashboard(dados) {
@@ -375,119 +543,94 @@
         criarCard('Valor realizado', formatarMoeda(totais.investimentoRealizado || 0), `Gap atual ${formatarMoeda(totais.gapFinanceiro || 0)}`)
       ].join('');
 
-      const coresBase = ['#1d4ed8', '#38bdf8', '#2563eb', '#0ea5e9', '#3b82f6', '#0284c7'];
-
       const distStatus = dados.distribuicaoStatus || [];
       renderChart('graficoStatus', {
-        type: 'doughnut',
-        data: {
-          labels: distStatus.map(s => s.status),
-          datasets: [{
-            data: distStatus.map(s => s.total),
-            backgroundColor: coresBase,
-            borderWidth: 0
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { position: 'bottom' }
+        chart: { type: 'pie' },
+        plotOptions: {
+          pie: {
+            innerSize: '60%',
+            dataLabels: { format: '{point.name}: <b>{point.y}</b>' }
           }
-        }
+        },
+        tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
+        series: [{
+          name: 'Poços',
+          data: distStatus.map(s => ({ name: s.status, y: Number(s.total || 0) }))
+        }]
       });
 
       const pipeline = dados.pipelineContatos || [];
       renderChart('graficoPipeline', {
-        type: 'bar',
-        data: {
-          labels: pipeline.map(p => p.status),
-          datasets: [{
-            label: 'Poços',
-            data: pipeline.map(p => p.total),
-            backgroundColor: '#1d4ed8',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
+        chart: { type: 'column' },
+        xAxis: { categories: pipeline.map(p => p.status), crosshair: true },
+        yAxis: { min: 0, title: { text: 'Poços' } },
+        tooltip: { pointFormat: '<b>{point.y}</b> poços' },
+        plotOptions: { column: { borderRadius: 6, pointPadding: 0.12, groupPadding: 0.1 } },
+        legend: { enabled: false },
+        series: [{ name: 'Poços', data: pipeline.map(p => Number(p.total || 0)) }]
       });
 
       renderChart('graficoFinanceiro', {
-        type: 'bar',
-        data: {
-          labels: ['Previsto', 'Planejado', 'Realizado'],
-          datasets: [{
-            label: 'R$ (milhares)',
-            data: [totais.investimentoPrevisto || 0, totais.investimentoPlanejado || 0, totais.investimentoRealizado || 0],
-            backgroundColor: ['#2563eb', '#3b82f6', '#1d4ed8'],
-            borderRadius: 10
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: valor => `R$ ${(valor / 1000).toLocaleString('pt-BR')}k`
-              }
+        chart: { type: 'column' },
+        xAxis: { categories: ['Previsto', 'Planejado', 'Realizado'] },
+        yAxis: {
+          min: 0,
+          title: { text: 'Investimento (R$)' },
+          labels: {
+            formatter() {
+              return `R$ ${(this.value / 1000).toLocaleString('pt-BR')}k`;
             }
           }
-        }
+        },
+        legend: { enabled: false },
+        tooltip: {
+          pointFormatter() {
+            return `<span style="color:${this.color}">●</span> ${this.category}: <b>${formatarMoeda(this.y)}</b>`;
+          }
+        },
+        plotOptions: { column: { borderRadius: 8, pointPadding: 0.15 } },
+        series: [{
+          name: 'Investimentos',
+          data: [
+            Number(totais.investimentoPrevisto || 0),
+            Number(totais.investimentoPlanejado || 0),
+            Number(totais.investimentoRealizado || 0)
+          ]
+        }]
       });
 
       const estados = dados.porEstado || [];
       renderChart('graficoBeneficiarios', {
-        type: 'horizontalBar' in Chart.controllers ? 'horizontalBar' : 'bar',
-        data: {
-          labels: estados.map(e => e.estado),
-          datasets: [{
-            label: 'Beneficiários',
-            data: estados.map(e => e.beneficiarios),
-            backgroundColor: '#38bdf8',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true }
-          }
-        }
+        chart: { type: 'bar' },
+        xAxis: { categories: estados.map(e => e.estado), title: { text: null } },
+        yAxis: { min: 0, title: { text: 'Beneficiários' } },
+        legend: { enabled: false },
+        tooltip: { pointFormat: '<b>{point.y}</b> beneficiários' },
+        plotOptions: { bar: { borderRadius: 6 } },
+        series: [{ name: 'Beneficiários', data: estados.map(e => Number(e.beneficiarios || 0)) }]
       });
 
       const gastos = dados.gastosPorCategoria || [];
       renderChart('graficoGastos', {
-        type: 'bar',
-        data: {
-          labels: gastos.map(g => g.categoria),
-          datasets: [{
-            label: 'Valor gasto',
-            data: gastos.map(g => g.valor),
-            backgroundColor: '#0ea5e9',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${formatarMoeda(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: valor => formatarMoeda(valor)
-              }
+        chart: { type: 'column' },
+        xAxis: { categories: gastos.map(g => g.categoria), title: { text: null } },
+        yAxis: {
+          min: 0,
+          title: { text: 'Valor gasto (R$)' },
+          labels: {
+            formatter() {
+              return formatarMoeda(this.value);
             }
           }
-        }
+        },
+        legend: { enabled: false },
+        tooltip: {
+          pointFormatter() {
+            return `<span style="color:${this.color}">●</span> ${this.category}: <b>${formatarMoeda(this.y)}</b>`;
+          }
+        },
+        plotOptions: { column: { borderRadius: 8, pointPadding: 0.1 } },
+        series: [{ name: 'Prestação', data: gastos.map(g => Number(g.valor || 0)) }]
       });
 
       renderTabela('tabelaDoadoresDestaque', dados.doadoresDestaque, item => {
@@ -582,6 +725,7 @@
           </tr>
         `;
       }, 5);
+      prepararMapa(dados);
     }
 
     google.script.run.withSuccessHandler(renderDashboard).obterDashboardAnalitico();

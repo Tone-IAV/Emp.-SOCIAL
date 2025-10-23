@@ -187,8 +187,9 @@ function salvarDoador(doador) {
     doador.nome || '',
     doador.email || '',
     doador.telefone || '',
-    doador.valorDoado || '',
-    new Date()
+    Number(doador.valorDoado) || 0,
+    new Date(),
+    ''
   ];
   sh.appendRow(data);
   return { success: true, id };
@@ -251,10 +252,12 @@ function salvarPrestacao(despesa) {
   const sh = ss.getSheetByName('PrestaçãoContas');
   const row = [
     despesa.pocoId,
-    despesa.data,
-    despesa.descricao,
-    despesa.valor,
-    despesa.comprovanteURL
+    despesa.data ? new Date(despesa.data) : new Date(),
+    despesa.descricao || '',
+    Number(despesa.valor) || 0,
+    despesa.comprovanteURL || '',
+    despesa.categoria || '',
+    despesa.registradoPor || ''
   ];
   sh.appendRow(row);
 

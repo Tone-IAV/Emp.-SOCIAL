@@ -54,20 +54,19 @@ function popularDadosDeExemplo() {
   const shContatos = ss.getSheetByName('Contatos');
   const shEmpresas = ss.getSheetByName('Empresas');
 
-  [shPocos, shDoadores, shPrest, shContatos, shEmpresas].forEach(sh => {
-    if (sh) sh.clearContents();
-  });
+  const resetSheet = (sheet, headers) => {
+    if (!sheet) return;
+    sheet.clearContents();
+    sheet.appendRow(headers);
+    sheet.setFrozenRows(1);
+  };
 
-  shPocos.appendRow(COLUNAS_POCOS);
+  resetSheet(shPocos, COLUNAS_POCOS);
+  resetSheet(shDoadores, ['ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados']);
+  resetSheet(shPrest, ['PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor']);
+  resetSheet(shContatos, ['ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato','Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor']);
+  resetSheet(shEmpresas, ['ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações']);
 
-  shDoadores.appendRow(['ID','Nome','Email','Telefone','ValorDoado','DataDoacao','PoçosVinculados']);
-  shPrest.appendRow(['PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor']);
-  shContatos.appendRow(['ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato','Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor']);
-  if (shEmpresas) {
-    shEmpresas.appendRow(['ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações']);
-  }
-
-  const hoje = new Date();
   const idPoco1 = Utilities.getUuid();
   const idPoco2 = Utilities.getUuid();
   const idPoco3 = Utilities.getUuid();
