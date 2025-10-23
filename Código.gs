@@ -975,7 +975,7 @@ function carregarDoadoresComDepositos_(ss) {
   const { objetos: doadores } = obterObjetosDaAba_(ss, 'Doadores', { optional: true });
   const { objetos: depositos } = obterObjetosDaAba_(ss, 'Depósitos', { optional: true });
 
-  const depositosPorDoador = depositos.reduce((acc, registro) => {
+  const depositosPorDoador = (Array.isArray(depositos) ? depositos : []).reduce((acc, registro) => {
     const doadorId = registro.DoadorID || registro['DoadorID'] || '';
     if (!doadorId) return acc;
     const valor = numero(registro.Valor || registro['Valor']);
