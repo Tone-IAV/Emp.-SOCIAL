@@ -176,19 +176,38 @@
 
     const overlay = document.getElementById('painelMapa');
     const btnInfo = document.getElementById('btnInfoMapa');
-    const fechar = overlay.querySelector('.map-close');
+    const fechar = overlay ? overlay.querySelector('.map-close') : null;
 
-    const fecharOverlay = () => overlay.classList.remove('visible');
-    btnInfo.addEventListener('click', () => {
-      overlay.classList.add('visible');
-      if (typeof window.renderMapaDistribuicao === 'function') {
-        window.renderMapaDistribuicao('mapaEstados');
+    const fecharOverlay = () => {
+      if (overlay) {
+        overlay.classList.remove('visible');
       }
-    });
-    fechar.addEventListener('click', fecharOverlay);
-    overlay.addEventListener('click', evt => {
-      if (evt.target === overlay) fecharOverlay();
-    });
+    };
+
+    if (!overlay || !btnInfo || !fechar) {
+      console.warn('Painel do mapa não foi inicializado corretamente. Verifique se os elementos necessários estão presentes.');
+    } else {
+      btnInfo.addEventListener('click', () => {
+        overlay.classList.add('visible');
+        if (typeof window.renderMapaDistribuicao === 'function') {
+          window.renderMapaDistribuicao('mapaEstados');
+        } else {
+          console.warn('Função "renderMapaDistribuicao" não encontrada. Certifique-se de carregá-la antes de abrir o painel.');
+        }
+      });
+
+      fechar.addEventListener('click', fecharOverlay);
+
+      overlay.addEventListener('click', evt => {
+        if (evt.target === overlay) fecharOverlay();
+      });
+
+      document.addEventListener('keydown', evt => {
+        if (evt.key === 'Escape' && overlay.classList.contains('visible')) {
+          fecharOverlay();
+        }
+      });
+    }
   </script>
 </body>
 </html>
