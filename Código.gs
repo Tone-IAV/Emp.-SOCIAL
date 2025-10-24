@@ -13,6 +13,7 @@ const COLUNAS_POCOS = [
   'Latitude',
   'Longitude',
   'Beneficiários',
+  'DistanciaEnergia',
   'Investimento',
   'Vazão (L/H)',
   'Profundidade (m)',
@@ -725,6 +726,9 @@ function salvarPoco(poco) {
       Latitude: coordenadasInformadas ? latitudeNormalizada : '',
       Longitude: coordenadasInformadas ? longitudeNormalizada : '',
       Beneficiários: Number(poco.beneficiarios) || 0,
+      DistanciaEnergia: (poco.distanciaEnergia === '' || poco.distanciaEnergia === null || poco.distanciaEnergia === undefined)
+        ? ''
+        : Number(poco.distanciaEnergia) || 0,
       Investimento: Number(poco.investimento) || 0,
       'Vazão (L/H)': poco.vazao || '',
       'Profundidade (m)': poco.profundidade || '',
@@ -871,6 +875,9 @@ function atualizarPoco(poco) {
       Latitude: latitudeNova,
       Longitude: longitudeNova,
       Beneficiários: poco.beneficiarios !== undefined ? Number(poco.beneficiarios) || 0 : (Number(registroAtual['Beneficiários']) || 0),
+      DistanciaEnergia: poco.distanciaEnergia !== undefined
+        ? (poco.distanciaEnergia === '' ? '' : Number(poco.distanciaEnergia) || 0)
+        : (registroAtual.DistanciaEnergia !== undefined ? registroAtual.DistanciaEnergia : ''),
       Investimento: poco.investimento !== undefined ? Number(poco.investimento) || 0 : (Number(registroAtual.Investimento) || 0),
       'Vazão (L/H)': poco.vazao !== undefined ? poco.vazao : registroAtual['Vazão (L/H)'],
       'Profundidade (m)': poco.profundidade !== undefined ? poco.profundidade : registroAtual['Profundidade (m)'],

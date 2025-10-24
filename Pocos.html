@@ -1,10 +1,20 @@
 <div class="space-y-6">
-  <header class="bg-white rounded-lg shadow p-5 flex flex-col gap-2">
-    <h2 class="text-xl font-semibold text-blue-700">💧 Jornada completa dos poços</h2>
-    <p class="text-sm text-gray-600">Centralize as informações desde a solicitação regional até o pagamento final. Anexe evidências, acompanhe a linha do tempo e mantenha os dados financeiros alinhados com doadores e fornecedores.</p>
-  </header>
+  <section class="grid gap-6 xl:grid-cols-12">
+    <header class="bg-white rounded-lg shadow p-6 space-y-4 xl:col-span-7">
+      <div class="space-y-2">
+        <p class="etapa-legenda text-blue-600">Fluxo completo</p>
+        <h2 class="text-2xl font-semibold text-blue-700">💧 Jornada enxuta dos poços artesianos</h2>
+        <p class="text-sm text-gray-600">Simplificamos o caminho desde o pedido do líder de base até a operação do poço. Cadastre, analise e acompanhe cada etapa sem perder os indicadores essenciais.</p>
+      </div>
+      <ol id="etapasFluxo" class="etapas-fluxo"></ol>
+    </header>
+    <aside class="painel-indicadores xl:col-span-5">
+      <h3 class="painel-indicadores__titulo">Indicadores do pipeline</h3>
+      <dl id="indicadoresFluxo" class="indicadores-fluxo"></dl>
+    </aside>
+  </section>
 
-  <form id="formPoco" class="bg-white rounded-lg shadow p-5 space-y-4">
+  <form id="formPoco" class="bg-white rounded-lg shadow p-6 space-y-6">
     <input type="hidden" id="pocoId">
     <input type="hidden" id="dadosEvidencias">
     <input type="hidden" id="dadosTimeline">
@@ -12,7 +22,10 @@
     <input type="hidden" id="dadosNota">
 
     <div class="flex items-center justify-between flex-wrap gap-3">
-      <h3 class="font-semibold text-lg text-gray-800">📋 Cadastro e atualização</h3>
+      <div>
+        <p class="etapa-legenda text-blue-600">Formulário unificado</p>
+        <h3 class="font-semibold text-lg text-gray-800">Cadastro e atualização do poço</h3>
+      </div>
       <div class="flex gap-3">
         <button type="button" id="btnLimparFormulario" class="px-4 py-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">Limpar</button>
         <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700">Salvar informações</button>
@@ -22,177 +35,246 @@
     <datalist id="listaEstados"></datalist>
     <datalist id="listaMunicipios"></datalist>
 
-    <div class="grid md:grid-cols-4 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Estado</label>
-        <input id="estado" class="campo" required list="listaEstados" autocomplete="address-level1" placeholder="Digite a sigla ou nome do estado">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Município</label>
-        <input id="municipio" class="campo" required list="listaMunicipios" autocomplete="address-level2" placeholder="Selecione o município">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Comunidade / Nome do poço</label>
-        <input id="comunidade" class="campo" placeholder="Ex.: Comunidade Vida">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Região</label>
-        <input id="regiao" class="campo" placeholder="Ex.: Sertão dos Inhamuns">
-      </div>
-    </div>
-
-    <div class="md:col-span-4 text-xs text-gray-500" id="feedbackMunicipio"></div>
-
-    <div class="grid md:grid-cols-4 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Latitude</label>
-        <input id="latitude" class="campo" placeholder="-5.167" inputmode="decimal" autocomplete="off">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Longitude</label>
-        <input id="longitude" class="campo" placeholder="-40.656" inputmode="decimal" autocomplete="off">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Beneficiários estimados</label>
-        <input id="beneficiarios" type="text" inputmode="numeric" class="campo" placeholder="0" autocomplete="off">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Empresa responsável</label>
-        <input id="empresa" class="campo" placeholder="Fornecedor responsável">
-      </div>
-    </div>
-
-    <div class="md:col-span-4 text-xs text-gray-500" id="feedbackCoordenadas"></div>
-
-    <div class="space-y-2">
-      <label class="text-sm font-medium text-gray-700">Localização no mapa</label>
-      <div id="mapaCoordenadas" class="mapa-coordenadas"></div>
-      <p class="text-xs text-gray-500">Clique ou arraste o marcador para preencher latitude e longitude automaticamente.</p>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Solicitante / líder local</label>
-        <input id="solicitante" class="campo" placeholder="Nome da pessoa referência">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Contato do solicitante</label>
-        <input id="contatoSolicitante" class="campo" placeholder="E-mail, telefone ou WhatsApp">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Doadores vinculados</label>
-        <input id="doadores" class="campo" placeholder="IDs ou nomes separados por vírgula">
-      </div>
-    </div>
-
-    <div>
-      <label class="text-sm font-medium text-gray-700">Resumo da situação</label>
-      <textarea id="resumoStatus" rows="2" class="campo" placeholder="Explique em poucas linhas em que etapa o poço está"></textarea>
-    </div>
-
-    <fieldset class="border border-blue-100 rounded-lg p-4">
-      <legend class="px-2 text-blue-700 font-semibold">Datas do processo</legend>
-      <div class="grid md:grid-cols-5 gap-4">
+    <section class="etapa-card">
+      <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <label class="texto-legenda">Solicitação</label>
-          <input type="date" id="dataSolicitacao" class="campo">
+          <p class="etapa-legenda">Passo 1</p>
+          <h4 class="etapa-titulo">Solicitação do líder de base</h4>
+          <p class="etapa-descricao">Peça que a pessoa em campo informe apenas o essencial. O sistema completa o restante automaticamente.</p>
+        </div>
+        <button type="button" id="btnCapturarLocalizacao" class="botao-localizacao">Capturar localização agora</button>
+      </div>
+
+      <p id="feedbackLocalizacaoSimplificada" class="feedback-simplificado">Use o botão acima quando estiver no local do poço para preencher a posição automaticamente.</p>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="text-sm font-medium text-gray-700">Comunidade / ponto do poço</label>
+          <input id="comunidade" class="campo" placeholder="Ex.: Comunidade Vida" autocomplete="organization">
         </div>
         <div>
-          <label class="texto-legenda">Orçamento previsto</label>
-          <input type="date" id="dataOrcamentoPrevisto" class="campo">
+          <label class="text-sm font-medium text-gray-700">Líder local</label>
+          <input id="solicitante" class="campo" placeholder="Nome de quem fez o pedido">
         </div>
         <div>
-          <label class="texto-legenda">Instalação</label>
-          <input type="date" id="dataInstalacao" class="campo">
+          <label class="text-sm font-medium text-gray-700">Contato do líder</label>
+          <input id="contatoSolicitante" class="campo" placeholder="Telefone ou WhatsApp">
         </div>
         <div>
-          <label class="texto-legenda">Conclusão</label>
-          <input type="date" id="dataConclusao" class="campo">
+          <label class="text-sm font-medium text-gray-700">Distância até energia (m)</label>
+          <input id="distanciaEnergia" class="campo" inputmode="decimal" autocomplete="off" placeholder="0">
         </div>
+        <div class="md:col-span-3">
+          <label class="text-sm font-medium text-gray-700">Resumo rápido da necessidade</label>
+          <textarea id="resumoStatus" rows="2" class="campo" placeholder="Em poucas palavras, descreva o cenário da comunidade."></textarea>
+        </div>
+        <div class="md:col-span-3">
+          <label class="text-sm font-medium text-gray-700">Evidências iniciais (foto, vídeo ou documento)</label>
+          <input type="file" id="arquivoEvidencias" class="campo" multiple>
+          <p class="texto-apoio">Você pode anexar imagens tiradas pelo celular ou outros arquivos que ajudem na análise.</p>
+        </div>
+      </div>
+
+      <div class="localizacao-resumo" id="resumoLocalizacao">
         <div>
-          <label class="texto-legenda">Pagamento</label>
-          <input type="date" id="dataPagamento" class="campo">
+          <p class="localizacao-label">Endereço estimado</p>
+          <p id="resumoLocalizacaoEndereco" class="localizacao-valor">Aguardando localização</p>
+        </div>
+        <div class="localizacao-coords">
+          <span>Lat: <strong id="resumoLocalizacaoLatitude">-</strong></span>
+          <span>Lon: <strong id="resumoLocalizacaoLongitude">-</strong></span>
         </div>
       </div>
-    </fieldset>
+    </section>
 
-    <fieldset class="border border-blue-100 rounded-lg p-4">
-      <legend class="px-2 text-blue-700 font-semibold">Orçamento</legend>
-      <div class="grid md:grid-cols-4 gap-4">
+    <section class="etapa-card etapa-card--localizacao">
+      <div class="space-y-4">
+        <div class="grid md:grid-cols-4 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Estado</label>
+            <input id="estado" class="campo" required list="listaEstados" autocomplete="address-level1" placeholder="Selecione ou deixe o sistema preencher">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Município</label>
+            <input id="municipio" class="campo" required list="listaMunicipios" autocomplete="address-level2" placeholder="Selecione o município">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Região</label>
+            <input id="regiao" class="campo" placeholder="Ex.: Sertão dos Inhamuns">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Doadores vinculados</label>
+            <input id="doadores" class="campo" placeholder="IDs ou nomes separados por vírgula">
+          </div>
+        </div>
+
+        <div class="md:col-span-4 text-xs text-gray-500" id="feedbackMunicipio"></div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Latitude</label>
+            <input id="latitude" class="campo" placeholder="-5.167000" inputmode="decimal" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Longitude</label>
+            <input id="longitude" class="campo" placeholder="-40.656000" inputmode="decimal" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Beneficiários estimados</label>
+            <input id="beneficiarios" type="text" inputmode="numeric" class="campo" placeholder="0" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Empresa responsável</label>
+            <input id="empresa" class="campo" placeholder="Fornecedor responsável">
+          </div>
+        </div>
+
+        <div class="md:col-span-4 text-xs text-gray-500" id="feedbackCoordenadas"></div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-gray-700">Localização no mapa</label>
+          <div id="mapaCoordenadas" class="mapa-coordenadas"></div>
+          <p class="text-xs text-gray-500">Clique ou arraste o marcador para ajustar a posição manualmente, se necessário.</p>
+        </div>
+      </div>
+    </section>
+
+    <details class="etapa-card etapa-card--detalhes" open>
+      <summary class="etapa-detalhes__summary">
+        <span>
+          <p class="etapa-legenda">Passo 3</p>
+          <h4 class="etapa-titulo">Completar dados operacionais e financeiros</h4>
+        </span>
+        <span class="etapa-detalhes__icone" aria-hidden="true"></span>
+      </summary>
+      <div class="space-y-4 mt-4">
+        <fieldset class="border border-blue-100 rounded-lg p-4">
+          <legend class="px-2 text-blue-700 font-semibold">Datas do processo</legend>
+          <div class="grid md:grid-cols-5 gap-4">
+            <div>
+              <label class="texto-legenda">Solicitação</label>
+              <input type="date" id="dataSolicitacao" class="campo">
+            </div>
+            <div>
+              <label class="texto-legenda">Orçamento previsto</label>
+              <input type="date" id="dataOrcamentoPrevisto" class="campo">
+            </div>
+            <div>
+              <label class="texto-legenda">Instalação</label>
+              <input type="date" id="dataInstalacao" class="campo">
+            </div>
+            <div>
+              <label class="texto-legenda">Conclusão</label>
+              <input type="date" id="dataConclusao" class="campo">
+            </div>
+            <div>
+              <label class="texto-legenda">Pagamento</label>
+              <input type="date" id="dataPagamento" class="campo">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="border border-blue-100 rounded-lg p-4">
+          <legend class="px-2 text-blue-700 font-semibold">Orçamento</legend>
+          <div class="grid md:grid-cols-4 gap-4">
+            <div>
+              <label class="texto-legenda">Previsto (R$)</label>
+              <input type="text" id="orcamentoPrevisto" class="campo" inputmode="decimal" autocomplete="off">
+            </div>
+            <div>
+              <label class="texto-legenda">Aprovado (R$)</label>
+              <input type="text" id="orcamentoAprovado" class="campo" inputmode="decimal" autocomplete="off">
+            </div>
+            <div>
+              <label class="texto-legenda">Executado (R$)</label>
+              <input type="text" id="orcamentoExecutado" class="campo" inputmode="decimal" autocomplete="off">
+            </div>
+            <div>
+              <label class="texto-legenda">Investimento previsto em planilha (R$)</label>
+              <input type="text" id="investimento" class="campo" inputmode="decimal" autocomplete="off">
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Contato principal</label>
+            <input id="contatoNome" class="campo" placeholder="Nome do responsável">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
+            <input id="contatoTelefone" class="campo" placeholder="(00) 90000-0000" inputmode="tel" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">E-mail</label>
+            <input id="contatoEmail" class="campo" placeholder="contato@email.com">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Termo de autorização (PDF ou imagem)</label>
+            <input type="file" id="arquivoTermo" accept=".pdf,image/*" class="campo">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Nota fiscal (PDF ou imagem)</label>
+            <input type="file" id="arquivoNota" accept=".pdf,image/*" class="campo">
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Situação hídrica</label>
+            <input id="situacaoHidrica" class="campo" placeholder="Produzindo normalmente, em análise técnica...">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Uso prioritário da água</label>
+            <input id="usoAgua" class="campo" placeholder="Consumo humano, irrigação, apoio à escola...">
+          </div>
+        </div>
+
         <div>
-          <label class="texto-legenda">Previsto (R$)</label>
-          <input type="text" id="orcamentoPrevisto" class="campo" inputmode="decimal" autocomplete="off">
+          <label class="text-sm font-medium text-gray-700">Ações pós-instalação</label>
+          <textarea id="acoesPosInstalacao" rows="2" class="campo" placeholder="Capacitações, hortas comunitárias, monitoramento..."></textarea>
         </div>
+
         <div>
-          <label class="texto-legenda">Aprovado (R$)</label>
-          <input type="text" id="orcamentoAprovado" class="campo" inputmode="decimal" autocomplete="off">
-        </div>
-        <div>
-          <label class="texto-legenda">Executado (R$)</label>
-          <input type="text" id="orcamentoExecutado" class="campo" inputmode="decimal" autocomplete="off">
-        </div>
-        <div>
-          <label class="texto-legenda">Investimento previsto em planilha (R$)</label>
-          <input type="text" id="investimento" class="campo" inputmode="decimal" autocomplete="off">
+          <label class="text-sm font-medium text-gray-700">Observações gerais</label>
+          <textarea id="observacoes" rows="3" class="campo" placeholder="Registre aprendizados, pendências ou alertas."></textarea>
         </div>
       </div>
-    </fieldset>
-
-    <div class="grid md:grid-cols-3 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Contato principal</label>
-        <input id="contatoNome" class="campo" placeholder="Nome do responsável">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
-        <input id="contatoTelefone" class="campo" placeholder="(00) 90000-0000" inputmode="tel" autocomplete="off">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">E-mail</label>
-        <input id="contatoEmail" class="campo" placeholder="contato@email.com">
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Termo de autorização (PDF ou imagem)</label>
-        <input type="file" id="arquivoTermo" accept=".pdf,image/*" class="campo">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Nota fiscal (PDF ou imagem)</label>
-        <input type="file" id="arquivoNota" accept=".pdf,image/*" class="campo">
-      </div>
-    </div>
-
-    <div>
-      <label class="text-sm font-medium text-gray-700">Evidências (imagens, vídeos ou documentos)</label>
-      <input type="file" id="arquivoEvidencias" class="campo" multiple>
-      <p class="text-xs text-gray-500 mt-1">Os arquivos serão enviados para o Google Drive configurado e vinculados ao poço.</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-sm font-medium text-gray-700">Situação hídrica</label>
-        <input id="situacaoHidrica" class="campo" placeholder="Produzindo normalmente, em análise técnica...">
-      </div>
-      <div>
-        <label class="text-sm font-medium text-gray-700">Uso prioritário da água</label>
-        <input id="usoAgua" class="campo" placeholder="Consumo humano, irrigação, apoio à escola...">
-      </div>
-    </div>
-
-    <div>
-      <label class="text-sm font-medium text-gray-700">Ações pós-instalação</label>
-      <textarea id="acoesPosInstalacao" rows="2" class="campo" placeholder="Capacitações, hortas comunitárias, monitoramento..."></textarea>
-    </div>
-
-    <div>
-      <label class="text-sm font-medium text-gray-700">Observações gerais</label>
-      <textarea id="observacoes" rows="3" class="campo"></textarea>
-    </div>
+    </details>
 
     <p id="mensagemFormulario" class="text-sm font-medium"></p>
   </form>
+
+  <section class="bg-white rounded-lg shadow p-6 space-y-4">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">Planilhas e etapas operacionais</h3>
+        <p class="text-sm text-gray-600">Clique em uma etapa para ver os registros correspondentes e os dados consolidados.</p>
+      </div>
+    </div>
+    <div id="listaPlanilhasOperacionais" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+  </section>
+
+  <div id="painelPlanilhaDetalhes" class="planilha-detalhes hidden" role="dialog" aria-modal="true" aria-labelledby="planilhaTitulo">
+    <div class="planilha-detalhes__content">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h4 id="planilhaTitulo" class="text-lg font-semibold text-gray-900"></h4>
+          <p id="planilhaResumo" class="text-sm text-gray-600"></p>
+        </div>
+        <button type="button" id="btnFecharPlanilha" class="btn-fechar-planilha" aria-label="Fechar detalhes">Fechar</button>
+      </div>
+      <div id="planilhaLista" class="planilha-detalhes__lista space-y-3 mt-4"></div>
+    </div>
+  </div>
+
+  <section class="bg-white rounded-lg shadow p-5 flex flex-col gap-2">
+    <h3 class="text-lg font-semibold text-gray-800">Painel de solicitações</h3>
+    <p class="text-sm text-gray-600">Acompanhe o andamento das solicitações, orçamentos, viabilidades e execuções em tempo real.</p>
+  </section>
 
   <section class="grid lg:grid-cols-12 gap-6">
     <aside class="lg:col-span-5 space-y-3">
@@ -220,7 +302,7 @@
           <p id="detalheResumo" class="text-sm text-gray-600"></p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-3">
+        <div class="grid md:grid-cols-4 gap-3">
           <article class="resumo-card">
             <p class="titulo">Beneficiários</p>
             <strong id="detalheBeneficiarios" class="valor">-</strong>
@@ -232,6 +314,11 @@
           <article class="resumo-card">
             <p class="titulo">Executado</p>
             <strong id="detalheExecutado" class="valor">-</strong>
+          </article>
+          <article class="resumo-card">
+            <p class="titulo">Energia</p>
+            <strong id="detalheDistanciaEnergia" class="valor">-</strong>
+            <p class="texto-apoio mt-1">Distância até o ponto de energia (m)</p>
           </article>
         </div>
 
@@ -268,6 +355,290 @@
 </div>
 
 <style>
+  .etapa-legenda {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2563eb;
+  }
+  .etapa-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  .etapa-descricao {
+    font-size: 0.9rem;
+    color: #475569;
+  }
+  .etapa-card {
+    border: 1px solid #e0f2fe;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.35), rgba(191, 219, 254, 0.15));
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .etapa-card--localizacao {
+    background: linear-gradient(135deg, rgba(191, 219, 254, 0.3), rgba(125, 211, 252, 0.18));
+  }
+  .etapa-card--detalhes {
+    background: #f8fafc;
+    border-style: dashed;
+  }
+  .botao-localizacao {
+    background: #1d4ed8;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    padding: 0.55rem 1.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .botao-localizacao:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.2);
+  }
+  .feedback-simplificado {
+    font-size: 0.85rem;
+    color: #475569;
+    background: rgba(219, 234, 254, 0.45);
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid transparent;
+  }
+  .feedback-simplificado--sucesso {
+    color: #166534;
+    background: rgba(187, 247, 208, 0.65);
+    border-color: rgba(22, 101, 52, 0.35);
+  }
+  .feedback-simplificado--erro {
+    color: #b91c1c;
+    background: rgba(254, 226, 226, 0.65);
+    border-color: rgba(185, 28, 28, 0.35);
+  }
+  .feedback-simplificado--info {
+    color: #1d4ed8;
+    background: rgba(219, 234, 254, 0.65);
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+  .feedback-simplificado--neutro {
+    color: #475569;
+  }
+  .texto-apoio {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  .localizacao-resumo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    padding: 0.85rem 1rem;
+    background: rgba(219, 234, 254, 0.25);
+  }
+  .localizacao-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .localizacao-valor {
+    font-size: 0.95rem;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .localizacao-coords {
+    display: flex;
+    gap: 1rem;
+    font-family: 'JetBrains Mono', 'Fira Mono', 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #0f172a;
+  }
+  .painel-indicadores {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(13, 148, 136, 0.15));
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 12px 30px rgba(15, 118, 110, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .painel-indicadores__titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .indicadores-fluxo {
+    display: grid;
+    gap: 0.85rem;
+  }
+  .indicadores-fluxo dt {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #0f172a;
+    opacity: 0.7;
+  }
+  .indicadores-fluxo dd {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .etapas-fluxo {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .etapas-fluxo li {
+    list-style: none;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: rgba(219, 234, 254, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .etapas-fluxo .etapa-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0ea5e9;
+  }
+  .etapas-fluxo .contador {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1d4ed8;
+  }
+  .etapa-detalhes__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+  }
+  .etapa-detalhes__summary::-webkit-details-marker {
+    display: none;
+  }
+  .etapa-detalhes__icone {
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid #1d4ed8;
+    border-radius: 999px;
+    position: relative;
+  }
+  .etapa-detalhes__icone::before,
+  .etapa-detalhes__icone::after {
+    content: '';
+    position: absolute;
+    background: #1d4ed8;
+    transition: transform .2s ease;
+  }
+  .etapa-detalhes__icone::before {
+    inset: 0.45rem 0.25rem;
+  }
+  .etapa-detalhes__icone::after {
+    inset: 0.25rem 0.45rem;
+    transform: rotate(90deg);
+  }
+  details[open] > .etapa-detalhes__summary .etapa-detalhes__icone::after {
+    transform: rotate(0deg);
+  }
+  .planilha-detalhes {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1.5rem;
+    z-index: 60;
+  }
+  .planilha-detalhes__content {
+    background: #fff;
+    border-radius: 1.25rem;
+    width: min(720px, 100%);
+    padding: 1.75rem;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+  .btn-fechar-planilha {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: none;
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-fechar-planilha:hover {
+    background: #dbeafe;
+  }
+  .planilha-detalhes__lista article {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.9rem;
+    padding: 1rem;
+    background: #f8fafc;
+  }
+  .planilha-card {
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    border-radius: 1rem;
+    padding: 1.1rem;
+    background: #fff;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+  }
+  .planilha-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.15);
+  }
+  .planilha-card:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+  .planilha-card__etapa {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0ea5e9;
+  }
+  .planilha-card__titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1d4ed8;
+  }
+  .planilha-card__contador {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .planilha-card__descricao {
+    font-size: 0.85rem;
+    color: #475569;
+  }
+  body.overflow-hidden-planilha {
+    overflow: hidden;
+  }
   .campo {
     width: 100%;
     border: 1px solid #e5e7eb;
@@ -455,6 +826,7 @@
   const detalheBeneficiarios = document.getElementById('detalheBeneficiarios');
   const detalhePrevisto = document.getElementById('detalhePrevisto');
   const detalheExecutado = document.getElementById('detalheExecutado');
+  const detalheDistanciaEnergia = document.getElementById('detalheDistanciaEnergia');
   const linkTermo = document.getElementById('linkTermo');
   const linkNota = document.getElementById('linkNota');
   const btnEditar = document.getElementById('btnEditarPoco');
@@ -465,6 +837,19 @@
   const datalistEstados = document.getElementById('listaEstados');
   const datalistMunicipios = document.getElementById('listaMunicipios');
   const form = document.getElementById('formPoco');
+  const btnCapturarLocalizacao = document.getElementById('btnCapturarLocalizacao');
+  const feedbackLocalizacaoSimplificada = document.getElementById('feedbackLocalizacaoSimplificada');
+  const resumoLocalizacaoEndereco = document.getElementById('resumoLocalizacaoEndereco');
+  const resumoLocalizacaoLatitude = document.getElementById('resumoLocalizacaoLatitude');
+  const resumoLocalizacaoLongitude = document.getElementById('resumoLocalizacaoLongitude');
+  const indicadoresFluxoEl = document.getElementById('indicadoresFluxo');
+  const etapasFluxoEl = document.getElementById('etapasFluxo');
+  const listaPlanilhasOperacionais = document.getElementById('listaPlanilhasOperacionais');
+  const painelPlanilhaDetalhes = document.getElementById('painelPlanilhaDetalhes');
+  const planilhaTitulo = document.getElementById('planilhaTitulo');
+  const planilhaResumo = document.getElementById('planilhaResumo');
+  const planilhaLista = document.getElementById('planilhaLista');
+  const btnFecharPlanilha = document.getElementById('btnFecharPlanilha');
 
   const hiddenId = document.getElementById('pocoId');
   const hiddenEvidencias = document.getElementById('dadosEvidencias');
@@ -481,6 +866,7 @@
     longitude: document.getElementById('longitude'),
     beneficiarios: document.getElementById('beneficiarios'),
     investimento: document.getElementById('investimento'),
+    distanciaEnergia: document.getElementById('distanciaEnergia'),
     solicitante: document.getElementById('solicitante'),
     contatoSolicitante: document.getElementById('contatoSolicitante'),
     doadores: document.getElementById('doadores'),
@@ -507,6 +893,22 @@
     termo: document.getElementById('arquivoTermo'),
     nota: document.getElementById('arquivoNota'),
     evidencias: document.getElementById('arquivoEvidencias')
+  };
+
+  const obterTextoCampo = (campo) => {
+    if (!campo || campo.value == null) return '';
+    return String(campo.value).trim();
+  };
+
+  const atualizarResumoLocalizacao = () => {
+    if (!resumoLocalizacaoEndereco) return;
+    const comunidade = obterTextoCampo(campos.comunidade);
+    const municipio = obterTextoCampo(campos.municipio);
+    const estado = obterTextoCampo(campos.estado);
+    const partes = [comunidade, municipio, estado].filter(Boolean);
+    resumoLocalizacaoEndereco.textContent = partes.length ? partes.join(' • ') : 'Aguardando localização';
+    resumoLocalizacaoLatitude.textContent = obterTextoCampo(campos.latitude) || '-';
+    resumoLocalizacaoLongitude.textContent = obterTextoCampo(campos.longitude) || '-';
   };
 
   const ESTADOS_BRASIL = [
@@ -822,7 +1224,8 @@
     { campo: campos.investimento, decimais: 2 },
     { campo: campos.orcamentoPrevisto, decimais: 2 },
     { campo: campos.orcamentoAprovado, decimais: 2 },
-    { campo: campos.orcamentoExecutado, decimais: 2 }
+    { campo: campos.orcamentoExecutado, decimais: 2 },
+    { campo: campos.distanciaEnergia, decimais: 0 }
   ].forEach(({ campo, decimais }) => configurarMascaraNumerica(campo, decimais));
 
   configurarMascaraTelefone(campos.contatoTelefone);
@@ -860,20 +1263,35 @@
     .filter(Boolean)
     .forEach(campo => {
       ['input', 'change', 'blur'].forEach(evento => {
-        campo.addEventListener(evento, () => atualizarPopupMarcador());
+        campo.addEventListener(evento, () => {
+          atualizarPopupMarcador();
+          atualizarResumoLocalizacao();
+        });
       });
     });
 
   const atualizarFeedbackCoordenadas = (mensagem, tipo = 'neutro') => {
-    if (!feedbackCoordenadas) return;
-    const cores = {
-      sucesso: 'text-green-600',
-      erro: 'text-red-600',
-      info: 'text-blue-600',
-      neutro: 'text-gray-500'
-    };
-    feedbackCoordenadas.textContent = mensagem;
-    feedbackCoordenadas.className = `md:col-span-4 text-xs mt-1 ${cores[tipo] || cores.neutro}`;
+    if (feedbackCoordenadas) {
+      const cores = {
+        sucesso: 'text-green-600',
+        erro: 'text-red-600',
+        info: 'text-blue-600',
+        neutro: 'text-gray-500'
+      };
+      feedbackCoordenadas.textContent = mensagem;
+      feedbackCoordenadas.className = `md:col-span-4 text-xs mt-1 ${cores[tipo] || cores.neutro}`;
+    }
+    if (feedbackLocalizacaoSimplificada) {
+      const classes = {
+        sucesso: 'feedback-simplificado feedback-simplificado--sucesso',
+        erro: 'feedback-simplificado feedback-simplificado--erro',
+        info: 'feedback-simplificado feedback-simplificado--info',
+        neutro: 'feedback-simplificado feedback-simplificado--neutro'
+      };
+      feedbackLocalizacaoSimplificada.textContent = mensagem;
+      feedbackLocalizacaoSimplificada.className = classes[tipo] || classes.neutro;
+    }
+    atualizarResumoLocalizacao();
     atualizarPopupMarcador();
   };
 
@@ -963,6 +1381,7 @@
         atualizarFeedbackCoordenadas('Coordenadas validadas e endereço identificado automaticamente.', 'sucesso');
         carregarLeafletSeNecessario().then(() => atualizarMarcadorCoordenadas(latitude, longitude, true)).catch(() => {});
         atualizarPopupMarcador(true);
+        atualizarResumoLocalizacao();
       })
       .withFailureHandler(err => {
         const latAtual = analisarCoordenada(campos.latitude.value, 90);
@@ -984,6 +1403,7 @@
 
   const monitorarCoordenadas = (event) => {
     const resultado = atualizarValidacaoCoordenadas();
+    atualizarResumoLocalizacao();
     const centralizarNoMapa = event && event.type === 'blur';
 
     if (!resultado.valido) {
@@ -1019,6 +1439,44 @@
   campos.latitude.addEventListener('blur', atualizarValidacaoCoordenadas);
   campos.longitude.addEventListener('blur', atualizarValidacaoCoordenadas);
 
+  const capturarLocalizacaoSimplificada = () => {
+    if (!navigator.geolocation) {
+      atualizarFeedbackCoordenadas('Seu dispositivo não permite capturar a localização automaticamente.', 'erro');
+      return;
+    }
+    atualizarFeedbackCoordenadas('Capturando localização do dispositivo...', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (posicao) => {
+        if (!posicao || !posicao.coords) {
+          atualizarFeedbackCoordenadas('Não foi possível obter coordenadas válidas.', 'erro');
+          return;
+        }
+        const { latitude, longitude } = posicao.coords;
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          atualizarFeedbackCoordenadas('As coordenadas retornadas não são válidas.', 'erro');
+          return;
+        }
+        campos.latitude.value = Number(latitude).toFixed(6);
+        campos.longitude.value = Number(longitude).toFixed(6);
+        atualizarResumoLocalizacao();
+        monitorarCoordenadas();
+        atualizarFeedbackCoordenadas('Localização capturada com sucesso! Validando endereço...', 'sucesso');
+      },
+      (erro) => {
+        let mensagem = 'Não foi possível capturar a localização automática.';
+        if (erro && erro.code === erro.PERMISSION_DENIED) {
+          mensagem = 'Permita o acesso à localização para preencher automaticamente.';
+        }
+        atualizarFeedbackCoordenadas(mensagem, 'erro');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  if (btnCapturarLocalizacao) {
+    btnCapturarLocalizacao.addEventListener('click', capturarLocalizacaoSimplificada);
+  }
+
   atualizarFeedbackCoordenadas('Informe latitude e longitude para validar as coordenadas.', 'neutro');
 
   const limparFormulario = () => {
@@ -1035,6 +1493,7 @@
     definirValorNumerico(campos.orcamentoPrevisto, '');
     definirValorNumerico(campos.orcamentoAprovado, '');
     definirValorNumerico(campos.orcamentoExecutado, '');
+    definirValorNumerico(campos.distanciaEnergia, '');
     definirTelefone(campos.contatoTelefone, '');
     carregarLeafletSeNecessario().then(() => limparMarcadorCoordenadas(true)).catch(() => {});
     limparMunicipios('Selecione um estado para listar municípios automaticamente.', 'info');
@@ -1044,6 +1503,7 @@
       geocodeTimeout = null;
     }
     atualizarFeedbackCoordenadas('Informe latitude e longitude para validar as coordenadas.', 'neutro');
+    atualizarResumoLocalizacao();
   };
 
   const STATUS_CORES = {
@@ -1054,12 +1514,182 @@
     'pago': 'bg-emerald-100 text-emerald-700'
   };
 
+  const ETAPAS_PIPELINE = [
+    {
+      id: 'solicitacao',
+      titulo: 'Solicitação do líder de base',
+      descricao: 'Registro inicial feito diretamente por quem está na comunidade.'
+    },
+    {
+      id: 'painel',
+      titulo: 'Painel de solicitações',
+      descricao: 'Triagem rápida para confirmar dados essenciais e encaminhar o pedido.'
+    },
+    {
+      id: 'orcamentos',
+      titulo: 'Orçamentos com fornecedores',
+      descricao: 'Cotações enviadas para quem perfura, instala e fornece equipamentos.'
+    },
+    {
+      id: 'viabilidade',
+      titulo: 'Viabilidade técnica em campo',
+      descricao: 'Profissional vai ao local validar terreno, energia e disponibilidade de água.'
+    },
+    {
+      id: 'analise',
+      titulo: 'Análise e priorização',
+      descricao: 'Definição dos poços que seguirão para a fase de instalação.'
+    },
+    {
+      id: 'financiamento',
+      titulo: 'Recursos do doador garantidos',
+      descricao: 'Valores reservados e prontos para transferência ao projeto do poço.'
+    },
+    {
+      id: 'execucao',
+      titulo: 'Execução e operação do poço',
+      descricao: 'Perfuração, instalação e monitoramento do funcionamento com a comunidade.'
+    }
+  ];
+
+  const classificarEtapaPrincipal = (poco = {}) => {
+    const baseStatus = [poco.StatusProcessual, poco.Status, poco.ResumoStatus]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!baseStatus) return 'solicitacao';
+    if (baseStatus.includes('conclu') || baseStatus.includes('oper') || baseStatus.includes('instal') || baseStatus.includes('execut')) return 'execucao';
+    if (baseStatus.includes('pag') || baseStatus.includes('recurso') || baseStatus.includes('doa') || baseStatus.includes('financ')) return 'financiamento';
+    if (baseStatus.includes('anal') || baseStatus.includes('priori') || baseStatus.includes('decis')) return 'analise';
+    if (baseStatus.includes('viab') || baseStatus.includes('vistoria') || baseStatus.includes('tecnic') || baseStatus.includes('exped')) return 'viabilidade';
+    if (baseStatus.includes('orc') || baseStatus.includes('cot') || baseStatus.includes('planej') || baseStatus.includes('fornecedor')) return 'orcamentos';
+    if (
+      baseStatus.includes('painel') ||
+      baseStatus.includes('triag') ||
+      baseStatus.includes('penden') ||
+      baseStatus.includes('aguard') ||
+      baseStatus.includes('valid') ||
+      baseStatus.includes('acompan')
+    ) return 'painel';
+    return 'solicitacao';
+  };
+
+  const fecharDetalhesPlanilha = () => {
+    if (!painelPlanilhaDetalhes) return;
+    painelPlanilhaDetalhes.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden-planilha');
+  };
+
+  const abrirDetalhesPlanilha = (etapaId) => {
+    if (!painelPlanilhaDetalhes || !planilhaTitulo || !planilhaResumo || !planilhaLista) return;
+    const etapa = ETAPAS_PIPELINE.find(item => item.id === etapaId);
+    if (!etapa) return;
+    const registros = listaPocos.filter(poco => classificarEtapaPrincipal(poco) === etapaId);
+    planilhaTitulo.textContent = etapa.titulo;
+    const contagemTexto = registros.length
+      ? `${registros.length} registro${registros.length === 1 ? '' : 's'} vinculado${registros.length === 1 ? '' : 's'} a esta etapa.`
+      : 'Nenhum registro encontrado nesta etapa.';
+    const resumoPartes = [];
+    if (etapa.descricao) resumoPartes.push(etapa.descricao);
+    resumoPartes.push(contagemTexto);
+    planilhaResumo.textContent = resumoPartes.join(' • ');
+    planilhaLista.innerHTML = registros.length
+      ? registros.map(poco => {
+          const nome = poco['Comunidade'] || poco['Município'] || poco['Estado'] || 'Poço sem identificação';
+          const local = [poco['Município'], poco['Estado']].filter(Boolean).join(' • ') || 'Local não informado';
+          const status = poco.Status || 'Sem status';
+          const distanciaBruta = poco.DistanciaEnergia !== undefined ? poco.DistanciaEnergia : poco.distanciaEnergia;
+          const distanciaNumero = Number(distanciaBruta);
+          const distanciaTexto = distanciaBruta !== '' && distanciaBruta !== null && Number.isFinite(distanciaNumero)
+            ? `${distanciaNumero} m até a energia`
+            : '';
+          return `<article>
+            <p class="font-semibold text-gray-900">${escapeHtml(nome)}</p>
+            <p class="text-xs text-gray-500">${escapeHtml(local)}</p>
+            <p class="text-xs text-blue-700 font-semibold mt-1">${escapeHtml(status)}</p>
+            ${distanciaTexto ? `<p class="text-xs text-gray-600 mt-1">${escapeHtml(distanciaTexto)}</p>` : ''}
+          </article>`;
+        }).join('')
+      : '<p class="text-sm text-gray-500">Registre novos dados no formulário para acompanhar esta etapa.</p>';
+    painelPlanilhaDetalhes.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden-planilha');
+  };
+
+  const renderizarPlanilhas = () => {
+    if (!listaPlanilhasOperacionais) return;
+    listaPlanilhasOperacionais.innerHTML = ETAPAS_PIPELINE.map((etapa, indice) => {
+      const total = resumoEtapasAtual[etapa.id] || 0;
+      const ariaLabel = `Ver detalhes da etapa ${indice + 1}: ${etapa.titulo}`;
+      return `<button type="button" class="planilha-card" data-planilha="${etapa.id}" aria-label="${escapeHtml(ariaLabel)}">
+        <span class="planilha-card__etapa">Etapa ${indice + 1}</span>
+        <span class="planilha-card__titulo">${escapeHtml(etapa.titulo)}</span>
+        <span class="planilha-card__contador">${total}</span>
+        <span class="planilha-card__descricao">${escapeHtml(etapa.descricao)}</span>
+      </button>`;
+    }).join('');
+    listaPlanilhasOperacionais.querySelectorAll('.planilha-card').forEach(botao => {
+      botao.addEventListener('click', () => abrirDetalhesPlanilha(botao.dataset.planilha));
+    });
+  };
+
+  const atualizarResumoFluxo = () => {
+    resumoEtapasAtual = ETAPAS_PIPELINE.reduce((acc, etapa) => {
+      acc[etapa.id] = 0;
+      return acc;
+    }, {});
+    listaPocos.forEach(poco => {
+      const etapa = classificarEtapaPrincipal(poco);
+      if (!resumoEtapasAtual[etapa]) resumoEtapasAtual[etapa] = 0;
+      resumoEtapasAtual[etapa] += 1;
+    });
+    if (etapasFluxoEl) {
+      etapasFluxoEl.innerHTML = ETAPAS_PIPELINE.map((etapa, indice) => {
+        const total = resumoEtapasAtual[etapa.id] || 0;
+        return `
+          <li>
+            <span class="etapa-label">Etapa ${indice + 1}</span>
+            <span class="contador">${total}</span>
+            <p class="font-semibold text-slate-800">${escapeHtml(etapa.titulo)}</p>
+            <p class="text-xs text-slate-600">${escapeHtml(etapa.descricao)}</p>
+          </li>
+        `.trim();
+      }).join('');
+    }
+    if (indicadoresFluxoEl) {
+      const total = listaPocos.length;
+      const execucao = resumoEtapasAtual.execucao || 0;
+      const emAndamento = Math.max(total - execucao, 0);
+      const aguardandoRecursos = resumoEtapasAtual.financiamento || 0;
+      indicadoresFluxoEl.innerHTML = `
+        <div><dt>Total de poços</dt><dd>${total}</dd></div>
+        <div><dt>Em andamento</dt><dd>${emAndamento}</dd></div>
+        <div><dt>Prontos para instalar</dt><dd>${aguardandoRecursos}</dd></div>
+      `;
+    }
+    renderizarPlanilhas();
+  };
+
+  if (btnFecharPlanilha) {
+    btnFecharPlanilha.addEventListener('click', fecharDetalhesPlanilha);
+  }
+  if (painelPlanilhaDetalhes) {
+    painelPlanilhaDetalhes.addEventListener('click', (evento) => {
+      if (evento.target === painelPlanilhaDetalhes) fecharDetalhesPlanilha();
+    });
+  }
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && painelPlanilhaDetalhes && !painelPlanilhaDetalhes.classList.contains('hidden')) {
+      fecharDetalhesPlanilha();
+    }
+  });
+
   const MAPA_CENTRO_BRASIL = [-14.235004, -51.92528];
   const MAPA_ZOOM_BRASIL = 4;
   const TILE_URL_PADRAO = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTRIBUTION_PADRAO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores';
 
   let listaPocos = [];
+  let resumoEtapasAtual = {};
   let detalheAtual = null;
   let mapaPocos = null;
   let camadaMarcadores = null;
@@ -1452,6 +2082,13 @@
     detalheBeneficiarios.textContent = Number(poco['Beneficiários'] || 0);
     detalhePrevisto.textContent = formataMoeda(poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração']);
     detalheExecutado.textContent = formataMoeda(poco.OrcamentoExecutado || poco['Valor Realizado']);
+    if (detalheDistanciaEnergia) {
+      const distanciaValor = poco.DistanciaEnergia !== undefined ? poco.DistanciaEnergia : poco.distanciaEnergia;
+      const distanciaNumero = Number(distanciaValor);
+      detalheDistanciaEnergia.textContent = distanciaValor === '' || distanciaValor === null || Number.isNaN(distanciaNumero)
+        ? '-'
+        : `${distanciaNumero} m`;
+    }
 
     const idsBase = new Set(['solicitado','orcamento','instalacao','conclusao','pagamento']);
     const timelineExtras = (timeline || []).filter(item => item && !idsBase.has(String(item.id || '').toLowerCase()));
@@ -1518,6 +2155,7 @@
     carregarLeafletSeNecessario().catch(() => {});
     google.script.run.withSuccessHandler(pocos => {
       listaPocos = pocos;
+      atualizarResumoFluxo();
       const filtro = (buscaEl.value || '').toLowerCase();
       const filtrados = filtro
         ? pocos.filter(p => {
@@ -1586,6 +2224,7 @@
     definirValorNumerico(campos.orcamentoPrevisto, poco.OrcamentoPrevisto || poco['Valor Previsto Perfuração'] || '');
     definirValorNumerico(campos.orcamentoAprovado, poco.OrcamentoAprovado || '');
     definirValorNumerico(campos.orcamentoExecutado, poco.OrcamentoExecutado || poco['Valor Realizado'] || '');
+    definirValorNumerico(campos.distanciaEnergia, poco.DistanciaEnergia || poco.distanciaEnergia || '');
     campos.empresa.value = poco['Empresa Responsável'] || '';
     campos.situacaoHidrica.value = poco.SituacaoHidrica || '';
     campos.usoAgua.value = poco.UsoAguaComunitario || '';
@@ -1636,6 +2275,7 @@
     hiddenTimeline.value = hiddenTimeline.value || '[]';
     hiddenTermo.value = poco.TermoAutorizacaoURL || '';
     hiddenNota.value = poco.NotaFiscalURL || '';
+    atualizarResumoLocalizacao();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
@@ -1699,6 +2339,7 @@
       const orcPrevistoNormalizado = obterNumeroNormalizado(campos.orcamentoPrevisto);
       const orcAprovadoNormalizado = obterNumeroNormalizado(campos.orcamentoAprovado);
       const orcExecutadoNormalizado = obterNumeroNormalizado(campos.orcamentoExecutado);
+      const distanciaEnergiaNormalizada = obterNumeroNormalizado(campos.distanciaEnergia);
       const telefoneNormalizado = obterTelefoneNormalizado(campos.contatoTelefone);
       const telefoneFormatado = formatarTelefoneParaExibicao(telefoneNormalizado);
       const geocodificacaoPayload = coordenadasInformadas && geocodificacaoAtual ? {
@@ -1733,6 +2374,7 @@
         longitude: coordenadasInformadas ? longitudeValor : '',
         beneficiarios: beneficiariosNormalizado === '' ? '' : beneficiariosNormalizado,
         investimento: investimentoNormalizado === '' ? '' : investimentoNormalizado,
+        distanciaEnergia: distanciaEnergiaNormalizada === '' ? '' : distanciaEnergiaNormalizada,
         solicitante: campos.solicitante.value,
         contatoSolicitante: campos.contatoSolicitante.value,
         doadores: campos.doadores.value,
@@ -1798,6 +2440,7 @@
     }
   });
 
+  atualizarResumoFluxo();
   carregarPocos();
 })();
 </script>
