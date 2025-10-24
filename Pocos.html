@@ -2070,10 +2070,28 @@
   };
 
   const selecionarPoco = (id) => {
-    google.script.run.withSuccessHandler(detalhe => {
-      detalheAtual = detalhe;
+    const encontrado = listaPocos.find(p => p.ID === id);
+    if (!encontrado) {
+      console.warn('Poço não encontrado para detalhamento:', id);
+      return;
+    }
+
+    detalheAtual = {
+      poco: encontrado,
+      timeline: encontrado.LinhaDoTempo || [],
+      evidencias: encontrado.Evidencias || [],
+      contatos: []
+    };
+    preencherDetalhes();
+
+    google.script.run.withSuccessHandler(contatos => {
+      if (!detalheAtual || !detalheAtual.poco || detalheAtual.poco.ID !== id) {
+        return;
+      }
+
+      detalheAtual = Object.assign({}, detalheAtual, { contatos });
       preencherDetalhes();
-    }).obterRelatorioPoco(id);
+    }).listarContatosPorPoco(id);
   };
 
   const preencherDetalhes = () => {

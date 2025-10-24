@@ -654,46 +654,6 @@ function obterKanbanProcesso() {
   }));
 }
 
-function obterCronogramaPocos() {
-  const mapaCampos = {
-    DataSolicitacao: 'solicitacao',
-    DataOrcamentoPrevisto: 'orcamento',
-    DataInstalacao: 'instalacao',
-    DataConclusao: 'conclusao',
-    DataPagamento: 'pagamento'
-  };
-
-  return listarPocos().map(p => {
-    const datas = {};
-    PROCESS_STAGES.forEach(stage => {
-      const chave = mapaCampos[stage.field];
-      if (!chave) return;
-      const dataConvertida = converterParaData(p[stage.field]);
-      datas[chave] = dataConvertida ? formatarDataISO(dataConvertida) : '';
-    });
-
-    const inicio = converterParaData(p.DataSolicitacao) || converterParaData(p.DataCadastro) || new Date();
-    const fim = converterParaData(p.DataPagamento) || converterParaData(p.DataConclusao) || converterParaData(p.DataInstalacao) || inicio;
-    const previsto = Number(p.OrcamentoPrevisto || p['Valor Previsto Perfuração'] || 0);
-    const executado = Number(p.OrcamentoExecutado || p['Valor Realizado'] || 0);
-    const progresso = previsto > 0 ? Math.min(executado / previsto, 1) : 0;
-
-    return {
-      id: p.ID,
-      nome: p['Comunidade'] || p['Município'] || p['Estado'] || 'Poço sem identificação',
-      estado: p['Estado'] || '',
-      status: p.Status || 'Solicitado',
-      datas,
-      inicio: formatarDataISO(inicio),
-      fim: formatarDataISO(fim),
-      previsto,
-      executado,
-      progresso,
-      beneficiarios: Number(p['Beneficiários'] || 0)
-    };
-  });
-}
-
 // Salvar novo poço
 
 function salvarPoco(poco) {
@@ -1044,34 +1004,6 @@ function carregarDoadoresComDepositos_(ss) {
   });
 }
 
-// Listar doadores
-function listarDoadores() {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const doadores = carregarDoadoresComDepositos_(ss);
-    return doadores.map(d => {
-      const dataNormalizada = d.DataDoacao instanceof Date ? d.DataDoacao.toISOString() : (d.DataDoacao || '');
-      const depositos = Array.isArray(d.Depositos)
-        ? d.Depositos.map(dep => ({
-            ID: dep.ID,
-            Valor: dep.Valor,
-            DataDeposito: dep.DataDeposito instanceof Date ? dep.DataDeposito.toISOString() : (dep.DataDeposito || ''),
-            Metodo: dep.Metodo || '',
-            Observacoes: dep.Observacoes || '',
-            RegistradoEm: dep.RegistradoEm instanceof Date ? dep.RegistradoEm.toISOString() : (dep.RegistradoEm || '')
-          }))
-        : [];
-      return Object.assign({}, d, {
-        DataDoacao: dataNormalizada,
-        Depositos: depositos
-      });
-    });
-  } catch (erro) {
-    registrarErro_('listarDoadores', erro);
-    return [];
-  }
-}
-
 // Salvar novo doador
 function salvarDoador(doador) {
   try {
@@ -1210,83 +1142,6 @@ function vincularDoadorAPocos(doadorId, pocosIds) {
   }
 }
 
-// ===========================
-// FUNÇÕES DE PRESTAÇÃO DE CONTAS
-// ===========================
-
-// Listar prestações (todas ou filtradas por poço)
-function listarPrestacoes(pocoId) {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const { objetos } = obterObjetosDaAba_(ss, 'PrestaçãoContas', { optional: true });
-    if (!pocoId) {
-      return objetos;
-    }
-    return objetos.filter(r => r['PoçoID'] === pocoId);
-  } catch (erro) {
-    registrarErro_('listarPrestacoes', erro);
-    return [];
-  }
-}
-
-// Salvar nova despesa
-function salvarPrestacao(despesa) {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const shPrest = obterOuCriarSheet_(ss, 'PrestaçãoContas', COLUNAS_PRESTACAO_CONTAS);
-    if (!shPrest) {
-      throw new Error('Planilha de prestação de contas não encontrada.');
-    }
-
-    const headersPrest = garantirColunas(shPrest, COLUNAS_PRESTACAO_CONTAS);
-    const linhaPrest = new Array(headersPrest.length).fill('');
-    const atribuirPrest = (coluna, valor) => {
-      const indice = headersPrest.indexOf(coluna);
-      if (indice >= 0) linhaPrest[indice] = valor;
-    };
-    atribuirPrest('PoçoID', despesa.pocoId);
-    atribuirPrest('Data', despesa.data ? new Date(despesa.data) : new Date());
-    atribuirPrest('Descrição', despesa.descricao || '');
-    atribuirPrest('Valor', Number(despesa.valor) || 0);
-    atribuirPrest('ComprovanteURL', despesa.comprovanteURL || '');
-    atribuirPrest('Categoria', despesa.categoria || '');
-    atribuirPrest('RegistradoPor', despesa.registradoPor || '');
-    shPrest.appendRow(linhaPrest);
-
-    const shPocos = obterOuCriarSheet_(ss, 'Poços', COLUNAS_POCOS);
-    if (shPocos) {
-      const values = shPocos.getDataRange().getValues();
-      if (values.length > 1) {
-        const headers = values.shift();
-        const idIndex = headers.indexOf('ID');
-        const orcamentoExecutadoIndex = headers.indexOf('OrcamentoExecutado');
-        if (idIndex !== -1) {
-          for (let i = 0; i < values.length; i++) {
-            if (values[i][idIndex] === despesa.pocoId) {
-              const executadoAtual = orcamentoExecutadoIndex !== -1 ? Number(values[i][orcamentoExecutadoIndex]) || 0 : 0;
-              const novoExecutado = executadoAtual + (Number(despesa.valor) || 0);
-              const categoria = (despesa.categoria || '').toLowerCase();
-              const dataPagamento = categoria.includes('pag') ? (despesa.data ? new Date(despesa.data) : new Date()) : undefined;
-              atualizarPoco({
-                id: despesa.pocoId,
-                orcamentoExecutado: novoExecutado,
-                dataPagamento: dataPagamento
-              });
-              break;
-            }
-          }
-        }
-      }
-    } else {
-      registrarErro_('salvarPrestacao', new Error('Planilha de poços não encontrada ao atualizar valores.'));
-    }
-
-    return { success: true };
-  } catch (erro) {
-    registrarErro_('salvarPrestacao', erro);
-    return { success: false, mensagem: erro && erro.message ? erro.message : 'Erro ao registrar despesa.' };
-  }
-}
 function atualizarContatoPoco(registro) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -1417,41 +1272,6 @@ function listarContatosPorPoco(pocoId) {
 // FUNÇÕES DE RELATÓRIO / ANÁLISE
 // ===================================================
 
-// Obter dados completos de um poço (detalhes + despesas)
-function obterRelatorioPoco(pocoId) {
-  const padrao = { poco: null, despesas: [], timeline: [], evidencias: [], contatos: [] };
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const { objetos: pocos } = obterObjetosDaAba_(ss, 'Poços');
-    if (!pocos.length) {
-      return padrao;
-    }
-    const bruto = pocos.find(p => p.ID === pocoId);
-    if (!bruto) {
-      return padrao;
-    }
-
-    const poco = mapearRegistroPoco(bruto);
-    const { objetos: prestacoes } = obterObjetosDaAba_(ss, 'PrestaçãoContas', { optional: true });
-    const despesas = prestacoes
-      .filter(d => d['PoçoID'] === pocoId)
-      .map(d => Object.assign({}, d, { DataISO: formatarDataISO(d['Data']) }));
-
-    const { objetos: contatos } = obterObjetosDaAba_(ss, 'Contatos', { optional: true });
-    const contatosFiltrados = contatos.filter(c => c['PoçoID'] === pocoId);
-
-    return {
-      poco,
-      despesas,
-      timeline: poco.LinhaDoTempo,
-      evidencias: poco.Evidencias,
-      contatos: contatosFiltrados
-    };
-  } catch (erro) {
-    registrarErro_('obterRelatorioPoco', erro);
-    return padrao;
-  }
-}
 function atualizarStatusPoco(id, novoStatus) {
   const etapa = PROCESS_STAGES.find(stage => stage.status === novoStatus);
   if (!etapa) return 'Status inválido';
