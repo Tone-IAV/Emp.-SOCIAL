@@ -4,19 +4,14 @@ function criarBaseDeDados() {
     "Poços": COLUNAS_POCOS,
     "Doadores": COLUNAS_DOADORES,
     "Depósitos": COLUNAS_DEPOSITOS,
-    "PrestaçãoContas": [
-      'PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor'
-    ],
+    "PrestaçãoContas": COLUNAS_PRESTACAO_CONTAS,
     "HistóricoStatus": [
       'PoçoID','StatusAnterior','NovoStatus','DataAlteracao','AlteradoPor'
     ],
     "Empresas": [
       'ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações'
     ],
-    "Contatos": [
-      'ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato',
-      'Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor'
-    ],
+    "Contatos": COLUNAS_CONTATOS,
     "Configurações": [
       'Chave','Valor'
     ]
@@ -73,8 +68,8 @@ function popularDadosDeExemplo() {
   resetSheet(shPocos, COLUNAS_POCOS);
   resetSheet(shDoadores, COLUNAS_DOADORES);
   resetSheet(shDepositos, COLUNAS_DEPOSITOS);
-  resetSheet(shPrest, ['PoçoID','Data','Descrição','Valor','ComprovanteURL','Categoria','RegistradoPor']);
-  resetSheet(shContatos, ['ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato','Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor']);
+  resetSheet(shPrest, COLUNAS_PRESTACAO_CONTAS);
+  resetSheet(shContatos, COLUNAS_CONTATOS);
   resetSheet(shEmpresas, ['ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações']);
 
   const idPoco1 = Utilities.getUuid();

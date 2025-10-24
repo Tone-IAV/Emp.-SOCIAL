@@ -81,6 +81,30 @@ const COLUNAS_DEPOSITOS = [
   'RegistradoEm'
 ];
 
+const COLUNAS_PRESTACAO_CONTAS = [
+  'PoçoID',
+  'Data',
+  'Descrição',
+  'Valor',
+  'ComprovanteURL',
+  'Categoria',
+  'RegistradoPor'
+];
+
+const COLUNAS_CONTATOS = [
+  'ID',
+  'PoçoID',
+  'ResponsavelContato',
+  'ContatoExterno',
+  'OrganizacaoContato',
+  'DataContato',
+  'Resumo',
+  'ProximaAcao',
+  'StatusContato',
+  'ImpactoPrevisto',
+  'RegistradoPor'
+];
+
 const LOG_PREFIX = '[EmpSocial]';
 
 function registrarErro_(contexto, erro) {
@@ -557,7 +581,7 @@ function obterOuCriarSheet_(ss, nome, colunasDesejadas) {
 // ===========================
 function initSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const names = ['Poços', 'Doadores', 'PrestaçãoContas', 'Depósitos'];
+  const names = ['Poços', 'Doadores', 'PrestaçãoContas', 'Depósitos', 'Contatos'];
 
   names.forEach(name => {
     if (!ss.getSheetByName(name)) {
@@ -567,16 +591,19 @@ function initSheets() {
       } else if (name === 'Doadores') {
         sh.appendRow(COLUNAS_DOADORES);
       } else if (name === 'PrestaçãoContas') {
-        sh.appendRow(['PoçoID', 'Data', 'Descrição', 'Valor', 'ComprovanteURL', 'Categoria', 'RegistradoPor']);
+        sh.appendRow(COLUNAS_PRESTACAO_CONTAS);
       } else if (name === 'Depósitos') {
         sh.appendRow(COLUNAS_DEPOSITOS);
+      } else if (name === 'Contatos') {
+        sh.appendRow(COLUNAS_CONTATOS);
       }
       sh.setFrozenRows(1);
     } else {
       if (name === 'Poços') garantirColunas(ss.getSheetByName(name), COLUNAS_POCOS);
       if (name === 'Doadores') garantirColunas(ss.getSheetByName(name), COLUNAS_DOADORES);
-      if (name === 'PrestaçãoContas') garantirColunas(ss.getSheetByName(name), ['PoçoID', 'Data', 'Descrição', 'Valor', 'ComprovanteURL', 'Categoria', 'RegistradoPor']);
+      if (name === 'PrestaçãoContas') garantirColunas(ss.getSheetByName(name), COLUNAS_PRESTACAO_CONTAS);
       if (name === 'Depósitos') garantirColunas(ss.getSheetByName(name), COLUNAS_DEPOSITOS);
+      if (name === 'Contatos') garantirColunas(ss.getSheetByName(name), COLUNAS_CONTATOS);
     }
   });
   return 'Guias verificadas/criadas com sucesso.';
@@ -671,16 +698,11 @@ function obterCronogramaPocos() {
 function salvarPoco(poco) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sh = ss.getSheetByName('Poços');
+    const sh = obterOuCriarSheet_(ss, 'Poços', COLUNAS_POCOS);
     if (!sh) {
-      initSheets();
-      sh = ss.getSheetByName('Poços');
-      if (!sh) {
-        registrarErro_('salvarPoco', new Error('Aba "Poços" não encontrada mesmo após tentativa de criação.'));
-        return { success: false, mensagem: 'Planilha de poços não encontrada.' };
-      }
+      registrarErro_('salvarPoco', new Error('Aba "Poços" não encontrada mesmo após tentativa de criação.'));
+      return { success: false, mensagem: 'Planilha de poços não encontrada.' };
     }
-
     garantirColunas(sh, COLUNAS_POCOS);
     const id = Utilities.getUuid();
     const agora = new Date();
@@ -1204,27 +1226,27 @@ function listarPrestacoes(pocoId) {
 function salvarPrestacao(despesa) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let shPrest = ss.getSheetByName('PrestaçãoContas');
+    const shPrest = obterOuCriarSheet_(ss, 'PrestaçãoContas', COLUNAS_PRESTACAO_CONTAS);
     if (!shPrest) {
-      initSheets();
-      shPrest = ss.getSheetByName('PrestaçãoContas');
-      if (!shPrest) {
-        throw new Error('Planilha de prestação de contas não encontrada.');
-      }
+      throw new Error('Planilha de prestação de contas não encontrada.');
     }
 
-    const row = [
-      despesa.pocoId,
-      despesa.data ? new Date(despesa.data) : new Date(),
-      despesa.descricao || '',
-      Number(despesa.valor) || 0,
-      despesa.comprovanteURL || '',
-      despesa.categoria || '',
-      despesa.registradoPor || ''
-    ];
-    shPrest.appendRow(row);
+    const headersPrest = garantirColunas(shPrest, COLUNAS_PRESTACAO_CONTAS);
+    const linhaPrest = new Array(headersPrest.length).fill('');
+    const atribuirPrest = (coluna, valor) => {
+      const indice = headersPrest.indexOf(coluna);
+      if (indice >= 0) linhaPrest[indice] = valor;
+    };
+    atribuirPrest('PoçoID', despesa.pocoId);
+    atribuirPrest('Data', despesa.data ? new Date(despesa.data) : new Date());
+    atribuirPrest('Descrição', despesa.descricao || '');
+    atribuirPrest('Valor', Number(despesa.valor) || 0);
+    atribuirPrest('ComprovanteURL', despesa.comprovanteURL || '');
+    atribuirPrest('Categoria', despesa.categoria || '');
+    atribuirPrest('RegistradoPor', despesa.registradoPor || '');
+    shPrest.appendRow(linhaPrest);
 
-    const shPocos = ss.getSheetByName('Poços');
+    const shPocos = obterOuCriarSheet_(ss, 'Poços', COLUNAS_POCOS);
     if (shPocos) {
       const values = shPocos.getDataRange().getValues();
       if (values.length > 1) {
@@ -1261,11 +1283,11 @@ function salvarPrestacao(despesa) {
 function atualizarContatoPoco(registro) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sh = ss.getSheetByName('Poços');
+    const sh = obterOuCriarSheet_(ss, 'Poços', COLUNAS_POCOS);
     if (!sh) {
       throw new Error('Planilha de poços não encontrada.');
     }
-
+    garantirColunas(sh, COLUNAS_POCOS);
     const values = sh.getDataRange().getValues();
     if (values.length <= 1) {
       throw new Error('Nenhum poço cadastrado.');
@@ -1329,28 +1351,30 @@ function atualizarContatoPoco(registro) {
 function registrarContatoPoco(contato) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sh = ss.getSheetByName('Contatos');
+    const sh = obterOuCriarSheet_(ss, 'Contatos', COLUNAS_CONTATOS);
     if (!sh) {
-      sh = ss.insertSheet('Contatos');
-      sh.appendRow(['ID','PoçoID','ResponsavelContato','ContatoExterno','OrganizacaoContato','DataContato','Resumo','ProximaAcao','StatusContato','ImpactoPrevisto','RegistradoPor']);
-      sh.setFrozenRows(1);
+      throw new Error('Planilha de contatos não encontrada.');
     }
 
+    const headers = garantirColunas(sh, COLUNAS_CONTATOS);
     const id = Utilities.getUuid();
-    const row = [
-      id,
-      contato.pocoId,
-      contato.responsavelContato || '',
-      contato.contatoExterno || '',
-      contato.organizacaoContato || '',
-      contato.dataContato ? new Date(contato.dataContato) : new Date(),
-      contato.resumo || '',
-      contato.proximaAcao || '',
-      contato.statusContato || '',
-      contato.impactoPrevisto || '',
-      contato.registradoPor || ''
-    ];
-    sh.appendRow(row);
+    const linha = new Array(headers.length).fill('');
+    const atribuir = (coluna, valor) => {
+      const indice = headers.indexOf(coluna);
+      if (indice >= 0) linha[indice] = valor;
+    };
+    atribuir('ID', id);
+    atribuir('PoçoID', contato.pocoId);
+    atribuir('ResponsavelContato', contato.responsavelContato || '');
+    atribuir('ContatoExterno', contato.contatoExterno || '');
+    atribuir('OrganizacaoContato', contato.organizacaoContato || '');
+    atribuir('DataContato', contato.dataContato ? new Date(contato.dataContato) : new Date());
+    atribuir('Resumo', contato.resumo || '');
+    atribuir('ProximaAcao', contato.proximaAcao || '');
+    atribuir('StatusContato', contato.statusContato || '');
+    atribuir('ImpactoPrevisto', contato.impactoPrevisto || '');
+    atribuir('RegistradoPor', contato.registradoPor || '');
+    sh.appendRow(linha);
 
     atualizarContatoPoco({
       pocoId: contato.pocoId,
