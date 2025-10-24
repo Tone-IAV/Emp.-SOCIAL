@@ -19,17 +19,14 @@
       </div>
     </div>
 
-    <datalist id="listaEstados"></datalist>
-    <datalist id="listaMunicipios"></datalist>
-
     <div class="grid md:grid-cols-4 gap-4">
       <div>
         <label class="text-sm font-medium text-gray-700">Estado</label>
-        <input id="estado" class="campo" required list="listaEstados" autocomplete="address-level1" placeholder="Digite a sigla ou nome do estado">
+        <input id="estado" class="campo" required>
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Município</label>
-        <input id="municipio" class="campo" required list="listaMunicipios" autocomplete="address-level2" placeholder="Selecione o município">
+        <input id="municipio" class="campo" required>
       </div>
       <div>
         <label class="text-sm font-medium text-gray-700">Comunidade / Nome do poço</label>
@@ -40,8 +37,6 @@
         <input id="regiao" class="campo" placeholder="Ex.: Sertão dos Inhamuns">
       </div>
     </div>
-
-    <div class="md:col-span-4 text-xs text-gray-500" id="feedbackMunicipio"></div>
 
     <div class="grid md:grid-cols-4 gap-4">
       <div>
@@ -63,12 +58,6 @@
     </div>
 
     <div class="md:col-span-4 text-xs text-gray-500" id="feedbackCoordenadas"></div>
-
-    <div class="space-y-2">
-      <label class="text-sm font-medium text-gray-700">Localização no mapa</label>
-      <div id="mapaCoordenadas" class="mapa-coordenadas"></div>
-      <p class="text-xs text-gray-500">Clique ou arraste o marcador para preencher latitude e longitude automaticamente.</p>
-    </div>
 
     <div class="grid md:grid-cols-3 gap-4">
       <div>
@@ -385,15 +374,6 @@
   .mapa-pocos.leaflet-container {
     height: 400px;
   }
-  .mapa-coordenadas {
-    height: 280px;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
-    overflow: hidden;
-  }
-  .mapa-coordenadas.leaflet-container {
-    height: 280px;
-  }
 </style>
 
 <script>
@@ -419,9 +399,6 @@
   const btnLimpar = document.getElementById('btnLimparFormulario');
   const mensagemFormulario = document.getElementById('mensagemFormulario');
   const feedbackCoordenadas = document.getElementById('feedbackCoordenadas');
-  const feedbackMunicipio = document.getElementById('feedbackMunicipio');
-  const datalistEstados = document.getElementById('listaEstados');
-  const datalistMunicipios = document.getElementById('listaMunicipios');
   const form = document.getElementById('formPoco');
 
   const hiddenId = document.getElementById('pocoId');
@@ -465,177 +442,6 @@
     termo: document.getElementById('arquivoTermo'),
     nota: document.getElementById('arquivoNota'),
     evidencias: document.getElementById('arquivoEvidencias')
-  };
-
-  const ESTADOS_BRASIL = [
-    { sigla: 'AC', nome: 'Acre' },
-    { sigla: 'AL', nome: 'Alagoas' },
-    { sigla: 'AP', nome: 'Amapá' },
-    { sigla: 'AM', nome: 'Amazonas' },
-    { sigla: 'BA', nome: 'Bahia' },
-    { sigla: 'CE', nome: 'Ceará' },
-    { sigla: 'DF', nome: 'Distrito Federal' },
-    { sigla: 'ES', nome: 'Espírito Santo' },
-    { sigla: 'GO', nome: 'Goiás' },
-    { sigla: 'MA', nome: 'Maranhão' },
-    { sigla: 'MT', nome: 'Mato Grosso' },
-    { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-    { sigla: 'MG', nome: 'Minas Gerais' },
-    { sigla: 'PA', nome: 'Pará' },
-    { sigla: 'PB', nome: 'Paraíba' },
-    { sigla: 'PR', nome: 'Paraná' },
-    { sigla: 'PE', nome: 'Pernambuco' },
-    { sigla: 'PI', nome: 'Piauí' },
-    { sigla: 'RJ', nome: 'Rio de Janeiro' },
-    { sigla: 'RN', nome: 'Rio Grande do Norte' },
-    { sigla: 'RS', nome: 'Rio Grande do Sul' },
-    { sigla: 'RO', nome: 'Rondônia' },
-    { sigla: 'RR', nome: 'Roraima' },
-    { sigla: 'SC', nome: 'Santa Catarina' },
-    { sigla: 'SP', nome: 'São Paulo' },
-    { sigla: 'SE', nome: 'Sergipe' },
-    { sigla: 'TO', nome: 'Tocantins' }
-  ];
-
-  const MUNICIPIOS_CACHE = new Map();
-  let carregamentoMunicipiosAtual = 0;
-  let ultimoEstadoReconhecido = '';
-
-  const normalizarTextoAcentos = (valor) => {
-    return (valor || '')
-      .toString()
-      .trim()
-      .toUpperCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  };
-
-  const obterEstadoPorValor = (valor) => {
-    const texto = normalizarTextoAcentos(valor);
-    if (!texto) return null;
-    return ESTADOS_BRASIL.find(estado => {
-      const nomeNormalizado = normalizarTextoAcentos(estado.nome);
-      return estado.sigla === texto || nomeNormalizado === texto;
-    }) || null;
-  };
-
-  const atualizarFeedbackMunicipios = (mensagem, tipo = 'neutro') => {
-    if (!feedbackMunicipio) return;
-    const cores = {
-      sucesso: 'text-green-600',
-      erro: 'text-red-600',
-      info: 'text-blue-600',
-      neutro: 'text-gray-500'
-    };
-    feedbackMunicipio.textContent = mensagem;
-    feedbackMunicipio.className = `md:col-span-4 text-xs mt-1 ${cores[tipo] || cores.neutro}`;
-  };
-
-  const escaparParaDatalist = (valor) => {
-    return String(valor || '').replace(/"/g, '&quot;');
-  };
-
-  const limparMunicipios = (mensagem = 'Selecione um estado para listar municípios automaticamente.', tipo = 'info') => {
-    if (datalistMunicipios) datalistMunicipios.innerHTML = '';
-    if (campos.municipio) {
-      campos.municipio.dataset.estado = '';
-    }
-    if (campos.estado) {
-      campos.estado.dataset.sigla = '';
-    }
-    ultimoEstadoReconhecido = '';
-    atualizarFeedbackMunicipios(mensagem, mensagem ? tipo : 'neutro');
-  };
-
-  const aplicarMunicipiosNaLista = (estadoInfo, municipios, municipioAtual = '') => {
-    if (!datalistMunicipios) return;
-    datalistMunicipios.innerHTML = municipios
-      .map(nome => `<option value="${escaparParaDatalist(nome)}"></option>`)
-      .join('');
-    if (campos.municipio) {
-      campos.municipio.dataset.estado = estadoInfo.sigla;
-    }
-    const municipioNormalizado = municipioAtual ? municipioAtual.toLowerCase() : '';
-    const existe = municipioNormalizado
-      ? municipios.some(nome => nome.toLowerCase() === municipioNormalizado)
-      : false;
-    if (municipioAtual && !existe) {
-      atualizarFeedbackMunicipios(`Municípios de ${estadoInfo.nome} carregados. O valor informado não foi encontrado, escolha um da lista.`, 'info');
-    } else {
-      atualizarFeedbackMunicipios(`Municípios de ${estadoInfo.nome} carregados (${municipios.length}).`, 'sucesso');
-    }
-  };
-
-  const carregarMunicipiosPorEstado = (estadoInfo, municipioAtual = '') => {
-    if (!estadoInfo) {
-      limparMunicipios('Estado não reconhecido. Preencha manualmente.', 'erro');
-      return;
-    }
-    ultimoEstadoReconhecido = estadoInfo.sigla;
-    if (campos.estado) {
-      campos.estado.dataset.sigla = estadoInfo.sigla;
-    }
-    const idSolicitacao = ++carregamentoMunicipiosAtual;
-    atualizarFeedbackMunicipios(`Carregando municípios de ${estadoInfo.nome}...`, 'info');
-
-    const preencher = (municipios) => {
-      if (idSolicitacao !== carregamentoMunicipiosAtual) return;
-      aplicarMunicipiosNaLista(estadoInfo, municipios, municipioAtual);
-    };
-
-    if (MUNICIPIOS_CACHE.has(estadoInfo.sigla)) {
-      preencher(MUNICIPIOS_CACHE.get(estadoInfo.sigla));
-      return;
-    }
-
-    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoInfo.sigla}/municipios`)
-      .then(res => {
-        if (!res.ok) throw new Error('Resposta inválida do IBGE.');
-        return res.json();
-      })
-      .then(lista => {
-        const municipios = Array.isArray(lista)
-          ? lista.map(item => item && item.nome ? item.nome : '')
-              .filter(Boolean)
-              .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-          : [];
-        MUNICIPIOS_CACHE.set(estadoInfo.sigla, municipios);
-        preencher(municipios);
-      })
-      .catch(erro => {
-        if (idSolicitacao !== carregamentoMunicipiosAtual) return;
-        console.error('Erro ao carregar municípios do IBGE.', erro);
-        limparMunicipios('Não foi possível carregar os municípios automaticamente. Preencha manualmente.', 'erro');
-      });
-  };
-
-  const popularEstados = () => {
-    if (!datalistEstados) return;
-    const opcoes = ESTADOS_BRASIL
-      .map(estado => {
-        const descricao = `${estado.nome} (${estado.sigla})`;
-        return [
-          `<option value="${escaparParaDatalist(estado.sigla)}">${descricao}</option>`,
-          `<option value="${escaparParaDatalist(estado.nome)}"></option>`
-        ];
-      })
-      .reduce((acumulador, atual) => acumulador.concat(atual), [])
-      .join('');
-    datalistEstados.innerHTML = opcoes;
-  };
-
-  const sincronizarMunicipiosComEstado = (valorEstado, municipioAtual = '') => {
-    const estadoInfo = obterEstadoPorValor(valorEstado);
-    if (!valorEstado) {
-      limparMunicipios('Selecione um estado para listar municípios automaticamente.', 'info');
-      return null;
-    }
-    if (!estadoInfo) {
-      limparMunicipios('Estado não reconhecido. Preencha manualmente.', 'erro');
-      return null;
-    }
-    carregarMunicipiosPorEstado(estadoInfo, municipioAtual);
-    return estadoInfo;
   };
 
   const numericMaskHelpers = new Map();
@@ -785,35 +591,6 @@
 
   configurarMascaraTelefone(campos.contatoTelefone);
 
-  popularEstados();
-  if (campos.estado && campos.estado.value) {
-    sincronizarMunicipiosComEstado(campos.estado.value, campos.municipio ? campos.municipio.value : '');
-  } else {
-    limparMunicipios('Selecione um estado para listar municípios automaticamente.', 'info');
-  }
-
-  if (campos.estado) {
-    const reagirEstado = () => {
-      const municipioAtual = campos.municipio ? campos.municipio.value : '';
-      sincronizarMunicipiosComEstado(campos.estado.value, municipioAtual);
-    };
-    ['change', 'blur'].forEach(evento => campos.estado.addEventListener(evento, reagirEstado));
-    campos.estado.addEventListener('input', () => {
-      if (!campos.estado.value.trim()) {
-        if (campos.municipio) campos.municipio.value = '';
-        limparMunicipios('Selecione um estado para listar municípios automaticamente.', 'info');
-      }
-    });
-  }
-
-  if (campos.municipio) {
-    campos.municipio.addEventListener('focus', () => {
-      if (!campos.estado.value.trim()) {
-        atualizarFeedbackMunicipios('Selecione um estado para habilitar a lista de municípios.', 'info');
-      }
-    });
-  }
-
   let geocodificacaoAtual = null;
   let geocodeTimeout = null;
 
@@ -903,16 +680,9 @@
           longitude
         };
 
-        const estadoGeocode = geocodificacaoAtual.estado || '';
-        const municipioGeocode = geocodificacaoAtual.municipio || '';
-        if (estadoGeocode) {
-          if (!campos.estado.value) campos.estado.value = estadoGeocode;
-          const municipioAtual = campos.municipio.value || municipioGeocode;
-          sincronizarMunicipiosComEstado(campos.estado.value || estadoGeocode, municipioAtual);
-        }
-        if (!campos.municipio.value && municipioGeocode) campos.municipio.value = municipioGeocode;
+        if (!campos.estado.value && geocodificacaoAtual.estado) campos.estado.value = geocodificacaoAtual.estado;
+        if (!campos.municipio.value && geocodificacaoAtual.municipio) campos.municipio.value = geocodificacaoAtual.municipio;
         atualizarFeedbackCoordenadas('Coordenadas validadas e endereço identificado automaticamente.', 'sucesso');
-        carregarLeafletSeNecessario().then(() => atualizarMarcadorCoordenadas(latitude, longitude, true)).catch(() => {});
       })
       .withFailureHandler(err => {
         const latAtual = analisarCoordenada(campos.latitude.value, 90);
@@ -932,23 +702,19 @@
     geocodeTimeout = window.setTimeout(() => solicitarGeocodificacao(latitude, longitude), 600);
   };
 
-  const monitorarCoordenadas = (event) => {
+  const monitorarCoordenadas = () => {
     const resultado = atualizarValidacaoCoordenadas();
-    const centralizarNoMapa = event && event.type === 'blur';
-
     if (!resultado.valido) {
       geocodificacaoAtual = null;
       if (geocodeTimeout) {
         clearTimeout(geocodeTimeout);
         geocodeTimeout = null;
       }
-      carregarLeafletSeNecessario().then(() => limparMarcadorCoordenadas(false)).catch(() => {});
       return;
     }
 
     const { latitude, longitude } = resultado;
     if (latitude !== null && longitude !== null) {
-      carregarLeafletSeNecessario().then(() => atualizarMarcadorCoordenadas(latitude, longitude, centralizarNoMapa)).catch(() => {});
       if (geocodificacaoAtual && geocodificacaoAtual.sucesso && geocodificacaoAtual.latitude === latitude && geocodificacaoAtual.longitude === longitude) {
         return;
       }
@@ -960,7 +726,6 @@
         clearTimeout(geocodeTimeout);
         geocodeTimeout = null;
       }
-      carregarLeafletSeNecessario().then(() => limparMarcadorCoordenadas(false)).catch(() => {});
     }
   };
 
@@ -986,8 +751,6 @@
     definirValorNumerico(campos.orcamentoAprovado, '');
     definirValorNumerico(campos.orcamentoExecutado, '');
     definirTelefone(campos.contatoTelefone, '');
-    carregarLeafletSeNecessario().then(() => limparMarcadorCoordenadas(true)).catch(() => {});
-    limparMunicipios('Selecione um estado para listar municípios automaticamente.', 'info');
     geocodificacaoAtual = null;
     if (geocodeTimeout) {
       clearTimeout(geocodeTimeout);
@@ -1004,18 +767,11 @@
     'pago': 'bg-emerald-100 text-emerald-700'
   };
 
-  const MAPA_CENTRO_BRASIL = [-14.235004, -51.92528];
-  const MAPA_ZOOM_BRASIL = 4;
-  const TILE_URL_PADRAO = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const TILE_ATTRIBUTION_PADRAO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores';
-
   let listaPocos = [];
   let detalheAtual = null;
   let mapaPocos = null;
   let camadaMarcadores = null;
   let leafletPromise = null;
-  let mapaCoordenadas = null;
-  let marcadorCoordenadas = null;
 
   const carregarLeafletSeNecessario = () => {
     if (window.L) return Promise.resolve();
@@ -1032,7 +788,7 @@
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-        link.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+        link.integrity = 'sha256-o9N1j7kGStbKd7EV0rXtQuwh2j6kHLM7pui1F0zOG44=';
         link.crossOrigin = '';
         link.dataset.leaflet = 'css';
         head.appendChild(link);
@@ -1051,7 +807,7 @@
 
       const script = scriptExistente || document.createElement('script');
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+      script.integrity = 'sha256-o9N1j7kGStbKd7EV0rXtQuwh2j6kHLM7pui1F0zOG44=';
       script.crossOrigin = '';
       script.defer = true;
       script.dataset.leaflet = 'js';
@@ -1080,93 +836,17 @@
     mapaPocos = L.map(container, {
       zoomControl: true,
       attributionControl: true
-    }).setView(MAPA_CENTRO_BRASIL, MAPA_ZOOM_BRASIL);
+    }).setView([-14.235004, -51.92528], 4);
 
-    L.tileLayer(TILE_URL_PADRAO, {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
-      attribution: TILE_ATTRIBUTION_PADRAO
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> colaboradores'
     }).addTo(mapaPocos);
 
     camadaMarcadores = L.layerGroup().addTo(mapaPocos);
     setTimeout(() => mapaPocos.invalidateSize(), 100);
     return mapaPocos;
   };
-
-  const inicializarMapaCoordenadas = () => {
-    if (mapaCoordenadas) return mapaCoordenadas;
-    const container = document.getElementById('mapaCoordenadas');
-    if (!container || !window.L) return null;
-
-    mapaCoordenadas = L.map(container, {
-      zoomControl: true,
-      attributionControl: true
-    }).setView(MAPA_CENTRO_BRASIL, MAPA_ZOOM_BRASIL);
-
-    L.tileLayer(TILE_URL_PADRAO, {
-      maxZoom: 18,
-      attribution: TILE_ATTRIBUTION_PADRAO
-    }).addTo(mapaCoordenadas);
-
-    mapaCoordenadas.on('click', (evento) => {
-      if (!evento || !evento.latlng) return;
-      definirCoordenadasAPartirDoMapa(evento.latlng.lat, evento.latlng.lng, { centralizar: false });
-    });
-
-    setTimeout(() => mapaCoordenadas.invalidateSize(), 100);
-    return mapaCoordenadas;
-  };
-
-  const limparMarcadorCoordenadas = (recentralizar = false) => {
-    if (marcadorCoordenadas) {
-      marcadorCoordenadas.remove();
-      marcadorCoordenadas = null;
-    }
-    if (recentralizar && mapaCoordenadas) {
-      mapaCoordenadas.setView(MAPA_CENTRO_BRASIL, MAPA_ZOOM_BRASIL);
-    }
-  };
-
-  const atualizarMarcadorCoordenadas = (latitude, longitude, centralizar = false) => {
-    if (!window.L) return;
-    const mapa = inicializarMapaCoordenadas();
-    if (!mapa) return;
-
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      limparMarcadorCoordenadas(centralizar);
-      return;
-    }
-
-    if (!marcadorCoordenadas) {
-      marcadorCoordenadas = L.marker([latitude, longitude], {
-        draggable: true,
-        autoPan: true
-      }).addTo(mapa);
-
-      marcadorCoordenadas.on('dragend', (evento) => {
-        const marcador = evento && evento.target;
-        if (!marcador) return;
-        const posicao = marcador.getLatLng();
-        definirCoordenadasAPartirDoMapa(posicao.lat, posicao.lng, { centralizar: false });
-      });
-    } else {
-      marcadorCoordenadas.setLatLng([latitude, longitude]);
-    }
-
-    if (centralizar) {
-      const zoom = Math.max(mapa.getZoom(), 12);
-      mapa.flyTo([latitude, longitude], zoom, { duration: 0.35 });
-    }
-  };
-
-  const definirCoordenadasAPartirDoMapa = (latitude, longitude, { centralizar = true } = {}) => {
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-    campos.latitude.value = Number(latitude).toFixed(6);
-    campos.longitude.value = Number(longitude).toFixed(6);
-    atualizarMarcadorCoordenadas(latitude, longitude, centralizar);
-    monitorarCoordenadas();
-  };
-
-  carregarLeafletSeNecessario().then(() => inicializarMapaCoordenadas()).catch(() => {});
 
   const obterCorMarcador = (poco) => {
     const situacao = (poco.SituacaoHidrica || '').toLowerCase();
@@ -1219,7 +899,7 @@
     if (bounds.length) {
       mapa.fitBounds(bounds, { padding: [32, 32] });
     } else {
-      mapa.setView(MAPA_CENTRO_BRASIL, MAPA_ZOOM_BRASIL);
+      mapa.setView([-14.235004, -51.92528], 4);
     }
   };
 
@@ -1425,7 +1105,6 @@
     campos.municipio.value = poco['Município'] || '';
     campos.comunidade.value = poco.Comunidade || '';
     campos.regiao.value = poco['Região'] || '';
-    sincronizarMunicipiosComEstado(campos.estado.value, campos.municipio.value);
     const latitudeExistente = poco.Latitude !== undefined && poco.Latitude !== null ? poco.Latitude : '';
     const longitudeExistente = poco.Longitude !== undefined && poco.Longitude !== null ? poco.Longitude : '';
     campos.latitude.value = latitudeExistente;
@@ -1455,40 +1134,33 @@
     definirTelefone(campos.contatoTelefone, contatoPrincipal.telefoneNormalizado || contatoPrincipal.telefone || contatoPrincipal.ContatoExterno || '');
     campos.contatoEmail.value = contatoPrincipal.email || '';
 
-    const latAnalise = analisarCoordenada(latitudeExistente, 90);
-    const lonAnalise = analisarCoordenada(longitudeExistente, 180);
     const statusGeocode = (poco.GeocodificacaoStatus || '').toString().toUpperCase();
     geocodificacaoAtual = null;
-    if (statusGeocode === 'OK' && latAnalise.valor !== null && lonAnalise.valor !== null) {
-      let timestampISO = '';
-      if (poco.GeocodificacaoTimestamp) {
-        const ts = new Date(poco.GeocodificacaoTimestamp);
-        if (!Number.isNaN(ts.getTime())) {
-          timestampISO = ts.toISOString();
+    if (statusGeocode === 'OK') {
+      const latAnalise = analisarCoordenada(latitudeExistente, 90);
+      const lonAnalise = analisarCoordenada(longitudeExistente, 180);
+      if (latAnalise.valor !== null && lonAnalise.valor !== null) {
+        let timestampISO = '';
+        if (poco.GeocodificacaoTimestamp) {
+          const ts = new Date(poco.GeocodificacaoTimestamp);
+          if (!Number.isNaN(ts.getTime())) {
+            timestampISO = ts.toISOString();
+          }
         }
+        geocodificacaoAtual = {
+          sucesso: true,
+          estado: poco.Estado || '',
+          municipio: poco['Município'] || '',
+          fonte: poco.GeocodificacaoFonte || '',
+          precisao: poco.GeocodificacaoPrecisao || '',
+          status: poco.GeocodificacaoStatus || 'OK',
+          timestamp: timestampISO,
+          latitude: latAnalise.valor,
+          longitude: lonAnalise.valor
+        };
       }
-      geocodificacaoAtual = {
-        sucesso: true,
-        estado: poco.Estado || '',
-        municipio: poco['Município'] || '',
-        fonte: poco.GeocodificacaoFonte || '',
-        precisao: poco.GeocodificacaoPrecisao || '',
-        status: poco.GeocodificacaoStatus || 'OK',
-        timestamp: timestampISO,
-        latitude: latAnalise.valor,
-        longitude: lonAnalise.valor
-      };
     }
     atualizarValidacaoCoordenadas();
-    carregarLeafletSeNecessario()
-      .then(() => {
-        if (latAnalise.valor !== null && lonAnalise.valor !== null) {
-          atualizarMarcadorCoordenadas(latAnalise.valor, lonAnalise.valor, true);
-        } else {
-          limparMarcadorCoordenadas(true);
-        }
-      })
-      .catch(() => {});
 
     hiddenEvidencias.value = JSON.stringify(detalheAtual.evidencias || []);
     hiddenTimeline.value = hiddenTimeline.value || '[]';
