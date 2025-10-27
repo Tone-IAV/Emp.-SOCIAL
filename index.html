@@ -16,26 +16,28 @@
   <script src="https://code.highcharts.com/gantt/highcharts-gantt.js"></script>
 
   <style>
-    body { font-family: 'Inter', sans-serif; margin:0; background:#f4f6f8; color:#222; }
-    nav { background:#2563eb; color:white; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:10px 20px; gap:12px; }
+    body { font-family: 'Inter', sans-serif; margin:0; background:linear-gradient(180deg,#cfe9ff 0%,#f9fbff 40%,#ffffff 100%); color:#1f2937; }
+    nav { background:linear-gradient(90deg,#60a5fa 0%,#38bdf8 50%,#22d3ee 100%); color:#0f172a; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:10px 20px; gap:12px; box-shadow:0 6px 16px rgba(14,116,144,0.25); }
     nav .title-wrapper { display:flex; align-items:center; gap:0.5rem; }
-    nav .title { font-weight:600; font-size:1.2rem; }
-    nav button { background:none; border:none; color:white; font-weight:500; margin:0 8px; cursor:pointer; }
-    nav button.active { border-bottom:2px solid white; }
-    .info-button { width:28px; height:28px; border-radius:50%; border:1px solid rgba(255,255,255,0.6); color:#2563eb; background:#fff; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s ease; }
-    .info-button:hover { background:rgba(255,255,255,0.85); transform:translateY(-1px); }
+    nav .title { font-weight:700; font-size:1.2rem; color:#0f172a; text-shadow:0 1px 0 rgba(255,255,255,0.6); }
+    nav button { background:rgba(255,255,255,0.6); border:none; color:#0f172a; font-weight:600; margin:0 8px; cursor:pointer; padding:6px 12px; border-radius:999px; transition:all .2s ease; box-shadow:0 4px 10px rgba(59,130,246,0.25); }
+    nav button:hover { transform:translateY(-1px); background:rgba(255,255,255,0.85); }
+    nav button.active { background:#0ea5e9; color:white; box-shadow:0 6px 14px rgba(14,165,233,0.35); }
+    .info-button { width:28px; height:28px; border-radius:50%; border:1px solid rgba(14,165,233,0.6); color:#0f172a; background:#e0f2fe; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s ease; box-shadow:0 4px 10px rgba(14,165,233,0.25); }
+    .info-button:hover { background:#bae6fd; transform:translateY(-1px); }
     main { padding:20px; }
     .section { display:none; animation:fadeIn .3s ease; }
     .section.active { display:block; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
-    .map-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .map-overlay { position:fixed; inset:0; background:rgba(191,219,254,0.6); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
     .map-overlay.visible { opacity:1; pointer-events:auto; }
-    .map-modal { background:#fff; border-radius:20px; max-width:900px; width:100%; padding:24px; box-shadow:0 20px 45px rgba(15,23,42,0.25); position:relative; display:flex; flex-direction:column; gap:16px; }
-    .map-modal h3 { font-size:1.25rem; font-weight:700; color:#1d4ed8; margin:0; }
-    .map-modal p { color:#475569; font-size:0.95rem; margin:0; }
-    .map-close { position:absolute; top:16px; right:16px; border:none; background:transparent; font-size:1.5rem; line-height:1; cursor:pointer; color:#0f172a; }
+    .map-modal { background:linear-gradient(180deg,#ffffff 0%,#e0f2fe 100%); border-radius:24px; max-width:900px; width:100%; padding:28px; box-shadow:0 24px 50px rgba(59,130,246,0.25); position:relative; display:flex; flex-direction:column; gap:16px; }
+    .map-modal h3 { font-size:1.25rem; font-weight:700; color:#0369a1; margin:0; }
+    .map-modal p { color:#0f172a; font-size:0.95rem; margin:0; }
+    .map-close { position:absolute; top:16px; right:16px; border:none; background:#bae6fd; font-size:1.3rem; line-height:1; cursor:pointer; color:#0f172a; border-radius:999px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(14,165,233,0.25); transition:background .2s ease, transform .2s ease; }
+    .map-close:hover { background:#7dd3fc; transform:translateY(-1px); }
     #mapaEstados { width:100%; height:420px; }
-    .map-legend { font-size:0.85rem; color:#475569; background:#eff6ff; border-radius:12px; padding:12px; }
+    .map-legend { font-size:0.85rem; color:#0f172a; background:rgba(191,219,254,0.8); border-radius:16px; padding:14px; box-shadow:0 8px 18px rgba(30,64,175,0.15); }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
