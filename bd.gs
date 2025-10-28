@@ -1,23 +1,6 @@
 function criarBaseDeDados() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const abas = {
-    "Poços": COLUNAS_POCOS,
-    "Doadores": COLUNAS_DOADORES,
-    "Depósitos": COLUNAS_DEPOSITOS,
-    "PrestaçãoContas": COLUNAS_PRESTACAO_CONTAS,
-    "HistóricoStatus": [
-      'PoçoID','StatusAnterior','NovoStatus','DataAlteracao','AlteradoPor'
-    ],
-    "Empresas": [
-      'ID','NomeEmpresa','CNPJ','Tipo','Contato','Observações'
-    ],
-    "Contatos": COLUNAS_CONTATOS,
-    "Configurações": [
-      'Chave','Valor'
-    ]
-  };
-
-  Object.entries(abas).forEach(([nome, colunas]) => {
+  Object.entries(SCHEMAS_PADRAO).forEach(([nome, colunas]) => {
     let sh = ss.getSheetByName(nome);
     if (!sh) {
       sh = ss.insertSheet(nome);
@@ -36,6 +19,8 @@ function criarBaseDeDados() {
     const range = shConfig.createTextFinder(c[0]).findNext();
     if (!range) shConfig.appendRow(c);
   });
+
+  atualizarAbaEstrutura_(ss);
 
   return '✅ Base de dados criada e configurada com sucesso.';
 }
