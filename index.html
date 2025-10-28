@@ -3,2067 +3,282 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Poços Missionários</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="https://code.highcharts.com/highcharts-more.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-  <script src="https://code.highcharts.com/maps/highmaps.js"></script>
-  <script src="https://code.highcharts.com/maps/modules/map.js"></script>
-  <script src="https://code.highcharts.com/gantt/highcharts-gantt.js"></script>
-
+  <title>Centro de Missões - Navegação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; margin:0; background:linear-gradient(180deg,#cfe9ff 0%,#f9fbff 40%,#ffffff 100%); color:#1f2937; }
-    nav { background:linear-gradient(90deg,#60a5fa 0%,#38bdf8 50%,#22d3ee 100%); color:#0f172a; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; padding:10px 20px; gap:12px; box-shadow:0 6px 16px rgba(14,116,144,0.25); }
-    nav .title-wrapper { display:flex; align-items:center; gap:0.5rem; }
-    nav .title { font-weight:700; font-size:1.2rem; color:#0f172a; text-shadow:0 1px 0 rgba(255,255,255,0.6); }
-    nav button { background:rgba(255,255,255,0.6); border:none; color:#0f172a; font-weight:600; margin:0 8px; cursor:pointer; padding:6px 12px; border-radius:999px; transition:all .2s ease; box-shadow:0 4px 10px rgba(59,130,246,0.25); }
-    nav button:hover { transform:translateY(-1px); background:rgba(255,255,255,0.85); }
-    nav button.active { background:#0ea5e9; color:white; box-shadow:0 6px 14px rgba(14,165,233,0.35); }
-    .info-button { width:28px; height:28px; border-radius:50%; border:1px solid rgba(14,165,233,0.6); color:#0f172a; background:#e0f2fe; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s ease; box-shadow:0 4px 10px rgba(14,165,233,0.25); }
-    .info-button:hover { background:#bae6fd; transform:translateY(-1px); }
-    main { padding:20px; }
-    .section { display:none; animation:fadeIn .3s ease; }
-    .section.active { display:block; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
-    #mapaEstados { width:100%; height:420px; }
-    .gamified-hub { margin:24px 20px 0; padding:28px; border-radius:28px; background:linear-gradient(180deg, rgba(191,219,254,0.65) 0%, rgba(255,255,255,0.96) 100%); box-shadow:0 28px 60px rgba(14,165,233,0.18); border:1px solid rgba(125,211,252,0.35); }
-    .gamified-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:28px; align-items:start; }
-    @media (max-width: 1024px) { .gamified-grid { grid-template-columns:1fr; } }
-    .gamified-hub__header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
-    .gamified-hub__title { font-size:1.4rem; font-weight:700; color:#0f172a; }
-    .gamified-hub__subtitle { font-size:0.9rem; color:#475569; max-width:520px; }
-    .hub-score-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:18px; margin-bottom:28px; }
-    .score-card { display:block; background:rgba(255,255,255,0.96); border-radius:20px; padding:18px; box-shadow:0 20px 42px rgba(59,130,246,0.18); position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(14,165,233,0.16); transition:transform .2s ease, box-shadow .2s ease; }
-    .score-card:hover { transform:translateY(-6px); box-shadow:0 26px 56px rgba(14,165,233,0.28); }
-    .score-card__icon { width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg, #38bdf8, #2563eb); display:flex; align-items:center; justify-content:center; color:white; font-size:1.35rem; margin-bottom:12px; box-shadow:0 12px 24px rgba(59,130,246,0.3); }
-    .score-card__label { font-size:0.75rem; letter-spacing:0.08em; font-weight:600; color:#0369a1; text-transform:uppercase; }
-    .score-card__value { font-size:1.9rem; font-weight:700; color:#0f172a; margin:6px 0; }
-    .score-card__detail { font-size:0.82rem; color:#475569; }
-    .journey-board { background:rgba(255,255,255,0.92); border-radius:26px; padding:24px; box-shadow:0 24px 48px rgba(15,23,42,0.12); border:1px solid rgba(226,232,240,0.8); }
-    .journey-board__header { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
-    .journey-board__title { font-size:1.05rem; font-weight:700; color:#0f172a; }
-    .journey-board__subtitle { font-size:0.82rem; color:#475569; max-width:480px; }
-    .journey-track { position:relative; display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:22px; }
-    .journey-track::before { content:""; position:absolute; top:50%; left:6%; right:6%; height:4px; background:linear-gradient(90deg, rgba(14,165,233,0.55), rgba(37,99,235,0.25)); z-index:0; }
-    .stage-node { background:#ffffff; border-radius:24px; padding:18px; box-shadow:0 24px 40px rgba(59,130,246,0.18); border:1px solid rgba(191,219,254,0.8); position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; min-height:210px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
-    .stage-node:hover { transform:translateY(-6px); box-shadow:0 30px 56px rgba(14,165,233,0.3); }
-    .stage-node::before { content:attr(data-order); position:absolute; top:16px; right:18px; font-size:0.85rem; font-weight:700; color:rgba(14,165,233,0.35); }
-    .stage-node__status { font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#0ea5e9; }
-    .stage-node__titulo { font-size:1.05rem; font-weight:700; color:#0f172a; }
-    .stage-node__contagem { display:flex; align-items:baseline; gap:6px; font-size:1.6rem; font-weight:700; color:#1d4ed8; }
-    .stage-node__contagem span { font-size:0.75rem; text-transform:uppercase; color:#475569; font-weight:600; letter-spacing:0.05em; }
-    .stage-node__progress { background:rgba(191,219,254,0.6); height:8px; border-radius:999px; position:relative; overflow:hidden; }
-    .stage-node__progress-bar { position:absolute; inset:0; width:var(--progress,0%); background:linear-gradient(90deg, #38bdf8, #2563eb); border-radius:999px; }
-    .stage-node__percentual { font-size:0.78rem; color:#0f172a; font-weight:600; }
-    .stage-node__lista { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
-    .stage-node__item { background:rgba(59,130,246,0.08); border-radius:16px; padding:10px 12px; display:flex; flex-direction:column; gap:4px; font-size:0.8rem; color:#334155; }
-    .stage-node__item strong { font-size:0.86rem; color:#0f172a; }
-    .stage-node__item span { font-size:0.76rem; color:#475569; }
-    .stage-node__empty { font-size:0.78rem; color:#64748b; background:rgba(226,232,240,0.7); padding:12px; border-radius:14px; text-align:center; }
-    .stage-node--alerta { border-color:rgba(248,113,113,0.45); box-shadow:0 30px 60px rgba(248,113,113,0.25); }
-    .stage-node--alerta .stage-node__progress-bar { background:linear-gradient(90deg, #f97316, #ef4444); }
-    .project-flow { margin-top:28px; background:rgba(255,255,255,0.94); border-radius:24px; padding:22px; box-shadow:0 24px 42px rgba(15,23,42,0.1); border:1px solid rgba(226,232,240,0.85); }
-    .project-flow__title { font-size:1rem; font-weight:700; color:#0f172a; margin-bottom:12px; }
-    .project-timeline { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
-    .project-timeline__item { position:relative; border-left:3px solid #38bdf8; padding-left:14px; background:rgba(59,130,246,0.06); border-radius:0 16px 16px 0; padding-top:8px; padding-bottom:8px; }
-    .project-timeline__item::before { content:""; position:absolute; left:-7px; top:10px; width:12px; height:12px; border-radius:999px; background:#0ea5e9; box-shadow:0 0 0 4px rgba(14,165,233,0.2); }
-    .project-timeline__item strong { font-size:0.86rem; color:#0f172a; }
-    .project-timeline__meta { font-size:0.74rem; color:#475569; display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
-    .project-timeline__descricao { font-size:0.78rem; color:#334155; margin-top:6px; }
-    .mission-sidebar { display:flex; flex-direction:column; gap:22px; }
-    .mission-card { background:rgba(255,255,255,0.95); border-radius:24px; padding:20px; box-shadow:0 24px 44px rgba(15,23,42,0.12); border:1px solid rgba(226,232,240,0.9); }
-    .mission-card__title { font-size:0.98rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-    .mission-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
-    .mission-list__item { background:rgba(14,165,233,0.12); border-radius:18px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; font-size:0.82rem; color:#334155; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
-    .mission-list__item:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(14,165,233,0.25); }
-    .mission-list__item strong { font-size:0.9rem; color:#0f172a; }
-    .mission-list__tag { font-size:0.72rem; text-transform:uppercase; font-weight:700; color:#0ea5e9; letter-spacing:0.08em; }
-    .mission-list__acao { font-size:0.78rem; color:#334155; }
-    .mission-card__empty { font-size:0.8rem; color:#64748b; text-align:center; padding:14px; background:rgba(226,232,240,0.65); border-radius:16px; }
-    .impact-glance { display:grid; gap:12px; }
-    .impact-pill { background:linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.2)); border-radius:18px; padding:14px; display:flex; flex-direction:column; gap:6px; font-size:0.84rem; color:#0f172a; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
-    .impact-pill:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(37,99,235,0.25); }
-    .impact-pill strong { font-size:1rem; font-weight:700; }
-    .impact-pill span { font-size:0.78rem; color:#334155; }
-    .donor-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
-    .donor-list__item { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; background:rgba(15,23,42,0.04); border-radius:18px; padding:12px 14px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
-    .donor-list__item:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(15,23,42,0.18); }
-    .donor-list__item strong { font-size:0.86rem; color:#0f172a; }
-    .donor-list__item span { font-size:0.74rem; color:#475569; display:block; }
-    .donor-list__value { text-align:right; display:flex; flex-direction:column; gap:4px; }
-    .hub-empty { font-size:0.8rem; color:#64748b; text-align:center; padding:16px; background:rgba(226,232,240,0.6); border-radius:16px; }
-    .mission-orchestrator { margin-top:28px; background:rgba(255,255,255,0.95); border-radius:30px; padding:28px; box-shadow:0 30px 68px rgba(14,165,233,0.16); border:1px solid rgba(125,211,252,0.3); display:flex; flex-direction:column; gap:24px; }
-    .mission-orchestrator__header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:18px; }
-    .mission-orchestrator__actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .mission-add-button { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#0ea5e9,#2563eb); color:#ffffff; border:none; border-radius:999px; padding:12px 20px; font-weight:600; cursor:pointer; box-shadow:0 18px 38px rgba(14,165,233,0.26); transition:transform .2s ease, box-shadow .2s ease; }
-    .mission-add-button:hover { transform:translateY(-2px); box-shadow:0 22px 44px rgba(14,165,233,0.3); }
-    .mission-add-button .icon { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.18); font-size:1.2rem; }
-    .mission-orchestrator__title { font-size:1.3rem; font-weight:700; color:#0f172a; }
-    .mission-orchestrator__subtitle { max-width:540px; font-size:0.9rem; color:#475569; }
-    .mission-orchestrator__grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; }
-    @media (max-width: 1024px) { .mission-orchestrator__grid { grid-template-columns:1fr; } }
-    .mission-orchestrator__panel { background:linear-gradient(180deg, rgba(191,219,254,0.35) 0%, rgba(255,255,255,0.92) 100%); border-radius:24px; padding:22px; box-shadow:0 20px 44px rgba(14,165,233,0.18); display:flex; flex-direction:column; gap:20px; }
-    .mission-preview { background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(224,242,254,0.85) 100%); }
-    .mission-preview__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .mission-preview__boards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
-    .kanban-preview, .gantt-preview { background:rgba(255,255,255,0.9); border-radius:18px; padding:16px; box-shadow:0 16px 32px rgba(15,23,42,0.1); min-height:220px; display:flex; flex-direction:column; gap:12px; }
-    .kanban-preview__columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-    .kanban-preview__column { background:rgba(14,165,233,0.08); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px; }
-    .kanban-preview__column h4 { font-size:0.8rem; text-transform:uppercase; letter-spacing:0.06em; color:#0ea5e9; margin:0; }
-    .kanban-preview__item { background:#ffffff; border-radius:14px; padding:10px; box-shadow:0 10px 18px rgba(14,165,233,0.12); font-size:0.78rem; color:#0f172a; display:flex; flex-direction:column; gap:4px; }
-    .kanban-preview__item span { color:#475569; font-size:0.72rem; }
-    .gantt-preview__chart { flex:1; min-height:180px; }
-    .mission-activities { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
-    .mission-activities__item { background:rgba(15,118,110,0.08); border-radius:16px; padding:12px 14px; box-shadow:0 12px 24px rgba(13,148,136,0.16); }
-    .mission-activities__item strong { display:block; font-size:0.9rem; color:#0f172a; }
-    .mission-activities__item span { display:block; font-size:0.78rem; color:#0f766e; }
-    .mission-overview-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; }
-    .mission-overview-card { background:rgba(255,255,255,0.95); border-radius:20px; padding:16px; box-shadow:0 16px 32px rgba(59,130,246,0.18); display:flex; flex-direction:column; gap:6px; border:1px solid rgba(148,163,184,0.25); }
-    .mission-overview-card strong { font-size:1.6rem; color:#1d4ed8; }
-    .mission-overview-card span { font-size:0.82rem; text-transform:uppercase; font-weight:600; color:#0f172a; letter-spacing:0.08em; }
-    .mission-overview-card p { font-size:0.78rem; color:#475569; margin:0; }
-    .mission-insights { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px; }
-    .mission-insights__item { background:rgba(14,165,233,0.14); border-radius:18px; padding:14px 16px; font-size:0.85rem; color:#0f172a; border:1px solid rgba(14,165,233,0.28); box-shadow:0 14px 30px rgba(14,165,233,0.18); }
-    .mission-insights__item strong { display:block; font-size:0.78rem; letter-spacing:0.06em; color:#0369a1; text-transform:uppercase; margin-bottom:4px; }
-    .mission-form-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.45); display:flex; align-items:center; justify-content:center; padding:24px; z-index:140; opacity:0; pointer-events:none; transition:opacity .25s ease; }
-    .mission-form-overlay.visible { opacity:1; pointer-events:auto; }
-    .mission-form-dialog { background:#ffffff; border-radius:26px; padding:28px; width:min(760px,100%); max-height:92vh; overflow:auto; box-shadow:0 32px 64px rgba(15,23,42,0.3); display:flex; flex-direction:column; gap:20px; position:relative; }
-    .mission-form-dialog header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-    .mission-form-dialog h3 { font-size:1.25rem; font-weight:700; color:#0f172a; margin:0; }
-    .mission-form-dialog .close-button { border:none; background:#e0f2fe; color:#0f172a; border-radius:999px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; box-shadow:0 12px 28px rgba(14,165,233,0.24); transition:transform .2s ease, background .2s ease; }
-    .mission-form-dialog .close-button:hover { background:#bae6fd; transform:translateY(-2px); }
-    .mission-form { background:#ffffff; border-radius:24px; padding:4px 0; display:flex; flex-direction:column; gap:18px; }
-    .mission-choice-dialog { background:#ffffff; border-radius:22px; padding:26px; width:min(420px,100%); box-shadow:0 26px 54px rgba(15,23,42,0.24); display:flex; flex-direction:column; gap:18px; position:relative; }
-    .mission-choice-grid { display:grid; gap:12px; }
-    .mission-choice-button { display:flex; align-items:center; gap:14px; border:1px solid rgba(56,189,248,0.25); border-radius:18px; padding:14px 16px; background:rgba(240,249,255,0.9); cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; text-align:left; }
-    .mission-choice-button strong { display:block; font-size:1rem; color:#0f172a; }
-    .mission-choice-button small { display:block; font-size:0.8rem; color:#475569; }
-    .mission-choice-button:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(14,165,233,0.24); border-color:rgba(14,165,233,0.5); }
-    .mission-choice-icon { display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:16px; background:linear-gradient(135deg,#38bdf8,#2563eb); color:white; font-size:1.4rem; }
-    .mission-choice-cancel { align-self:flex-end; background:none; border:none; color:#0ea5e9; font-weight:600; cursor:pointer; padding:6px 0; font-size:0.9rem; }
-    .mission-choice-cancel:hover { text-decoration:underline; }
-    .mission-form__group { display:grid; gap:16px; }
-    .mission-form__group--cols { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
-    .mission-form label { font-size:0.8rem; font-weight:600; color:#0369a1; text-transform:uppercase; letter-spacing:0.06em; }
-    .mission-form input, .mission-form select, .mission-form textarea { border-radius:16px; border:1px solid rgba(148,163,184,0.4); padding:12px 14px; font-size:0.9rem; color:#0f172a; background:rgba(248,250,252,0.9); transition:border-color .2s ease, box-shadow .2s ease; }
-    .mission-form input:focus, .mission-form select:focus, .mission-form textarea:focus { outline:none; border-color:#38bdf8; box-shadow:0 0 0 3px rgba(56,189,248,0.25); }
-    .mission-form textarea { min-height:88px; resize:vertical; }
-    .mission-form__actions { display:flex; flex-wrap:wrap; gap:12px; justify-content:flex-end; }
-    .mission-form__actions button { border:none; border-radius:999px; padding:10px 20px; font-weight:600; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
-    .mission-form__actions button:hover { transform:translateY(-1px); }
-    .mission-form__actions .btn-secundario { background:#e0f2fe; color:#0369a1; box-shadow:0 12px 24px rgba(56,189,248,0.18); }
-    .mission-form__actions .btn-primario { background:linear-gradient(90deg,#0ea5e9,#2563eb); color:#ffffff; box-shadow:0 14px 36px rgba(14,165,233,0.25); }
-    .mission-autofill { background:rgba(15,118,110,0.06); border-radius:20px; padding:18px; border:1px solid rgba(45,212,191,0.35); display:flex; flex-direction:column; gap:12px; }
-    .mission-autofill h4 { font-size:0.95rem; font-weight:700; color:#0f766e; margin:0; }
-    .mission-autofill__list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
-    .mission-autofill__item { background:#ffffff; border-radius:14px; padding:10px 12px; font-size:0.82rem; color:#0f172a; border:1px solid rgba(45,212,191,0.35); }
-    .mission-feedback { font-size:0.82rem; font-weight:600; color:#047857; background:rgba(16,185,129,0.12); border-radius:16px; padding:12px 14px; display:none; }
-    .mission-feedback.visible { display:block; }
-    .mission-drafts { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
-    .mission-drafts__item { background:rgba(15,23,42,0.05); border-radius:16px; padding:12px 14px; font-size:0.82rem; color:#0f172a; border:1px solid rgba(148,163,184,0.25); }
-    .score-card:focus-visible, .stage-node:focus-visible, .mission-list__item:focus-visible, .project-timeline__item:focus-visible, .impact-pill:focus-visible, .donor-list__item:focus-visible { outline:3px solid rgba(14,165,233,0.55); outline-offset:3px; }
-    [data-detalhes] { cursor:pointer; }
-    tr[data-detalhes]:hover, tr[data-detalhes]:focus-visible,
-    li[data-detalhes]:hover, li[data-detalhes]:focus-visible,
-    .timeline-item[data-detalhes]:hover, .timeline-item[data-detalhes]:focus-visible { background:rgba(14,165,233,0.12); }
-    body.detail-open { overflow:hidden; }
-    .detail-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; padding:24px; z-index:120; opacity:0; pointer-events:none; transition:opacity .2s ease; }
-    .detail-overlay.visible { opacity:1; pointer-events:auto; }
-    .detail-modal { background:#ffffff; border-radius:24px; box-shadow:0 28px 60px rgba(15,23,42,0.25); width:min(720px, 100%); max-height:90vh; overflow:auto; padding:28px; display:flex; flex-direction:column; gap:18px; position:relative; }
-    .detail-close { position:absolute; top:18px; right:18px; width:36px; height:36px; border:none; border-radius:999px; background:#e0f2fe; color:#0f172a; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 20px rgba(14,165,233,0.25); transition:transform .2s ease, background .2s ease; }
-    .detail-close:hover { background:#bae6fd; transform:translateY(-2px); }
-    .detail-title { font-size:1.3rem; font-weight:700; color:#0f172a; margin:0; }
-    .detail-subtitle { font-size:0.95rem; color:#0369a1; margin:0; }
-    .detail-description { font-size:0.9rem; color:#475569; margin:0; }
-    .detail-list { margin:0; display:flex; flex-direction:column; gap:12px; }
-    .detail-row { display:grid; grid-template-columns:160px 1fr; gap:12px; padding:12px 14px; border-radius:16px; background:rgba(226,232,240,0.55); }
-    .detail-term { font-size:0.8rem; font-weight:600; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.06em; }
-    .detail-value { font-size:0.92rem; color:#0f172a; line-height:1.4; }
-    .detail-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:4px; }
-    .detail-action-button {
-      background:linear-gradient(90deg,#38bdf8,#2563eb);
-      color:#ffffff;
-      border:none;
-      border-radius:999px;
-      padding:10px 18px;
-      font-weight:600;
-      font-size:0.9rem;
-      cursor:pointer;
-      box-shadow:0 10px 24px rgba(37,99,235,0.25);
-      transition:transform .2s ease, box-shadow .2s ease;
+    :root {
+      color-scheme: light;
     }
-    .detail-action-button:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(37,99,235,0.3); }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 55%),
+                  linear-gradient(180deg, #e0f2fe 0%, #f8fafc 45%, #ffffff 100%);
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav {
+      position: relative;
+      background: linear-gradient(120deg, #38bdf8 0%, #2563eb 100%);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 18px 40px rgba(37, 99, 235, 0.22);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      color: #0f172a;
+    }
+
+    .brand strong {
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand span {
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .menu-toggle {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 0.55rem 1.3rem;
+      background: rgba(255,255,255,0.9);
+      color: #0f172a;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 12px 24px rgba(15,23,42,0.15);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .menu-toggle:hover,
+    .menu-toggle:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(15,23,42,0.18);
+      outline: none;
+    }
+
+    .menu-toggle span {
+      font-size: 1rem;
+    }
+
+    .menu-toggle::after {
+      content: '\25BE';
+      font-size: 0.9rem;
+    }
+
+    .menu-panel {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 1.5rem;
+      width: min(280px, 90vw);
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 28px 60px rgba(15,23,42,0.2);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .menu-panel.visible {
+      display: flex;
+    }
+
+    .menu-panel header {
+      padding: 1rem 1.2rem 0.6rem;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    .menu-panel header h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1d4ed8;
+    }
+
+    .menu-list {
+      list-style: none;
+      padding: 0.6rem 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .menu-list li a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.2rem;
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 600;
+      background: transparent;
+      transition: background .2s ease, transform .2s ease;
+    }
+
+    .menu-list li a span {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #475569;
+    }
+
+    .menu-list li a:hover,
+    .menu-list li a:focus-visible {
+      background: rgba(14, 165, 233, 0.12);
+      transform: translateX(4px);
+      outline: none;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+
+    .welcome-card {
+      max-width: 540px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 28px;
+      padding: 2.8rem 2.4rem;
+      box-shadow: 0 40px 90px rgba(14,165,233,0.25);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .welcome-card h1 {
+      margin: 0;
+      font-size: 1.85rem;
+      color: #0f172a;
+    }
+
+    .welcome-card p {
+      margin: 0;
+      font-size: 1rem;
+      color: #334155;
+      line-height: 1.55;
+    }
+
+    .welcome-card .hint {
+      font-size: 0.85rem;
+      color: #1d4ed8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
     @media (max-width: 640px) {
-      .detail-row { grid-template-columns:1fr; }
-      .detail-term { font-size:0.75rem; }
+      nav {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .menu-panel {
+        right: 0;
+        left: 0;
+        margin: 0 auto;
+      }
     }
   </style>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Highcharts) {
-        Highcharts.setOptions({
-          lang: {
-            decimalPoint: ',',
-            thousandsSep: '.',
-            downloadPNG: 'Baixar PNG',
-            downloadJPEG: 'Baixar JPEG',
-            downloadPDF: 'Baixar PDF',
-            downloadSVG: 'Baixar SVG'
-          },
-          chart: {
-            style: { fontFamily: 'Inter, sans-serif' },
-            backgroundColor: 'transparent'
-          },
-          title: { style: { fontWeight: '600' } },
-          colors: ['#1d4ed8', '#38bdf8', '#2563eb', '#0ea5e9', '#3b82f6', '#0284c7']
-        });
-      }
-    });
-  </script>
-  <script>
-    window.formatarNumero = function(valor, casasDecimais = 0) {
-      const numero = Number(valor || 0);
-      return numero.toLocaleString('pt-BR', {
-        minimumFractionDigits: casasDecimais,
-        maximumFractionDigits: casasDecimais
-      });
-    };
-
-    window.formatarMoeda = function(valor) {
-      return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    };
-
-    window.escapeHtml = function(texto = '') {
-      return String(texto)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    };
-  </script>
-  <script>
-    window.criarAtributoDetalhes = function(config = {}) {
-      const normalizar = (valor) => {
-        if (valor === null || valor === undefined) return '';
-        if (Array.isArray(valor)) return valor.join(', ');
-        return String(valor);
-      };
-
-      try {
-        const payload = {
-          titulo: normalizar(config.titulo || 'Detalhes'),
-          subtitulo: normalizar(config.subtitulo || ''),
-          descricao: normalizar(config.descricao || ''),
-          campos: Array.isArray(config.campos)
-            ? config.campos.map(campo => ({
-                label: normalizar(campo && campo.label),
-                valor: normalizar(campo && campo.valor)
-              }))
-            : []
-        };
-        if (config.acao && typeof config.acao === 'object') {
-          payload.acao = {
-            label: normalizar(config.acao.label || ''),
-            destino: normalizar(config.acao.destino || ''),
-            descricao: normalizar(config.acao.descricao || '')
-          };
-        }
-        const encoded = encodeURIComponent(JSON.stringify(payload));
-        return `data-detalhes="${encoded}"`;
-      } catch (erro) {
-        console.error('Não foi possível preparar os detalhes do item.', erro);
-        return '';
-      }
-    };
-
-    window.definirDetalhesElemento = function(elemento, config = {}) {
-      if (!elemento) return;
-      const atributo = window.criarAtributoDetalhes(config);
-      if (!atributo) return;
-      const match = atributo.match(/data-detalhes="([^"]*)"/);
-      if (!match || match.length < 2) return;
-      elemento.setAttribute('data-detalhes', match[1]);
-      if (!elemento.hasAttribute('tabindex')) {
-        elemento.setAttribute('tabindex', '0');
-      }
-      if (!elemento.hasAttribute('role')) {
-        elemento.setAttribute('role', 'button');
-      }
-    };
-  </script>
 </head>
-
 <body>
-  <!-- NAVBAR -->
   <nav>
-    <div class="title-wrapper">
-      <span class="title">💧 Poços Missionários</span>
-      <a class="info-button" href="Mapa.html" title="Abrir mapa vivo das missões">i</a>
+    <div class="brand">
+      <strong>💧 Emp. Social - Centro de Missões</strong>
+      <span>Escolha uma área para acessar os painéis especializados</span>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <button class="nav-item active" data-target="dashboard">Dashboard</button>
-      <button class="nav-item" data-target="gestao">Gestão à vista</button>
-      <button class="nav-item" data-target="impacto">Impacto</button>
-      <button class="nav-item" data-target="pocos">Poços</button>
-      <button class="nav-item" data-target="kanban">Kanban</button>
-      <button class="nav-item" data-target="detalhes">Detalhes dinâmicos</button>
+    <button type="button" class="menu-toggle" id="menuToggle" aria-haspopup="true" aria-expanded="false">
+      <span>Menu principal</span>
+    </button>
+    <div class="menu-panel" id="menuPanel" role="menu" aria-label="Navegação principal">
+      <header>
+        <h2>Navegar</h2>
+      </header>
+      <ul class="menu-list">
+        <li><a href="Dashboard.html" role="menuitem">Painel principal <span>Indicadores consolidados</span></a></li>
+        <li><a href="Gestao.html" role="menuitem">Gestão à vista <span>Atividades, cronograma e equipes</span></a></li>
+        <li><a href="Impacto.html" role="menuitem">Impacto <span>Métricas sociais e de beneficiários</span></a></li>
+        <li><a href="Pocos.html" role="menuitem">Poços <span>Cadastro detalhado e status</span></a></li>
+        <li><a href="Kanban.html" role="menuitem">Kanban <span>Fluxo operacional</span></a></li>
+        <li><a href="Detalhes.html" role="menuitem">Detalhes dinâmicos <span>Consultas e relatórios</span></a></li>
+        <li><a href="Mapa.html" role="menuitem">Mapa vivo <span>Visualização geográfica em tempo real</span></a></li>
+      </ul>
     </div>
   </nav>
 
-  <section class="gamified-hub" aria-labelledby="tituloHubGamificado">
-    <div class="gamified-grid">
-      <div>
-        <header class="gamified-hub__header">
-          <div>
-            <h1 id="tituloHubGamificado" class="gamified-hub__title">Mapa vivo da missão 💠</h1>
-            <p class="gamified-hub__subtitle">Navegue como um jogo: acompanhe a jornada dos poços, organize projetos colaborativos e mantenha as missões registradas com precisão na base de dados.</p>
-          </div>
-          <button type="button" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold shadow" data-navegacao="dashboard">Abrir painel analítico</button>
-        </header>
-
-        <section class="mission-orchestrator" aria-labelledby="missionOrchestratorTitulo">
-          <div class="mission-orchestrator__header">
-            <div>
-              <h2 id="missionOrchestratorTitulo" class="mission-orchestrator__title">Central de missões inteligentes</h2>
-              <p class="mission-orchestrator__subtitle">Cadastre poços, projetos sociais e doadores de maneira orientada. Visualize tudo em um painel vivo com atividades, kanban e gantt em tempo real.</p>
-            </div>
-            <div class="mission-orchestrator__actions">
-              <div id="missionFeedback" class="mission-feedback" role="status" aria-live="polite"></div>
-              <button type="button" id="btnNovaEntrada" class="mission-add-button">
-                <span class="icon">+</span>
-                Nova entrada
-              </button>
-            </div>
-          </div>
-          <div class="mission-orchestrator__grid">
-            <div class="mission-orchestrator__panel">
-              <div>
-                <h3 class="journey-board__title">Resumo imediato</h3>
-                <div id="missionOverviewCards" class="mission-overview-grid">
-                  <div class="hub-empty">Carregando resumo das missões...</div>
-                </div>
-              </div>
-              <div>
-                <h3 class="journey-board__title">Insights automáticos</h3>
-                <ul id="missionInsights" class="mission-insights">
-                  <li class="hub-empty">Analisando dados de campo...</li>
-                </ul>
-              </div>
-              <div class="mission-autofill">
-                <h4>Checklist inteligente</h4>
-                <ul id="missionAutoChecklist" class="mission-autofill__list">
-                  <li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>
-                </ul>
-              </div>
-              <div>
-                <h3 class="journey-board__title">Rascunhos prontos para envio</h3>
-                <ul id="missionDrafts" class="mission-drafts">
-                  <li class="hub-empty">Nenhum rascunho salvo ainda.</li>
-                </ul>
-              </div>
-            </div>
-            <div class="mission-orchestrator__panel mission-preview">
-              <div class="mission-preview__header">
-                <div>
-                  <h3 class="journey-board__title">Atividades recentes</h3>
-                  <p class="journey-board__subtitle">Visualize os últimos movimentos registrados e acompanhe o pulso da missão.</p>
-                </div>
-                <button type="button" class="px-4 py-2 rounded-full bg-emerald-500 text-white font-semibold shadow" data-navegacao="gestao">Abrir gestão detalhada</button>
-              </div>
-              <ul id="recentActivities" class="mission-activities">
-                <li class="hub-empty">Coletando eventos registrados...</li>
-              </ul>
-              <div class="mission-preview__boards">
-                <div class="kanban-preview">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h4 class="text-sm font-semibold text-sky-700">Kanban rápido</h4>
-                      <p class="text-xs text-sky-900/70">Principais cartões em movimento.</p>
-                    </div>
-                    <button type="button" class="text-xs font-semibold text-sky-600 underline" data-navegacao="kanban">Ver completo</button>
-                  </div>
-                  <div id="kanbanPreview" class="kanban-preview__columns">
-                    <div class="hub-empty">Sincronizando colunas...</div>
-                  </div>
-                </div>
-                <div class="gantt-preview">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h4 class="text-sm font-semibold text-indigo-700">Linha do tempo</h4>
-                      <p class="text-xs text-indigo-900/70">Etapas planejadas e em execução.</p>
-                    </div>
-                    <button type="button" class="text-xs font-semibold text-indigo-600 underline" data-navegacao="gestao">Abrir cronograma</button>
-                  </div>
-                  <div id="ganttPreview" class="gantt-preview__chart"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div id="hubScoreCards" class="hub-score-grid">
-          <div class="hub-empty">Carregando métricas da missão...</div>
-        </div>
-
-        <div class="journey-board">
-          <div class="journey-board__header">
-            <div>
-              <h2 class="journey-board__title">Trilha dos poços</h2>
-              <p class="journey-board__subtitle">Cada etapa representa um checkpoint crítico. Clique para mergulhar na gestão detalhada e atualizar dados diretamente na base.</p>
-            </div>
-            <button type="button" class="px-3 py-2 rounded-full bg-white border border-sky-200 text-sky-700 text-sm font-semibold shadow-sm" data-navegacao="pocos">Cadastrar ou atualizar poço</button>
-          </div>
-          <div id="journeyTrack" class="journey-track">
-            <div class="hub-empty">Mapeando estágios dos poços...</div>
-          </div>
-        </div>
-
-        <div class="project-flow">
-          <div class="project-flow__title">Cronograma vivo dos projetos</div>
-          <ul id="projectTimeline" class="project-timeline">
-            <li class="mission-card__empty">Carregando etapas do cronograma...</li>
-          </ul>
-        </div>
-      </div>
-
-      <aside class="mission-sidebar">
-        <div class="mission-card">
-          <div class="mission-card__title">⚡ Missões prioritárias</div>
-          <ul id="missionList" class="mission-list">
-            <li class="mission-card__empty">Buscando alertas críticos...</li>
-          </ul>
-        </div>
-
-        <div class="mission-card">
-          <div class="mission-card__title">🎯 Impacto imediato</div>
-          <div id="impactGlance" class="impact-glance">
-            <div class="hub-empty">Calculando impacto gerado...</div>
-          </div>
-        </div>
-
-        <div class="mission-card">
-          <div class="mission-card__title">🤝 Aliados em campo</div>
-          <ul id="donorRanking" class="donor-list">
-            <li class="mission-card__empty">Conectando com os doadores em destaque...</li>
-          </ul>
-        </div>
-      </aside>
-    </div>
-  </section>
-
-  <!-- ÁREA PRINCIPAL -->
   <main>
-    <div id="dashboard" class="section active"><?!= include('Dashboard'); ?></div>
-    <div id="gestao" class="section"><?!= include('Gestao'); ?></div>
-    <div id="impacto" class="section"><?!= include('Impacto'); ?></div>
-    <div id="pocos" class="section"><?!= include('Pocos'); ?></div>
-    <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
-    <div id="detalhes" class="section"><?!= include('Detalhes'); ?></div>
+    <section class="welcome-card" aria-labelledby="boasVindasTitulo">
+      <p class="hint">Central de acesso</p>
+      <h1 id="boasVindasTitulo">Escolha um módulo no menu suspenso</h1>
+      <p>Esta página inicial funciona como um hub simples para os painéis do sistema. Utilize o menu principal para abrir o módulo que deseja consultar. Cada seção é exibida em uma página dedicada, como o Mapa vivo das missões.</p>
+    </section>
   </main>
 
-  <div id="seletorCadastroOverlay" class="mission-form-overlay" aria-hidden="true">
-    <div class="mission-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloSeletorCadastro">
-      <header class="space-y-2">
-        <h3 id="tituloSeletorCadastro" class="text-lg font-semibold text-sky-800">O que você deseja cadastrar?</h3>
-        <p class="text-sm text-slate-600">Escolha abaixo para que o formulário inteligente adapte indicadores, checklists e campos automaticamente.</p>
-      </header>
-      <div class="mission-choice-grid">
-        <button type="button" class="mission-choice-button" data-tipo-cadastro="poco">
-          <span class="mission-choice-icon">💧</span>
-          <span>
-            <strong>Perfuração de poços</strong>
-            <small>Fluxo completo de planejamento e operação hídrica.</small>
-          </span>
-        </button>
-        <button type="button" class="mission-choice-button" data-tipo-cadastro="projeto">
-          <span class="mission-choice-icon">🤝</span>
-          <span>
-            <strong>Projeto social</strong>
-            <small>Negócios sociais, iniciativas produtivas e suporte comunitário.</small>
-          </span>
-        </button>
-        <button type="button" class="mission-choice-button" data-tipo-cadastro="doador">
-          <span class="mission-choice-icon">💙</span>
-          <span>
-            <strong>Doadores</strong>
-            <small>Cadastro de aliados, compromissos de aporte e regiões de atuação.</small>
-          </span>
-        </button>
-      </div>
-      <button type="button" class="mission-choice-cancel" data-fechar-seletor>Cancelar</button>
-    </div>
-  </div>
-
-  <div id="missionFormOverlay" class="mission-form-overlay" aria-hidden="true">
-    <div class="mission-form-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloFormularioMissao">
-      <header>
-        <div>
-          <h3 id="tituloFormularioMissao">Formulário inteligente</h3>
-          <p class="text-sm text-slate-600" id="descricaoFormularioMissao">Personalize as missões com indicadores, anexos e próximos passos automáticos.</p>
-        </div>
-        <button type="button" class="close-button" id="btnFecharFormulario" aria-label="Fechar formulário">×</button>
-      </header>
-      <form id="formPlanejamentoMissao" class="mission-form" autocomplete="off">
-        <input type="hidden" id="idMissao" name="idMissao">
-        <div class="mission-form__group">
-          <label for="codigoMissao" id="labelCodigo">Código inteligente</label>
-          <input id="codigoMissao" name="codigoMissao" placeholder="Será gerado automaticamente" readonly>
-        </div>
-        <div class="mission-form__group mission-form__group--cols">
-          <div>
-            <label for="tipoMissao" id="labelTipo">Tipo de missão</label>
-            <select id="tipoMissao" name="tipoMissao" required>
-              <option value="" disabled selected>Selecione</option>
-              <option value="poco">Poço artesiano</option>
-              <option value="projeto">Projeto social</option>
-              <option value="doador">Doador</option>
-            </select>
-          </div>
-          <div>
-            <label for="categoriaMissao" id="labelCategoria">Categoria</label>
-            <select id="categoriaMissao" name="categoriaMissao" disabled>
-              <option value="" disabled selected>Escolha o tipo primeiro</option>
-            </select>
-          </div>
-        </div>
-        <div class="mission-form__group mission-form__group--cols">
-          <div>
-            <label for="tituloMissao" id="labelTitulo">Nome da missão</label>
-            <input id="tituloMissao" name="tituloMissao" placeholder="Ex.: Missão Água Viva - Sítio Novo" required>
-          </div>
-          <div>
-            <label for="responsavelMissao" id="labelResponsavel">Responsável direto</label>
-            <input id="responsavelMissao" name="responsavelMissao" placeholder="Quem lidera em campo">
-          </div>
-        </div>
-        <div class="mission-form__group mission-form__group--cols">
-          <div>
-            <label for="estadoMissao" id="labelEstado">Estado</label>
-            <input id="estadoMissao" name="estadoMissao" placeholder="UF" maxlength="2">
-          </div>
-          <div>
-            <label for="municipioMissao" id="labelMunicipio">Município / Comunidade</label>
-            <input id="municipioMissao" name="municipioMissao" placeholder="Localidade atendida">
-          </div>
-          <div>
-            <label for="familiasAtendidas" id="labelFamilias">Famílias atendidas</label>
-            <input id="familiasAtendidas" name="familiasAtendidas" type="number" min="0" placeholder="0">
-          </div>
-        </div>
-        <div class="mission-form__group">
-          <label for="indicadoresMissao" id="labelIndicadores">Indicadores sugeridos</label>
-          <textarea id="indicadoresMissao" name="indicadoresMissao" placeholder="O sistema trará indicadores conforme o tipo escolhido"></textarea>
-        </div>
-        <div class="mission-form__group">
-          <label for="impactoPrevisto" id="labelImpacto">Impacto previsto</label>
-          <textarea id="impactoPrevisto" name="impactoPrevisto" placeholder="Como essa missão muda a realidade das famílias"></textarea>
-        </div>
-        <div class="mission-form__group">
-          <label for="financeiroMissao" id="labelFinanceiro">Saúde financeira e produtiva</label>
-          <textarea id="financeiroMissao" name="financeiroMissao" placeholder="Estimativas de investimento, break-even, margens"></textarea>
-        </div>
-        <div class="mission-form__group">
-          <label for="doacoesMissao" id="labelDoacoes">Doações e aliados recomendados</label>
-          <textarea id="doacoesMissao" name="doacoesMissao" placeholder="Sugestões de doadores, valores alvo e contrapartidas"></textarea>
-        </div>
-        <div class="mission-form__group">
-          <label for="proximosPassos" id="labelPassos">Próximos passos automáticos</label>
-          <textarea id="proximosPassos" name="proximosPassos" placeholder="O sistema sugerirá um roteiro de execução"></textarea>
-        </div>
-        <div class="mission-form__group">
-          <label for="observacoesMissao" id="labelObservacoes">Observações adicionais</label>
-          <textarea id="observacoesMissao" name="observacoesMissao" placeholder="Espaço livre para registros específicos"></textarea>
-        </div>
-        <div class="mission-form__actions">
-          <button type="button" class="btn-secundario" id="btnCancelarMissao">Cancelar</button>
-          <button type="button" class="btn-secundario" id="btnLimparMissao">Limpar</button>
-          <button type="submit" class="btn-primario">Salvar registro inteligente</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="detalhesOverlay" class="detail-overlay" aria-hidden="true" role="dialog">
-    <div class="detail-modal" role="document">
-      <button type="button" class="detail-close" id="btnFecharDetalhes" aria-label="Fechar detalhes">&times;</button>
-      <div class="space-y-2">
-        <h3 class="detail-title" id="detalheTitulo"></h3>
-        <p class="detail-subtitle" id="detalheSubtitulo"></p>
-      </div>
-      <p class="detail-description" id="detalheDescricao"></p>
-      <dl class="detail-list" id="detalheConteudo"></dl>
-      <div class="detail-actions" id="detalheAcoes" style="display:none;"></div>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
-  <footer class="text-center text-gray-500 py-4 mt-6 text-sm">
-    © 2025 Projeto Poços Missionários — Sistema desenvolvido em Google Apps Script
-  </footer>
-
   <script>
-    (function() {
-      const scoreContainer = document.getElementById('hubScoreCards');
-      const trackContainer = document.getElementById('journeyTrack');
-      const missionContainer = document.getElementById('missionList');
-      const projectContainer = document.getElementById('projectTimeline');
-      const impactContainer = document.getElementById('impactGlance');
-      const donorContainer = document.getElementById('donorRanking');
-      const missionOverview = document.getElementById('missionOverviewCards');
-      const missionInsightsList = document.getElementById('missionInsights');
-      const activitiesList = document.getElementById('recentActivities');
-      const kanbanPreview = document.getElementById('kanbanPreview');
-      const ganttPreview = document.getElementById('ganttPreview');
-      let ganttPreviewChart = null;
-      const { escapeHtml, formatarNumero, formatarMoeda, criarAtributoDetalhes } = window;
+    (function () {
+      const toggle = document.getElementById('menuToggle');
+      const panel = document.getElementById('menuPanel');
 
-      const placeholder = (element, mensagem) => {
-        if (!element) return;
-        element.innerHTML = `<div class="hub-empty">${escapeHtml(mensagem)}</div>`;
+      if (!toggle || !panel) return;
+
+      const closeMenu = () => {
+        panel.classList.remove('visible');
+        toggle.setAttribute('aria-expanded', 'false');
       };
 
-      const parseDataValor = (valor) => {
-        if (!valor) return null;
-        if (valor instanceof Date && !isNaN(valor.getTime())) return valor;
-        const tentativaDireta = new Date(valor);
-        if (!isNaN(tentativaDireta.getTime())) return tentativaDireta;
-        if (typeof valor === 'string') {
-          const partes = valor.split(/[\/-]/);
-          if (partes.length === 3) {
-            const [dia, mes, ano] = partes.map(p => parseInt(p, 10));
-            if (!Number.isNaN(dia) && !Number.isNaN(mes) && !Number.isNaN(ano)) {
-              const dataBr = new Date(ano < 100 ? 2000 + ano : ano, (mes || 1) - 1, dia || 1);
-              if (!isNaN(dataBr.getTime())) return dataBr;
-            }
-          }
-        }
-        return null;
+      const openMenu = () => {
+        panel.classList.add('visible');
+        toggle.setAttribute('aria-expanded', 'true');
       };
 
-      const normalizarStatus = (valor) => {
-        if (!valor) return 'Solicitado';
-        const texto = String(valor).toLowerCase();
-        if (texto.includes('concl') || texto.includes('final')) return 'Concluído';
-        if (texto.includes('exec') || texto.includes('obra')) return 'Execução';
-        if (texto.includes('plan') || texto.includes('prep')) return 'Planejamento';
-        return 'Solicitado';
-      };
-
-      const renderRecentActivities = (missoes, projetos) => {
-        if (!activitiesList) return;
-        const eventos = [];
-        const adicionarEvento = (item = {}, tipo) => {
-          if (!item) return;
-          const data = parseDataValor(item.ultimaAtualizacao || item.data || item.inicio || item.previsaoInicio || item.criadoEm || item.atualizadoEm);
-          const titulo = item.titulo || item.poco || item.nome || (tipo === 'missao' ? 'Missão' : 'Projeto');
-          const contexto = item.motivo || item.descricao || item.status || item.etapa || item.categoria || '';
-          const responsavel = item.responsavel || item.contato || item.responsavelDireto || '';
-          eventos.push({
-            titulo,
-            contexto,
-            responsavel,
-            tipo,
-            raw: item,
-            data: data ? data.getTime() : 0,
-            dataObjeto: data
-          });
-        };
-
-        (Array.isArray(projetos) ? projetos : []).forEach(item => adicionarEvento(item, 'projeto'));
-        (Array.isArray(missoes) ? missoes : []).forEach(item => adicionarEvento(item, 'missao'));
-
-        if (!eventos.length) {
-          placeholder(activitiesList, 'Cadastre novas ações para acompanhar a linha do tempo da missão.');
-          return;
-        }
-
-        eventos.sort((a, b) => (b.data || 0) - (a.data || 0));
-        const selecionados = eventos.slice(0, 5);
-        activitiesList.innerHTML = selecionados.map(evento => {
-          const dataFormatada = evento.dataObjeto
-            ? evento.dataObjeto.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-            : 'Data não informada';
-          const detalheAttr = criarAtributoDetalhes({
-            titulo: evento.titulo,
-            subtitulo: `${dataFormatada} • ${evento.tipo === 'missao' ? 'Missão' : 'Projeto/Poço'}`,
-            descricao: evento.contexto || 'Atualização recente registrada no painel vivo.',
-            campos: [
-              { label: 'Tipo', valor: evento.tipo === 'missao' ? 'Missão prioritária' : 'Projeto operacional' },
-              { label: 'Responsável', valor: evento.responsavel || 'Não informado' },
-              { label: 'Status', valor: evento.raw.status || evento.raw.etapa || 'Sem status' }
-            ],
-            acao: { label: 'Abrir gestão', destino: 'gestao' }
-          });
-          return `
-            <li class="mission-activities__item" ${detalheAttr} role="button" tabindex="0">
-              <strong>${escapeHtml(evento.titulo)}</strong>
-              <span>${escapeHtml(evento.contexto || 'Registro sem descrição adicional')}</span>
-              <span>${escapeHtml(dataFormatada)}${evento.responsavel ? ` • ${escapeHtml(evento.responsavel)}` : ''}</span>
-            </li>
-          `;
-        }).join('');
-      };
-
-      const renderKanbanPreview = (projetos) => {
-        if (!kanbanPreview) return;
-        const lista = Array.isArray(projetos) ? projetos : [];
-        if (!lista.length) {
-          placeholder(kanbanPreview, 'Cadastre projetos ou poços para visualizar o fluxo do kanban.');
-          return;
-        }
-        const colunasConfig = [
-          { chave: 'Solicitado', titulo: 'Solicitado' },
-          { chave: 'Planejamento', titulo: 'Planejamento' },
-          { chave: 'Execução', titulo: 'Execução' },
-          { chave: 'Concluído', titulo: 'Concluído' }
-        ];
-        const agrupado = lista.reduce((acc, item) => {
-          const statusNormalizado = normalizarStatus(item.status || item.etapa);
-          const chave = colunasConfig.find(col => col.titulo === statusNormalizado)?.titulo || 'Solicitado';
-          if (!acc[chave]) acc[chave] = [];
-          acc[chave].push(item);
-          return acc;
-        }, {});
-        kanbanPreview.innerHTML = colunasConfig.map(coluna => {
-          const itens = (agrupado[coluna.titulo] || []).slice(0, 3);
-          if (!itens.length) {
-            return `
-              <div class="kanban-preview__column">
-                <h4>${escapeHtml(coluna.titulo)}</h4>
-                <div class="hub-empty">Sem cartões</div>
-              </div>
-            `;
-          }
-          const cards = itens.map(item => {
-            const detalheAttr = criarAtributoDetalhes({
-              titulo: item.poco || item.titulo || 'Missão',
-              subtitulo: item.etapa || item.status || 'Etapa não informada',
-              descricao: item.descricao || '',
-              campos: [
-                { label: 'Responsável', valor: item.responsavel || 'Não informado' },
-                { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' },
-                { label: 'Categoria', valor: item.categoria || 'Não informada' }
-              ],
-              acao: { label: 'Ir para o kanban', destino: 'kanban' }
-            });
-            return `
-              <div class="kanban-preview__item" ${detalheAttr} role="button" tabindex="0">
-                <strong>${escapeHtml(item.poco || item.titulo || 'Missão')}</strong>
-                <span>${escapeHtml(item.municipio || item.local || item.estado || 'Local não informado')}</span>
-                ${item.proximaAcao ? `<span>Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
-              </div>
-            `;
-          }).join('');
-          return `
-            <div class="kanban-preview__column">
-              <h4>${escapeHtml(coluna.titulo)}</h4>
-              ${cards}
-            </div>
-          `;
-        }).join('');
-      };
-
-      const renderGanttPreview = (projetos) => {
-        if (!ganttPreview) return;
-        if (!window.Highcharts || typeof Highcharts.ganttChart !== 'function') {
-          placeholder(ganttPreview, 'Ative o módulo Gantt do Highcharts para visualizar a linha do tempo.');
-          return;
-        }
-        const lista = Array.isArray(projetos) ? projetos : [];
-        const tarefas = lista.slice(0, 6).map((item, index) => {
-          const inicio = parseDataValor(item.inicio || item.data || item.previsaoInicio);
-          const fim = parseDataValor(item.fim || item.previsaoFim || item.entregaPrevista);
-          if (!inicio && !fim) return null;
-          const inicioMs = (inicio || (fim ? new Date(fim.getTime() - 3 * 86400000) : new Date())).getTime();
-          const fimMs = (fim || new Date(inicioMs + 7 * 86400000)).getTime();
-          return {
-            id: `preview-${index}`,
-            name: item.poco || item.titulo || item.nome || `Tarefa ${index + 1}`,
-            start: inicioMs,
-            end: fimMs,
-            dataLabels: { enabled: false }
-          };
-        }).filter(Boolean);
-
-        if (!tarefas.length) {
-          placeholder(ganttPreview, 'Nenhuma etapa com datas definidas para montar o gantt.');
-          return;
-        }
-
-        if (ganttPreviewChart) {
-          ganttPreviewChart.destroy();
-          ganttPreviewChart = null;
-        }
-
-        ganttPreviewChart = Highcharts.ganttChart('ganttPreview', {
-          title: { text: null },
-          credits: { enabled: false },
-          xAxis: { type: 'datetime' },
-          yAxis: { type: 'category', grid: { enabled: true }, uniqueNames: true },
-          navigator: { enabled: false },
-          series: [{
-            name: 'Linha do tempo',
-            data: tarefas,
-            pointPadding: 0.25
-          }]
-        });
-      };
-
-      const renderMissionOverview = (resumo, missoes, projetos, impacto) => {
-        if (!missionOverview) return;
-        const totalPocos = Number(resumo.totalPocos || 0);
-        const totalProjetos = Number(resumo.totalProjetos || 0);
-        const totalDeclarado = Number(resumo.totalMissoes || 0);
-        const totalCalculado = totalDeclarado || totalPocos + totalProjetos || missoes.length + projetos.length;
-        const emExecucao = Number(resumo.emExecucao || 0) || projetos.filter(proj => (proj.status || '').toLowerCase() !== 'concluído').length;
-        const criticas = missoes.length;
-        const familias = Number(resumo.beneficiarios || impacto.familiasEstimadas || 0);
-        const cards = [
-          { label: 'Missões totais', valor: formatarNumero(totalCalculado), descricao: 'Poços e projetos acompanhados.' },
-          { label: 'Em execução', valor: formatarNumero(emExecucao), descricao: 'Etapas vivas no pipeline.' },
-          { label: 'Prioridade imediata', valor: formatarNumero(criticas), descricao: 'Ações que precisam de atenção.' },
-          { label: 'Famílias impactadas', valor: formatarNumero(familias), descricao: 'Estimativa somada de beneficiários.' }
-        ];
-        missionOverview.innerHTML = cards.map(card => `
-          <article class="mission-overview-card" role="presentation">
-            <span>${escapeHtml(card.label)}</span>
-            <strong>${escapeHtml(String(card.valor))}</strong>
-            <p>${escapeHtml(card.descricao)}</p>
-          </article>
-        `).join('');
-      };
-
-      const renderMissionInsights = (resumo, missoes, projetos, impacto, doadores) => {
-        if (!missionInsightsList) return;
-        const insights = [];
-        const gap = Number(resumo.gapFinanceiro || 0);
-        if (gap > 0) {
-          insights.push({ titulo: 'Gap financeiro detectado', mensagem: `Direcione ${formatarMoeda(gap)} para equilibrar o ciclo atual.` });
-        }
-        if (missoes.length) {
-          const foco = missoes[0];
-          insights.push({
-            titulo: 'Missão em alerta',
-            mensagem: `${foco.titulo || foco.poco || 'Ação prioritária'} exige: ${foco.proximaAcao || foco.motivo || 'definir próximo passo imediato.'}`
-          });
-        }
-        if (impacto.volumeAguaDiario) {
-          insights.push({ titulo: 'Produção hídrica', mensagem: `Volume diário registrado: ${formatarNumero(impacto.volumeAguaDiario)} L distribuídos.` });
-        }
-        if (doadores.length) {
-          const aliado = doadores[0];
-          insights.push({ titulo: 'Aliado estratégico', mensagem: `${aliado.nome || 'Aliado'} mantém ${formatarNumero(aliado.pocos || 0)} poços e ${formatarNumero(aliado.beneficiarios || 0)} beneficiários ativos.` });
-        }
-        if (!insights.length) {
-          missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
-          return;
-        }
-        missionInsightsList.innerHTML = insights.map(item => `
-          <li class="mission-insights__item">
-            <strong>${escapeHtml(item.titulo)}</strong>
-            <span>${escapeHtml(item.mensagem)}</span>
-          </li>
-        `).join('');
-      };
-
-      const formatarPercentual = valor => `${Math.round(Number(valor) || 0)}%`;
-      const formatarDataCurta = valor => {
-        if (!valor) return 'Sem data';
-        const data = new Date(valor);
-        if (isNaN(data.getTime())) return 'Sem data';
-        return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-      };
-
-      const createScoreCard = (icon, titulo, valor, detalhe, destino) => {
-        const detalheAttr = criarAtributoDetalhes({
-          titulo,
-          subtitulo: detalhe || '',
-          campos: [
-            { label: 'Valor atual', valor: valor },
-            { label: 'Contexto', valor: detalhe || 'Sem detalhes adicionais.' }
-          ],
-          acao: destino ? { label: 'Abrir guia relacionada', destino } : undefined
-        });
-        return `
-          <article class="score-card" ${detalheAttr} role="button" tabindex="0">
-            <div class="score-card__icon">${icon}</div>
-            <span class="score-card__label">${escapeHtml(titulo)}</span>
-            <div class="score-card__value">${escapeHtml(String(valor))}</div>
-            <p class="score-card__detail">${escapeHtml(String(detalhe))}</p>
-          </article>
-        `;
-      };
-
-      const render = (dados) => {
-        if (!dados) {
-          placeholder(scoreContainer, 'Não foi possível carregar as métricas.');
-          placeholder(trackContainer, 'Não foi possível carregar o pipeline.');
-          placeholder(missionContainer, 'Não foi possível carregar as missões prioritárias.');
-          placeholder(projectContainer, 'Não foi possível carregar o cronograma.');
-          placeholder(impactContainer, 'Sem dados de impacto disponíveis.');
-          placeholder(donorContainer, 'Sem doadores destacados no momento.');
-          placeholder(missionOverview, 'Nenhuma missão cadastrada. Crie um rascunho para começar.');
-          if (missionInsightsList) {
-            missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
-          }
-          return;
-        }
-
-        const resumo = dados.resumo || {};
-        const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
-        const missoes = Array.isArray(dados.missoes) ? dados.missoes : [];
-        const projetos = Array.isArray(dados.projetos) ? dados.projetos : [];
-        const impacto = dados.impacto || {};
-        const doadores = Array.isArray(dados.rankingDoadores) ? dados.rankingDoadores : [];
-
-        window.__dadosMissoesAtuais = { resumo, missoes, projetos, impacto, doadores };
-        document.dispatchEvent(new CustomEvent('dadosMissoesAtualizados'));
-
-        renderMissionOverview(resumo, missoes, projetos, impacto);
-        renderMissionInsights(resumo, missoes, projetos, impacto, doadores);
-        renderRecentActivities(missoes, projetos);
-        renderKanbanPreview(projetos);
-        renderGanttPreview(projetos);
-
-        if (scoreContainer) {
-          scoreContainer.innerHTML = [
-            createScoreCard('🎯', 'Poços monitorados', formatarNumero(resumo.totalPocos || 0), `${formatarNumero(resumo.concluidos || 0)} concluídos`, 'dashboard'),
-            createScoreCard('🚀', 'Missões em campo', formatarNumero(resumo.emExecucao || 0), `${formatarNumero(resumo.planejados || 0)} em preparação`, 'gestao'),
-            createScoreCard('👥', 'Beneficiários alcançados', formatarNumero(resumo.beneficiarios || 0), `Custo médio ${formatarMoeda(resumo.custoPorPessoa || 0)}/pessoa`, 'impacto'),
-            createScoreCard('💰', 'Investimento realizado', formatarMoeda(resumo.investimentoRealizado || 0), `Gap ${formatarMoeda(resumo.gapFinanceiro || 0)}`, 'gestao'),
-            createScoreCard('🤝', 'Doadores ativos', formatarNumero(resumo.doadoresAtivos || 0), 'Rede colaborativa atualizada', 'impacto')
-          ].join('');
-        }
-
-        if (trackContainer) {
-          if (!etapas.length) {
-            placeholder(trackContainer, 'Cadastre um poço para ativar a trilha do jogo.');
-          } else {
-            trackContainer.innerHTML = etapas.map(etapa => {
-              const totalFormatado = formatarNumero(etapa.total || 0);
-              const safePercent = Math.min(Math.max(Number(etapa.percentual) || 0, 0), 100);
-              const destaques = Array.isArray(etapa.destaques) && etapa.destaques.length
-                ? etapa.destaques.map(item => `
-                    <li class="stage-node__item">
-                      <strong>${escapeHtml(item.nome || 'Sem identificação')}</strong>
-                      <span>${escapeHtml(item.local || 'Sem local informado')}</span>
-                      ${item.responsavel ? `<span>Responsável: ${escapeHtml(item.responsavel)}</span>` : ''}
-                      ${item.gapFinanceiro > 0 ? `<span>Gap: <b>${formatarMoeda(item.gapFinanceiro)}</b></span>` : ''}
-                      ${item.diasSemContato > 0 ? `<span>${escapeHtml(`${item.diasSemContato} dias sem contato`)}</span>` : ''}
-                      ${item.proximaAcao ? `<span>Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
-                    </li>
-                  `).join('')
-                : '<li class="stage-node__empty">Nenhuma pendência crítica nesta etapa.</li>';
-              const ariaLabel = `${totalFormatado} poços em ${etapa.titulo}`;
-              return `
-                <article class="stage-node ${etapa.alerta ? 'stage-node--alerta' : ''}" data-order="${escapeHtml(String(etapa.ordem || ''))}" data-navegacao="pocos" role="button" tabindex="0" aria-label="${escapeHtml(ariaLabel)}">
-                  <div>
-                    <div class="stage-node__status">${escapeHtml(etapa.status)}</div>
-                    <div class="stage-node__titulo">${escapeHtml(etapa.titulo)}</div>
-                  </div>
-                  <div class="stage-node__contagem">${escapeHtml(totalFormatado)} <span>poços</span></div>
-                  <div class="stage-node__progress" aria-hidden="true"><span class="stage-node__progress-bar" style="--progress:${safePercent}%;"></span></div>
-                  <div class="stage-node__percentual">${escapeHtml(formatarPercentual(etapa.percentual || 0))} do pipeline</div>
-                  <ul class="stage-node__lista">${destaques}</ul>
-                </article>
-              `;
-            }).join('');
-          }
-        }
-
-        if (missionContainer) {
-          if (!missoes.length) {
-            missionContainer.innerHTML = '<li class="mission-card__empty">Sem alertas críticos. Continue monitorando o campo!</li>';
-          } else {
-            missionContainer.innerHTML = missoes.map(item => {
-              const detalheAttr = criarAtributoDetalhes({
-                titulo: item.titulo || 'Missão prioritária',
-                subtitulo: item.motivo || 'Ação necessária',
-                campos: [
-                  { label: 'Responsável', valor: item.responsavel || 'Não informado' },
-                  { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' },
-                  { label: 'Status', valor: item.status || 'Sem status' }
-                ],
-                acao: { label: 'Abrir gestão', destino: 'gestao' }
-              });
-              return `
-              <li class="mission-list__item" ${detalheAttr} role="button" tabindex="0">
-                <span class="mission-list__tag">Prioridade</span>
-                <strong>${escapeHtml(item.titulo || 'Missão')}</strong>
-                <span class="mission-list__acao">${escapeHtml(item.motivo || 'Ação necessária')}</span>
-                ${item.responsavel ? `<span class="mission-list__acao">Responsável: ${escapeHtml(item.responsavel)}</span>` : ''}
-                ${item.proximaAcao ? `<span class="mission-list__acao">Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
-              </li>`;
-            }).join('');
-          }
-        }
-
-        if (projectContainer) {
-          if (!projetos.length) {
-            projectContainer.innerHTML = '<li class="mission-card__empty">Nenhuma etapa de projeto registrada ainda.</li>';
-          } else {
-            projectContainer.innerHTML = projetos.map(item => {
-              const detalheAttr = criarAtributoDetalhes({
-                titulo: item.poco || 'Projeto',
-                subtitulo: `${item.etapa || 'Etapa não informada'} • ${formatarDataCurta(item.data)}`,
-                descricao: item.descricao || '',
-                campos: [
-                  { label: 'Status', valor: item.status || 'Sem status' },
-                  { label: 'Responsável', valor: item.responsavel || 'Não informado' },
-                  { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' }
-                ],
-                acao: { label: 'Abrir gestão', destino: 'gestao' }
-              });
-              return `
-              <li class="project-timeline__item" ${detalheAttr} role="button" tabindex="0">
-                <strong>${escapeHtml(item.poco || 'Projeto')}</strong>
-                <div class="project-timeline__meta">
-                  <span>${escapeHtml(item.etapa || '-')}</span>
-                  <span>${escapeHtml(formatarDataCurta(item.data))}</span>
-                  ${item.status ? `<span>${escapeHtml(item.status)}</span>` : ''}
-                </div>
-                ${item.descricao ? `<div class="project-timeline__descricao">${escapeHtml(item.descricao)}</div>` : ''}
-              </li>`;
-            }).join('');
-          }
-        }
-
-        if (impactContainer) {
-          const cards = [
-            { label: 'Famílias estimadas atendidas', valor: formatarNumero(impacto.familiasEstimadas || 0), descricao: 'Estimativa com base em 4 pessoas por família.' },
-            { label: 'Volume diário de água', valor: `${formatarNumero(impacto.volumeAguaDiario || 0)} L/dia`, descricao: 'Capacidade total somada dos poços ativos.' },
-            { label: 'Investimento previsto', valor: formatarMoeda(impacto.investimentoPrevisto || 0), descricao: 'Planejamento financeiro aprovado para o ciclo atual.' },
-            { label: 'Investimento realizado', valor: formatarMoeda(impacto.investimentoRealizado || 0), descricao: 'Recursos já aplicados em campo.' }
-          ];
-          impactContainer.innerHTML = cards.map(card => {
-            const detalheAttr = criarAtributoDetalhes({
-              titulo: card.label,
-              subtitulo: card.valor,
-              descricao: card.descricao,
-              campos: [
-                { label: 'Indicador', valor: card.label },
-                { label: 'Valor atual', valor: card.valor },
-                { label: 'Descrição', valor: card.descricao }
-              ],
-              acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
-            });
-            return `
-            <div class="impact-pill" ${detalheAttr} role="button" tabindex="0">
-              <strong>${escapeHtml(String(card.valor))}</strong>
-              <span>${escapeHtml(card.label)}</span>
-            </div>`;
-          }).join('');
-        }
-
-        if (donorContainer) {
-          if (!doadores.length) {
-            donorContainer.innerHTML = '<li class="mission-card__empty">Traga novos aliados para acelerar as missões.</li>';
-          } else {
-            donorContainer.innerHTML = doadores.map(item => {
-              const detalheAttr = criarAtributoDetalhes({
-                titulo: item.nome || 'Aliado',
-                subtitulo: `Contribuição ${formatarMoeda(item.valor || 0)}`,
-                campos: [
-                  { label: 'Poços apoiados', valor: formatarNumero(item.pocos || 0) },
-                  { label: 'Beneficiários impactados', valor: formatarNumero(item.beneficiarios || 0) },
-                  { label: 'Contato', valor: item.contato || 'Não informado' }
-                ],
-                acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
-              });
-              return `
-              <li class="donor-list__item" ${detalheAttr} role="button" tabindex="0">
-                <div>
-                  <strong>${escapeHtml(item.nome || 'Aliado')}</strong>
-                  <span>${escapeHtml(`${formatarNumero(item.pocos || 0)} poços apoiados`)}</span>
-                </div>
-                <div class="donor-list__value">
-                  <span>${escapeHtml(formatarMoeda(item.valor || 0))}</span>
-                  <span>${escapeHtml(`${formatarNumero(item.beneficiarios || 0)} beneficiários`)}</span>
-                </div>
-              </li>`;
-            }).join('');
-          }
-        }
-      };
-
-      const inicializar = () => {
-        if (window.google && google.script && google.script.run && google.script.run.withSuccessHandler) {
-          google.script.run.withSuccessHandler(render).obterVisaoGamificada();
+      toggle.addEventListener('click', () => {
+        const isOpen = panel.classList.contains('visible');
+        if (isOpen) {
+          closeMenu();
         } else {
-          render(null);
-        }
-      };
-
-      inicializar();
-    })();
-  </script>
-
-
-  <script>
-    (function() {
-      const form = document.getElementById('formPlanejamentoMissao');
-      if (!form) return;
-
-      const tipoSelect = document.getElementById('tipoMissao');
-      const categoriaSelect = document.getElementById('categoriaMissao');
-      const tituloInput = document.getElementById('tituloMissao');
-      const responsavelInput = document.getElementById('responsavelMissao');
-      const estadoInput = document.getElementById('estadoMissao');
-      const municipioInput = document.getElementById('municipioMissao');
-      const familiasInput = document.getElementById('familiasAtendidas');
-      const indicadoresField = document.getElementById('indicadoresMissao');
-      const impactoField = document.getElementById('impactoPrevisto');
-      const financeiroField = document.getElementById('financeiroMissao');
-      const doacoesField = document.getElementById('doacoesMissao');
-      const passosField = document.getElementById('proximosPassos');
-      const observacoesField = document.getElementById('observacoesMissao');
-      const checklistList = document.getElementById('missionAutoChecklist');
-      const draftsList = document.getElementById('missionDrafts');
-      const feedbackBox = document.getElementById('missionFeedback');
-      const codigoInput = document.getElementById('codigoMissao');
-      const limparBtn = document.getElementById('btnLimparMissao');
-      const cancelarBtn = document.getElementById('btnCancelarMissao');
-      const idInput = document.getElementById('idMissao');
-      const descricaoFormulario = document.getElementById('descricaoFormularioMissao');
-
-      const labelCodigo = document.getElementById('labelCodigo');
-      const labelTipo = document.getElementById('labelTipo');
-      const labelCategoria = document.getElementById('labelCategoria');
-      const labelTitulo = document.getElementById('labelTitulo');
-      const labelResponsavel = document.getElementById('labelResponsavel');
-      const labelEstado = document.getElementById('labelEstado');
-      const labelMunicipio = document.getElementById('labelMunicipio');
-      const labelFamilias = document.getElementById('labelFamilias');
-      const labelIndicadores = document.getElementById('labelIndicadores');
-      const labelImpacto = document.getElementById('labelImpacto');
-      const labelFinanceiro = document.getElementById('labelFinanceiro');
-      const labelDoacoes = document.getElementById('labelDoacoes');
-      const labelPassos = document.getElementById('labelPassos');
-      const labelObservacoes = document.getElementById('labelObservacoes');
-
-      const btnNovaEntrada = document.getElementById('btnNovaEntrada');
-      const seletorOverlay = document.getElementById('seletorCadastroOverlay');
-      const missionFormOverlay = document.getElementById('missionFormOverlay');
-      const btnFecharFormulario = document.getElementById('btnFecharFormulario');
-      const botoesSeletor = seletorOverlay ? seletorOverlay.querySelectorAll('[data-tipo-cadastro]') : [];
-      const btnCancelarSeletor = seletorOverlay ? seletorOverlay.querySelector('[data-fechar-seletor]') : null;
-
-      const { escapeHtml, formatarMoeda } = window;
-      const body = document.body;
-
-      if (!tipoSelect || !categoriaSelect) return;
-
-      const labelsPadrao = {
-        descricao: 'Personalize as missões com indicadores, anexos e próximos passos automáticos.',
-        categoria: 'Categoria',
-        titulo: 'Nome da missão',
-        tituloPlaceholder: 'Ex.: Missão Água Viva - Sítio Novo',
-        responsavel: 'Responsável direto',
-        responsavelPlaceholder: 'Quem lidera em campo',
-        estado: 'Estado',
-        estadoPlaceholder: 'UF',
-        municipio: 'Município / Comunidade',
-        municipioPlaceholder: 'Localidade atendida',
-        familias: 'Famílias atendidas',
-        familiasPlaceholder: '0',
-        indicadores: 'Indicadores sugeridos',
-        indicadoresPlaceholder: 'O sistema trará indicadores conforme o tipo escolhido',
-        impacto: 'Impacto previsto',
-        impactoPlaceholder: 'Como essa missão muda a realidade das famílias',
-        financeiro: 'Saúde financeira e produtiva',
-        financeiroPlaceholder: 'Estimativas de investimento, break-even, margens',
-        doacoes: 'Doações e aliados recomendados',
-        doacoesPlaceholder: 'Sugestões de doadores, valores alvo e contrapartidas',
-        proximosPassos: 'Próximos passos automáticos',
-        proximosPassosPlaceholder: 'O sistema sugerirá um roteiro de execução',
-        observacoes: 'Observações adicionais',
-        observacoesPlaceholder: 'Espaço livre para registros específicos'
-      };
-
-      const coordenadoresRegionais = {
-        'CE': 'Ana Paula — Sertão Central',
-        'BA': 'João Batista — Chapada',
-        'PE': 'Marta Lins — Semiárido',
-        'RN': 'Cláudio Alves — Seridó',
-        'PI': 'Lia Gomes — Cariri',
-        'PB': 'Rafael Lima — Borborema'
-      };
-
-      const configMissoes = {
-        poco: {
-          prefixo: 'POC',
-          labels: {
-            descricao: 'Detalhe perfuração, equipe e indicadores técnicos.',
-            categoria: 'Frente de operação',
-            tituloPlaceholder: 'Ex.: Poço Águas do Sertão - Comunidade X',
-            familiasPlaceholder: 'Famílias estimadas atendidas'
-          },
-          checklistBase: [
-            'Validar solicitação comunitária com visita técnica.',
-            'Confirmar disponibilidade de energia e logística de perfuratriz.',
-            'Emitir orçamento comparativo com fornecedores homologados.'
-          ],
-          categorias: {
-            operacao: {
-              nome: 'Perfuração e operação do poço',
-              indicadores: [
-                'Profundidade média perfurada (m)',
-                'Vazão testada (L/h)',
-                'Tempo de resposta da equipe técnica',
-                'Custo por metro perfurado'
-              ],
-              impacto: [
-                'Disponibilizar água potável contínua para famílias locais.',
-                'Reduzir deslocamento médio para coleta de água em 70%.',
-                'Criar base para projetos produtivos agrícolas.'
-              ],
-              financeiro: [
-                'Investimento previsto para perfuração e bomba submersa.',
-                'Custos de manutenção trimestral estimados.',
-                'Provisionamento para análise de qualidade da água.'
-              ],
-              doacoes: [
-                'Doadores com foco em infraestrutura hídrica.',
-                'Campanhas mensais de manutenção comunitária.',
-                'Cofinanciamento com prefeituras ou empresas locais.'
-              ],
-              proximosPassos: [
-                'Agendar mobilização comunitária de lançamento.',
-                'Enviar contrato e cronograma ao fornecedor.',
-                'Programar monitoramento pós-instalação (30, 60 e 120 dias).'
-              ],
-              familiasPadrao: 60
-            }
-          }
-        },
-        projeto: {
-          prefixo: 'PRO',
-          labels: {
-            descricao: 'Descreva iniciativas sociais, metas e indicadores produtivos.',
-            categoria: 'Categoria do projeto social',
-            tituloPlaceholder: 'Ex.: Padaria Solidária - Vila Esperança',
-            familiasPlaceholder: 'Famílias impactadas',
-            doacoes: 'Parceiros estratégicos',
-            doacoesPlaceholder: 'Registre aliados, aportes e contrapartidas previstas'
-          },
-          checklistBase: [
-            'Validar diagnóstico socioeconômico da comunidade.',
-            'Calcular orçamento de implantação e capital de giro inicial.',
-            'Definir indicadores de impacto social e produtivo.'
-          ],
-          categorias: {
-            plantacao: {
-              nome: 'Plantações agroecológicas',
-              indicadores: [
-                'Área cultivada (hectares)',
-                'Produção mensal (kg)',
-                'Índice de adoção de técnicas regenerativas',
-                'Participação de famílias na gestão'
-              ],
-              impacto: [
-                'Aumentar segurança alimentar das famílias atendidas.',
-                'Gerar excedente comercializável em feiras locais.',
-                'Promover capacitações em manejo agroecológico.'
-              ],
-              financeiro: [
-                'Investimento em insumos, sementes e irrigação.',
-                'Capital de giro para os três primeiros ciclos.',
-                'Receita média por safra e ponto de equilíbrio.'
-              ],
-              doacoes: [
-                'Doadores interessados em agricultura familiar.',
-                'Campanhas de financiamento coletivo por safra.',
-                'Parcerias com cooperativas e secretarias rurais.'
-              ],
-              proximosPassos: [
-                'Planejar mutirões de preparo do solo.',
-                'Agendar treinamentos com assistência técnica.',
-                'Definir calendário de colheita e distribuição.'
-              ],
-              familiasPadrao: 45
-            },
-            padaria: {
-              nome: 'Padarias comunitárias',
-              indicadores: [
-                'Produção diária de pães e derivados',
-                'Ticket médio por cliente',
-                'Taxa de reinvestimento na operação',
-                'Número de famílias empregadas'
-              ],
-              impacto: [
-                'Garantir acesso a alimentos a preço justo.',
-                'Gerar renda fixa para famílias envolvidas.',
-                'Fortalecer a economia solidária local.'
-              ],
-              financeiro: [
-                'Investimento em equipamentos e reforma do espaço.',
-                'Custos mensais de insumos e energia.',
-                'Margem média de contribuição e ponto de equilíbrio.'
-              ],
-              doacoes: [
-                'Parceiros focados em segurança alimentar.',
-                'Campanhas de apadrinhamento por família beneficiada.',
-                'Contrapartidas com fornecimento a escolas locais.'
-              ],
-              proximosPassos: [
-                'Definir cardápio e tabela de preços solidários.',
-                'Agendar treinamento de boas práticas de produção.',
-                'Estabelecer canais de venda e entregas comunitárias.'
-              ],
-              familiasPadrao: 35
-            },
-            empreendimento: {
-              nome: 'Empreendimentos sociais diversos',
-              indicadores: [
-                'Receita mensal recorrente',
-                'Margem operacional',
-                'Empregos diretos e indiretos criados',
-                'Índice de satisfação das famílias atendidas'
-              ],
-              impacto: [
-                'Diversificar a renda das famílias do território.',
-                'Criar oportunidades de formação profissional.',
-                'Manter ciclo de aprendizagem contínuo.'
-              ],
-              financeiro: [
-                'Plano de negócios com fluxo de caixa projetado.',
-                'Fontes de receita e mix de produtos/serviços.',
-                'Estratégia de sustentabilidade financeira anual.'
-              ],
-              doacoes: [
-                'Investidores de impacto e fundos solidários.',
-                'Campanhas de microcrédito comunitário.',
-                'Acordos de compra garantida com parceiros.'
-              ],
-              proximosPassos: [
-                'Validar proposta de valor com a comunidade.',
-                'Mapear fornecedores e parceiros estratégicos.',
-                'Estabelecer metas de impacto trimestrais.'
-              ],
-              familiasPadrao: 50
-            }
-          }
-        },
-        doador: {
-          prefixo: 'DOA',
-          labels: {
-            descricao: 'Centralize os dados do aliado para personalizar a jornada de relacionamento.',
-            categoria: 'Tipo de apoio',
-            titulo: 'Nome do doador',
-            tituloPlaceholder: 'Ex.: Instituto Água Viva',
-            responsavel: 'Contato principal',
-            responsavelPlaceholder: 'Responsável pela relação',
-            estado: 'Estado de atuação principal',
-            municipio: 'Abrangência / Região',
-            municipioPlaceholder: 'Região atendida',
-            familias: 'Projetos apoiados',
-            familiasPlaceholder: 'Número de iniciativas apoiadas',
-            indicadores: 'Indicadores de parceria',
-            impacto: 'Expectativas de impacto',
-            impactoPlaceholder: 'Resultados esperados e metas de impacto',
-            financeiro: 'Compromissos financeiros',
-            financeiroPlaceholder: 'Valores previstos, forma de repasse e vigência',
-            doacoes: 'Histórico de aportes e contrapartidas',
-            doacoesPlaceholder: 'Registre campanhas, aportes e contrapartidas combinadas',
-            proximosPassos: 'Próximos passos com o doador',
-            proximosPassosPlaceholder: 'Defina a agenda de relacionamento e entregas',
-            observacoes: 'Notas internas e follow-up',
-            observacoesPlaceholder: 'Notas internas, alertas e anexos a providenciar'
-          },
-          checklistBase: [
-            'Validar critérios de prestação de contas e SLA de comunicação.',
-            'Registrar compromissos financeiros e vigência do acordo.',
-            'Definir responsáveis internos pelo relacionamento.'
-          ],
-          categorias: {
-            mantenedor: {
-              nome: 'Mantenedor recorrente',
-              indicadores: [
-                'Valor anual comprometido',
-                'Periodicidade das doações',
-                'Projetos prioritários do mantenedor'
-              ],
-              impacto: [
-                'Metas de beneficiários apoiados',
-                'Resultados esperados por área de atuação',
-                'Indicadores compartilhados de reputação'
-              ],
-              financeiro: [
-                'Ticket médio por transferência',
-                'Modalidade de repasse (PIX/TED ou bens)',
-                'Regras de contrapartida financeira'
-              ],
-              doacoes: [
-                'Campanhas recorrentes financiadas',
-                'Demandas de relatórios e evidências',
-                'Benefícios oferecidos ao mantenedor'
-              ],
-              proximosPassos: [
-                'Atualizar prestação de contas trimestral',
-                'Enviar convites para visitas de campo',
-                'Planejar renovação do termo de parceria'
-              ],
-              familiasPadrao: 4
-            },
-            institucional: {
-              nome: 'Parceiro institucional',
-              indicadores: [
-                'Áreas de atuação institucional',
-                'Recursos não financeiros ofertados',
-                'Capilaridade territorial'
-              ],
-              impacto: [
-                'Fortalecimento da governança local',
-                'Engajamento de voluntários especializados',
-                'Visibilidade compartilhada da missão'
-              ],
-              financeiro: [
-                'Investimentos em capacitação e comunicação',
-                'Aportes destinados a infraestrutura',
-                'Contrapartidas de advocacy'
-              ],
-              doacoes: [
-                'Eventos e campanhas cocriadas',
-                'Rede de contatos mobilizada',
-                'Conexões estratégicas fornecidas'
-              ],
-              proximosPassos: [
-                'Planejar agenda de eventos conjuntos',
-                'Mapear demandas de comunicação',
-                'Coordenar plano de relacionamento anual'
-              ],
-              familiasPadrao: 3
-            },
-            aliadoLocal: {
-              nome: 'Aliado comunitário',
-              indicadores: [
-                'Comunidades apoiadas',
-                'Recursos logísticos disponibilizados',
-                'Número de voluntários ativos'
-              ],
-              impacto: [
-                'Fortalecimento da base comunitária',
-                'Agilidade na mobilização local',
-                'Cocriação de iniciativas sociais'
-              ],
-              financeiro: [
-                'Aportes em insumos e logística',
-                'Custos operacionais cobertos',
-                'Metas de captação conjunta'
-              ],
-              doacoes: [
-                'Campanhas locais lideradas',
-                'Eventos comunitários patrocinados',
-                'Ações de sensibilização realizadas'
-              ],
-              proximosPassos: [
-                'Programar reuniões de acompanhamento mensais',
-                'Definir indicadores compartilhados',
-                'Acompanhar satisfação das comunidades atendidas'
-              ],
-              familiasPadrao: 2
-            }
-          }
-        }
-      };
-
-      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('\n');
-      const rascunhos = [];
-      let codigoBase = '';
-      let modoEdicao = false;
-
-      const atualizarBloqueioCorpo = () => {
-        if (document.querySelector('.mission-form-overlay.visible') || document.querySelector('.detail-overlay.visible')) {
-          body.classList.add('detail-open');
-        } else {
-          body.classList.remove('detail-open');
-        }
-      };
-
-      const abrirOverlay = (elemento) => {
-        if (!elemento) return;
-        elemento.classList.add('visible');
-        elemento.setAttribute('aria-hidden', 'false');
-        atualizarBloqueioCorpo();
-      };
-
-      const fecharOverlay = (elemento) => {
-        if (!elemento) return;
-        elemento.classList.remove('visible');
-        elemento.setAttribute('aria-hidden', 'true');
-        atualizarBloqueioCorpo();
-      };
-
-      const abrirFormulario = () => {
-        if (!missionFormOverlay) return;
-        abrirOverlay(missionFormOverlay);
-        setTimeout(() => tituloInput && tituloInput.focus(), 60);
-      };
-
-      const fecharFormulario = () => {
-        modoEdicao = false;
-        fecharOverlay(missionFormOverlay);
-      };
-
-      const abrirSeletor = () => {
-        if (!seletorOverlay) return;
-        limparFormulario();
-        aplicarRotulos('');
-        abrirOverlay(seletorOverlay);
-        setTimeout(() => {
-          const primeiro = seletorOverlay.querySelector('[data-tipo-cadastro]');
-          if (primeiro) primeiro.focus();
-        }, 60);
-      };
-
-      const fecharSeletor = () => fecharOverlay(seletorOverlay);
-      function aplicarRotulos(tipo) {
-        const config = configMissoes[tipo] || {};
-        const labels = Object.assign({}, labelsPadrao, config.labels || {});
-        if (descricaoFormulario) descricaoFormulario.textContent = labels.descricao || labelsPadrao.descricao;
-        if (labelCategoria) labelCategoria.textContent = labels.categoria || labelsPadrao.categoria;
-        if (labelTitulo) labelTitulo.textContent = labels.titulo || labelsPadrao.titulo;
-        if (labelResponsavel) labelResponsavel.textContent = labels.responsavel || labelsPadrao.responsavel;
-        if (labelEstado) labelEstado.textContent = labels.estado || labelsPadrao.estado;
-        if (labelMunicipio) labelMunicipio.textContent = labels.municipio || labelsPadrao.municipio;
-        if (labelFamilias) labelFamilias.textContent = labels.familias || labelsPadrao.familias;
-        if (labelIndicadores) labelIndicadores.textContent = labels.indicadores || labelsPadrao.indicadores;
-        if (labelImpacto) labelImpacto.textContent = labels.impacto || labelsPadrao.impacto;
-        if (labelFinanceiro) labelFinanceiro.textContent = labels.financeiro || labelsPadrao.financeiro;
-        if (labelDoacoes) labelDoacoes.textContent = labels.doacoes || labelsPadrao.doacoes;
-        if (labelPassos) labelPassos.textContent = labels.proximosPassos || labelsPadrao.proximosPassos;
-        if (labelObservacoes) labelObservacoes.textContent = labels.observacoes || labelsPadrao.observacoes;
-        if (tituloInput) tituloInput.placeholder = labels.tituloPlaceholder || labelsPadrao.tituloPlaceholder;
-        if (responsavelInput) responsavelInput.placeholder = labels.responsavelPlaceholder || labelsPadrao.responsavelPlaceholder;
-        if (estadoInput) estadoInput.placeholder = labels.estadoPlaceholder || labelsPadrao.estadoPlaceholder;
-        if (municipioInput) municipioInput.placeholder = labels.municipioPlaceholder || labelsPadrao.municipioPlaceholder;
-        if (familiasInput) familiasInput.placeholder = labels.familiasPlaceholder || labelsPadrao.familiasPlaceholder;
-        if (indicadoresField) indicadoresField.placeholder = labels.indicadoresPlaceholder || labelsPadrao.indicadoresPlaceholder;
-        if (impactoField) impactoField.placeholder = labels.impactoPlaceholder || labelsPadrao.impactoPlaceholder;
-        if (financeiroField) financeiroField.placeholder = labels.financeiroPlaceholder || labelsPadrao.financeiroPlaceholder;
-        if (doacoesField) doacoesField.placeholder = labels.doacoesPlaceholder || labelsPadrao.doacoesPlaceholder;
-        if (passosField) passosField.placeholder = labels.proximosPassosPlaceholder || labelsPadrao.proximosPassosPlaceholder;
-        if (observacoesField) observacoesField.placeholder = labels.observacoesPlaceholder || labelsPadrao.observacoesPlaceholder;
-      }
-
-      function atualizarCategorias() {
-        const tipo = tipoSelect.value;
-        if (!tipo) {
-          categoriaSelect.innerHTML = '<option value="" disabled selected>Escolha o tipo primeiro</option>';
-          categoriaSelect.disabled = true;
-          return;
-        }
-        const configTipo = configMissoes[tipo];
-        if (!configTipo) return;
-        const categorias = configTipo.categorias || {};
-        const chaves = Object.keys(categorias);
-        if (!chaves.length) {
-          categoriaSelect.innerHTML = '<option value="" disabled selected>Categoria não disponível</option>';
-          categoriaSelect.disabled = true;
-          return;
-        }
-        if (tipo === 'poco') {
-          categoriaSelect.innerHTML = `<option value="${escapeHtml(chaves[0])}" selected>${escapeHtml(categorias[chaves[0]].nome)}</option>`;
-          categoriaSelect.disabled = true;
-        } else if (chaves.length === 1) {
-          categoriaSelect.innerHTML = `<option value="${escapeHtml(chaves[0])}" selected>${escapeHtml(categorias[chaves[0]].nome)}</option>`;
-          categoriaSelect.disabled = false;
-        } else {
-          categoriaSelect.disabled = false;
-          categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a categoria</option>' + chaves.map(chave => `<option value="${escapeHtml(chave)}">${escapeHtml(categorias[chave].nome)}</option>`).join('');
-        }
-      }
-
-      function gerarCodigoBase() {
-        const tipo = tipoSelect.value;
-        if (!tipo) {
-          codigoBase = '';
-          codigoInput.value = '';
-          return;
-        }
-        const configTipo = configMissoes[tipo] || {};
-        const prefixo = configTipo.prefixo || 'MIS';
-        const agora = new Date();
-        const anoMes = `${String(agora.getFullYear()).slice(-2)}${String(agora.getMonth() + 1).padStart(2, '0')}`;
-        const sequencia = `${agora.getDate().toString().padStart(2, '0')}${agora.getHours().toString().padStart(2, '0')}`;
-        codigoBase = `${prefixo}-${anoMes}${sequencia}`;
-        atualizarCodigo();
-      }
-
-      function atualizarCodigo() {
-        if (!codigoBase) return;
-        const uf = (estadoInput.value || 'NA').toUpperCase().replace(/[^A-Z]/g, '').padEnd(2, 'X').slice(0, 2);
-        codigoInput.value = `${codigoBase}-${uf}`;
-      }
-
-      function sugerirResponsavel() {
-        const uf = (estadoInput.value || '').toUpperCase();
-        if (!uf || responsavelInput.value || tipoSelect.value === 'doador') return;
-        if (coordenadoresRegionais[uf]) {
-          responsavelInput.value = coordenadoresRegionais[uf];
-        }
-      }
-
-      function atualizarChecklist(itens) {
-        if (!checklistList) return;
-        if (!itens.length) {
-          checklistList.innerHTML = '<li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>';
-          return;
-        }
-        checklistList.innerHTML = itens.map(item => `<li class="mission-autofill__item">${escapeHtml(item)}</li>`).join('');
-      }
-
-      function sugerirDoadoresAutomatizados() {
-        if (!doacoesField || tipoSelect.value === 'doador') return;
-        const dados = window.__dadosMissoesAtuais;
-        if (!dados || !Array.isArray(dados.doadores) || !dados.doadores.length) return;
-        const principais = dados.doadores.slice(0, 2).map(item => `${item.nome || 'Aliado'} • Contribuição média ${formatarMoeda(item.valor || 0)}`);
-        const textoAtual = doacoesField.value.trim();
-        const sugestaoLinhas = ['Aliados recomendados:', ...principais.map(item => `• ${item}`)];
-        const sugestao = sugestaoLinhas.join('\n');
-        if (!textoAtual.includes('Aliados recomendados')) {
-          const separadorSugestao = textoAtual ? "\n\n" : "";
-          doacoesField.value = `${textoAtual}${separadorSugestao}${sugestao}`.trim();
-        }
-
-      }
-
-      function preencherSugestoes() {
-        const tipo = tipoSelect.value;
-        if (!tipo) return;
-        const configTipo = configMissoes[tipo];
-        if (!configTipo) return;
-        const categorias = configTipo.categorias || {};
-        const chaveCategoria = tipo === 'poco'
-          ? Object.keys(categorias)[0]
-          : (categoriaSelect.value || Object.keys(categorias)[0]);
-        const configCategoria = categorias[chaveCategoria];
-        if (!configCategoria) return;
-
-        const listaIndicadores = formatarLista(configCategoria.indicadores);
-        const listaImpacto = formatarLista(configCategoria.impacto);
-        const listaFinanceiro = formatarLista(configCategoria.financeiro);
-        const listaDoacoes = formatarLista(configCategoria.doacoes);
-        const checklist = [...(configTipo.checklistBase || []), ...(configCategoria.proximosPassos || [])];
-        const listaPassos = formatarLista(checklist);
-
-        if (!modoEdicao || !indicadoresField.value.trim()) indicadoresField.value = listaIndicadores;
-        if (!modoEdicao || !impactoField.value.trim()) impactoField.value = listaImpacto;
-        if (!modoEdicao || !financeiroField.value.trim()) financeiroField.value = listaFinanceiro;
-        if (!modoEdicao || !doacoesField.value.trim()) doacoesField.value = listaDoacoes;
-        if (!modoEdicao || !passosField.value.trim()) passosField.value = listaPassos;
-        if (!familiasInput.value) familiasInput.value = configCategoria.familiasPadrao || '';
-
-        atualizarChecklist(checklist);
-        sugerirResponsavel();
-        atualizarCodigo();
-        sugerirDoadoresAutomatizados();
-      }
-
-      function limparFormulario() {
-        form.reset();
-        codigoBase = '';
-        modoEdicao = false;
-        if (idInput) idInput.value = '';
-        categoriaSelect.innerHTML = '<option value="" disabled selected>Escolha o tipo primeiro</option>';
-        categoriaSelect.disabled = true;
-        atualizarChecklist([]);
-        if (codigoInput) codigoInput.value = '';
-        if (indicadoresField) indicadoresField.value = '';
-        if (impactoField) impactoField.value = '';
-        if (financeiroField) financeiroField.value = '';
-        if (doacoesField) doacoesField.value = '';
-        if (passosField) passosField.value = '';
-        if (observacoesField) observacoesField.value = '';
-        if (familiasInput) familiasInput.value = '';
-        if (feedbackBox) {
-          feedbackBox.classList.remove('visible');
-          feedbackBox.textContent = '';
-        }
-        aplicarRotulos(tipoSelect.value || '');
-      }
-      function renderizarRascunhos() {
-        if (!draftsList) return;
-        if (!rascunhos.length) {
-          draftsList.innerHTML = '<li class="hub-empty">Nenhum rascunho salvo ainda.</li>';
-          return;
-        }
-        draftsList.innerHTML = rascunhos.slice(-4).reverse().map(item => `
-          <li class="mission-drafts__item">
-            <strong>${escapeHtml(item.codigo)}</strong> — ${escapeHtml(item.titulo)}
-            <div>${escapeHtml(item.resumo)}</div>
-            <small>${escapeHtml(item.local)}</small>
-          </li>
-        `).join('');
-      }
-
-      function exibirFeedback(mensagem) {
-        if (!feedbackBox) return;
-        feedbackBox.textContent = mensagem;
-        feedbackBox.classList.add('visible');
-        clearTimeout(exibirFeedback.timeout);
-        exibirFeedback.timeout = setTimeout(() => feedbackBox.classList.remove('visible'), 6000);
-      }
-
-      function preencherFormulario(dados = {}) {
-        if (!dados) return;
-        modoEdicao = true;
-        const categoriaValor = dados.categoria || dados.tipoCategoria;
-        if (idInput) idInput.value = dados.id || dados.identificador || '';
-        if (dados.codigo) {
-          codigoInput.value = dados.codigo;
-          codigoBase = dados.codigo.includes('-') ? dados.codigo.split('-').slice(0, -1).join('-') : dados.codigo;
-        }
-        if (tituloInput) tituloInput.value = dados.titulo || dados.nome || tituloInput.value;
-        if (responsavelInput) responsavelInput.value = dados.responsavel || dados.contato || dados.responsavelDireto || responsavelInput.value;
-        if (estadoInput) estadoInput.value = (dados.estado || dados.uf || estadoInput.value || '').toUpperCase();
-        if (municipioInput) municipioInput.value = dados.municipio || dados.cidade || dados.comunidade || dados.local || municipioInput.value;
-        if (familiasInput) familiasInput.value = dados.familias || dados.familiasAtendidas || dados.projetosApoiados || familiasInput.value;
-        if (indicadoresField && (dados.indicadores || dados.indicadoresSugeridos)) indicadoresField.value = dados.indicadores || dados.indicadoresSugeridos;
-        if (impactoField && (dados.impacto || dados.impactoPrevisto)) impactoField.value = dados.impacto || dados.impactoPrevisto;
-        if (financeiroField && (dados.financeiro || dados.saudeFinanceira)) financeiroField.value = dados.financeiro || dados.saudeFinanceira;
-        if (doacoesField && (dados.doacoes || dados.aportes || dados.aliados)) doacoesField.value = dados.doacoes || dados.aportes || dados.aliados;
-        if (passosField && dados.proximosPassos) passosField.value = dados.proximosPassos;
-        if (observacoesField && (dados.observacoes || dados.notas)) observacoesField.value = dados.observacoes || dados.notas;
-        if (categoriaValor && categoriaSelect.querySelector(`option[value="${categoriaValor}"]`)) {
-          categoriaSelect.value = categoriaValor;
-        }
-        atualizarCodigo();
-      }
-
-      function iniciarNovoCadastro(tipo) {
-        if (!tipo) return;
-        modoEdicao = false;
-        limparFormulario();
-        tipoSelect.value = tipo;
-        aplicarRotulos(tipo);
-        atualizarCategorias();
-        if (tipo === 'poco' || categoriaSelect.options.length === 1) {
-          categoriaSelect.selectedIndex = 0;
-        }
-        gerarCodigoBase();
-        preencherSugestoes();
-        fecharSeletor();
-        abrirFormulario();
-      }
-
-      form.addEventListener('submit', evento => {
-        evento.preventDefault();
-        const dados = {
-          codigo: codigoInput.value || 'MISSÃO-S/ID',
-          titulo: tituloInput.value || 'Missão sem título',
-          local: `${municipioInput.value || 'Local não informado'} / ${(estadoInput.value || '').toUpperCase() || '--'}`,
-          resumo: (passosField.value.split('
-')[0] || 'Plano inicial registrado.').replace(/^•\s*/, '')
-        };
-        rascunhos.push(dados);
-        renderizarRascunhos();
-        exibirFeedback(`Rascunho salvo! O plano "${dados.titulo}" está pronto para revisão.`);
-      });
-
-      tipoSelect.addEventListener('change', () => {
-        aplicarRotulos(tipoSelect.value);
-        atualizarCategorias();
-        gerarCodigoBase();
-        preencherSugestoes();
-      });
-
-      categoriaSelect.addEventListener('change', preencherSugestoes);
-      estadoInput.addEventListener('change', () => {
-        sugerirResponsavel();
-        atualizarCodigo();
-        preencherSugestoes();
-      });
-      municipioInput.addEventListener('change', preencherSugestoes);
-      tituloInput.addEventListener('change', () => {
-        if (!codigoBase) gerarCodigoBase();
-      });
-      if (limparBtn) limparBtn.addEventListener('click', limparFormulario);
-      if (cancelarBtn) cancelarBtn.addEventListener('click', fecharFormulario);
-      if (btnFecharFormulario) btnFecharFormulario.addEventListener('click', fecharFormulario);
-
-      if (missionFormOverlay) {
-        missionFormOverlay.addEventListener('click', evento => {
-          if (evento.target === missionFormOverlay) fecharFormulario();
-        });
-      }
-
-      if (seletorOverlay) {
-        seletorOverlay.addEventListener('click', evento => {
-          if (evento.target === seletorOverlay) fecharSeletor();
-        });
-      }
-
-      if (btnCancelarSeletor) {
-        btnCancelarSeletor.addEventListener('click', fecharSeletor);
-      }
-
-      if (btnNovaEntrada) {
-        btnNovaEntrada.addEventListener('click', abrirSeletor);
-      }
-
-      botoesSeletor.forEach(botao => {
-        botao.addEventListener('click', () => iniciarNovoCadastro(botao.getAttribute('data-tipo-cadastro')));
-      });
-
-      document.addEventListener('keydown', evento => {
-        if (evento.key !== 'Escape') return;
-        if (missionFormOverlay && missionFormOverlay.classList.contains('visible')) {
-          fecharFormulario();
-        } else if (seletorOverlay && seletorOverlay.classList.contains('visible')) {
-          fecharSeletor();
+          openMenu();
         }
       });
 
-      document.addEventListener('dadosMissoesAtualizados', () => {
-        if (!modoEdicao && tipoSelect.value) preencherSugestoes();
-      });
-
-      renderizarRascunhos();
-      aplicarRotulos('');
-      atualizarCategorias();
-
-      window.abrirFormularioCadastro = ({ tipo, dados } = {}) => {
-        modoEdicao = Boolean(dados);
-        limparFormulario();
-        if (tipo) {
-          tipoSelect.value = tipo;
-        }
-        aplicarRotulos(tipoSelect.value || '');
-        atualizarCategorias();
-        if (dados && dados.categoria && categoriaSelect.querySelector(`option[value="${dados.categoria}"]`)) {
-          categoriaSelect.value = dados.categoria;
-        } else if (tipoSelect.value === 'poco' || categoriaSelect.options.length === 1) {
-          categoriaSelect.selectedIndex = 0;
-        }
-        if (dados && dados.codigo) {
-          codigoBase = dados.codigo.includes('-') ? dados.codigo.split('-').slice(0, -1).join('-') : dados.codigo;
-          codigoInput.value = dados.codigo;
-        } else {
-          gerarCodigoBase();
-        }
-        preencherSugestoes();
-        if (dados) preencherFormulario(dados);
-        fecharSeletor();
-        abrirFormulario();
-      };
-    })();
-  </script>
-
-
-  <!-- SCRIPT DE NAVEGAÇÃO -->
-  <script>
-    const setActiveSection = (target) => {
-      const secaoDestino = document.getElementById(target);
-      if (!secaoDestino) {
-        console.error(`Seção "${target}" não encontrada. Verifique se o include correspondente está disponível.`);
-        return false;
-      }
-
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      secaoDestino.classList.add('active');
-
-      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      const botaoDestino = document.querySelector(`.nav-item[data-target="${target}"]`);
-      if (botaoDestino) {
-        botaoDestino.classList.add('active');
-      }
-
-      if (typeof fecharOverlay === 'function') {
-        fecharOverlay();
-      }
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return true;
-    };
-
-    document.querySelectorAll('.nav-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        setActiveSection(btn.dataset.target);
-      });
-    });
-
-    window.navegarPara = (target) => {
-      if (!setActiveSection(target)) {
-        setActiveSection('dashboard');
-      }
-    };
-
-    document.addEventListener('click', (evento) => {
-      const alvo = evento.target.closest('[data-navegacao]');
-      if (!alvo) return;
-      if (evento.target.closest('[data-detalhes]')) {
-        return;
-      }
-      const destino = alvo.getAttribute('data-navegacao');
-      if (!destino) return;
-      evento.preventDefault();
-      window.navegarPara(destino);
-    });
-
-    document.addEventListener('keydown', (evento) => {
-      const alvo = evento.target.closest('[data-navegacao]');
-      if (!alvo) return;
-      if (evento.target.closest('[data-detalhes]')) {
-        return;
-      }
-      if (evento.key === 'Enter' || evento.key === ' ') {
-        evento.preventDefault();
-        const destino = alvo.getAttribute('data-navegacao');
-        if (destino) {
-          window.navegarPara(destino);
-        }
-      }
-    });
-
-  </script>
-  <script>
-    (function() {
-      const overlay = document.getElementById('detalhesOverlay');
-      if (!overlay) return;
-
-      const tituloEl = document.getElementById('detalheTitulo');
-      const subtituloEl = document.getElementById('detalheSubtitulo');
-      const descricaoEl = document.getElementById('detalheDescricao');
-      const conteudoEl = document.getElementById('detalheConteudo');
-      const acoesEl = document.getElementById('detalheAcoes');
-      const fecharBtn = document.getElementById('btnFecharDetalhes');
-      const { escapeHtml } = window;
-      let ultimoFoco = null;
-
-      const setTexto = (elemento, valor) => {
-        if (!elemento) return;
-        if (valor) {
-          elemento.innerHTML = escapeHtml(valor);
-          elemento.style.display = '';
-        } else {
-          elemento.innerHTML = '';
-          elemento.style.display = 'none';
-        }
-      };
-
-      const formatarValor = (valor) => {
-        const texto = escapeHtml(valor || '');
-        return texto.replace(/\n/g, '<br>');
-      };
-
-      const fecharDetalhes = () => {
-        overlay.classList.remove('visible');
-        overlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('detail-open');
-        if (ultimoFoco && typeof ultimoFoco.focus === 'function') {
-          ultimoFoco.focus();
-        }
-      };
-
-      const abrirDetalhes = (dados) => {
-        if (!dados) return;
-        ultimoFoco = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        setTexto(tituloEl, dados.titulo || 'Detalhes do item');
-        setTexto(subtituloEl, dados.subtitulo || '');
-        setTexto(descricaoEl, dados.descricao || '');
-
-        const campos = Array.isArray(dados.campos) ? dados.campos : [];
-        if (!campos.length) {
-          conteudoEl.innerHTML = `
-            <div class="detail-row">
-              <dt class="detail-term">Informações</dt>
-              <dd class="detail-value">Sem dados adicionais disponíveis.</dd>
-            </div>`;
-        } else {
-          conteudoEl.innerHTML = campos.map(campo => `
-            <div class="detail-row">
-              <dt class="detail-term">${escapeHtml(campo.label || '')}</dt>
-              <dd class="detail-value">${formatarValor(campo.valor || '')}</dd>
-            </div>
-          `).join('');
-        }
-
-        if (acoesEl) {
-          acoesEl.innerHTML = '';
-          acoesEl.style.display = 'none';
-          const acao = dados.acao;
-          if (acao && acao.destino) {
-            const botao = document.createElement('button');
-            botao.type = 'button';
-            botao.className = 'detail-action-button';
-            botao.textContent = acao.label || 'Abrir guia relacionada';
-            botao.addEventListener('click', () => {
-              fecharDetalhes();
-              if (typeof window.navegarPara === 'function') {
-                window.navegarPara(acao.destino);
-              }
-            });
-            acoesEl.appendChild(botao);
-            acoesEl.style.display = 'flex';
-          }
-        }
-
-        overlay.classList.add('visible');
-        overlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('detail-open');
-        if (fecharBtn && typeof fecharBtn.focus === 'function') {
-          fecharBtn.focus();
-        }
-      };
-
-      const obterDetalhes = (elemento) => {
-        if (!elemento) return null;
-        const bruto = elemento.getAttribute('data-detalhes');
-        if (!bruto) return null;
-        try {
-          return JSON.parse(decodeURIComponent(bruto));
-        } catch (erro) {
-          console.error('Não foi possível abrir os detalhes do item selecionado.', erro);
-          return null;
-        }
-      };
-
-      document.addEventListener('click', (evento) => {
-        const alvo = evento.target.closest('[data-detalhes]');
-        if (!alvo) return;
-        const dados = obterDetalhes(alvo);
-        if (!dados) return;
-        evento.preventDefault();
-        abrirDetalhes(dados);
-      });
-
-      document.addEventListener('keydown', (evento) => {
-        const alvo = evento.target.closest('[data-detalhes]');
-        if (!alvo) return;
-        if (evento.key === 'Enter' || evento.key === ' ') {
-          const dados = obterDetalhes(alvo);
-          if (!dados) return;
-          evento.preventDefault();
-          abrirDetalhes(dados);
+      document.addEventListener('click', (event) => {
+        if (!panel.contains(event.target) && event.target !== toggle) {
+          closeMenu();
         }
       });
 
-      if (fecharBtn) {
-        fecharBtn.addEventListener('click', (evt) => {
-          evt.preventDefault();
-          fecharDetalhes();
-        });
-      }
-
-      overlay.addEventListener('click', (evento) => {
-        if (evento.target === overlay) {
-          fecharDetalhes();
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeMenu();
+          toggle.focus();
         }
       });
-
-      document.addEventListener('keydown', (evento) => {
-        if (evento.key === 'Escape' && overlay.classList.contains('visible')) {
-          fecharDetalhes();
-        }
-      });
-
-      window.fecharDetalhesItem = fecharDetalhes;
     })();
   </script>
 </body>
