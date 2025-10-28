@@ -1,6 +1,18 @@
 <div class="p-4 space-y-6">
-  <h2 class="text-xl font-bold">🌱 Análise de impacto das perfurações</h2>
-  <p class="text-gray-600">Resumo consolidado dos resultados entregues aos doadores e às comunidades atendidas.</p>
+  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 id="impactoTitulo" class="text-xl font-bold">🌱 Análise de impacto das perfurações</h2>
+      <p id="impactoDescricao" class="text-gray-600">Resumo consolidado dos resultados entregues aos doadores e às comunidades atendidas.</p>
+    </div>
+    <div class="impact-controls">
+      <label for="impactoFiltro" class="impact-controls__label">Analisar:</label>
+      <select id="impactoFiltro" class="impact-controls__select">
+        <option value="pocos" selected>Perfuração de poços</option>
+        <option value="projetos">Projetos sociais</option>
+        <option value="doadores">Rede de doadores</option>
+      </select>
+    </div>
+  </div>
 
   <style>
     .impact-card {
@@ -91,41 +103,39 @@
       margin-top: 0.25rem;
     }
   </style>
+  <style>
+    .impact-controls { display:flex; align-items:center; gap:0.75rem; background:#eff6ff; padding:0.6rem 1rem; border-radius:999px; box-shadow:0 6px 18px rgba(37,99,235,0.12); }
+    .impact-controls__label { font-size:0.85rem; font-weight:600; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.08em; }
+    .impact-controls__select { border:none; background:transparent; font-size:0.95rem; font-weight:600; color:#1e40af; padding:0.25rem 0.5rem; outline:none; cursor:pointer; }
+    .impact-controls__select option { color:#1e293b; }
+  </style>
 
   <div class="grid gap-4 md:grid-cols-5" id="metricasImpacto"></div>
 
   <div class="grid gap-4 md:grid-cols-2">
     <div class="impact-card">
-      <h3>Contribuição por doador</h3>
+      <h3 id="impactoGraficoPrimarioTitulo">Contribuição por doador</h3>
       <div id="graficoDoadoresImpacto" class="impact-chart"></div>
     </div>
     <div class="impact-card">
-      <h3>Status de entrega dos poços</h3>
+      <h3 id="impactoGraficoSecundarioTitulo">Status de entrega dos poços</h3>
       <div id="graficoStatusImpacto" class="impact-chart"></div>
     </div>
   </div>
 
   <div class="impact-card">
-    <h3>Distribuição dos beneficiários por estado</h3>
+    <h3 id="impactoGraficoTerciarioTitulo">Distribuição dos beneficiários por estado</h3>
     <div id="graficoRegioesImpacto" class="impact-chart"></div>
   </div>
 
   <div class="impact-card">
-    <h3>Prestação de contas por poço</h3>
+    <h3 id="impactoTabelaTitulo">Prestação de contas por poço</h3>
     <div class="overflow-x-auto">
-      <table class="impact-table" id="tabelaImpactoPocos">
+      <table class="impact-table">
         <thead>
-          <tr>
-            <th>Poço</th>
-            <th>Status</th>
-            <th>Beneficiários</th>
-            <th>Doadores vinculados</th>
-            <th>Investimento realizado</th>
-            <th>Gap financeiro</th>
-            <th>Vazão estimada</th>
-          </tr>
+          <tr id="impactoTabelaCabecalho"></tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="impactoTabelaCorpo"></tbody>
       </table>
     </div>
   </div>
@@ -137,172 +147,526 @@
 </div>
 
 <script>
+
   (() => {
     const chartsImpacto = {};
-    const { formatarNumero, formatarMoeda, escapeHtml, criarAtributoDetalhes } = window;
+    const utilFormatarNumero = typeof window.formatarNumero === 'function' ? window.formatarNumero : (valor) => Number(valor || 0).toLocaleString('pt-BR');
+    const utilFormatarMoeda = typeof window.formatarMoeda === 'function' ? window.formatarMoeda : (valor) => Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const escapeHtmlBase = typeof window.escapeHtml === 'function' ? window.escapeHtml : (texto = '') => String(texto)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    const criarDetalhes = typeof window.criarAtributoDetalhes === 'function' ? window.criarAtributoDetalhes : (() => '');
+    const filtroSelect = document.getElementById('impactoFiltro');
+    const tituloEl = document.getElementById('impactoTitulo');
+    const descricaoEl = document.getElementById('impactoDescricao');
+    const metricasContainer = document.getElementById('metricasImpacto');
+    const tabelaCabecalho = document.getElementById('impactoTabelaCabecalho');
+    const tabelaCorpo = document.getElementById('impactoTabelaCorpo');
+    const tabelaTitulo = document.getElementById('impactoTabelaTitulo');
+    const graficoPrimarioTitulo = document.getElementById('impactoGraficoPrimarioTitulo');
+    const graficoSecundarioTitulo = document.getElementById('impactoGraficoSecundarioTitulo');
+    const graficoTerciarioTitulo = document.getElementById('impactoGraficoTerciarioTitulo');
+    const timelineContainer = document.getElementById('timelineImpacto');
+    let dadosBase = {};
+    let categoriaAtual = 'pocos';
 
-    const STATUS_CORES = {
-      'Solicitado': '#f97316',
-      'Orçamento previsto': '#facc15',
-      'Instalação': '#2563eb',
-      'Concluído': '#16a34a',
-      'Pago': '#047857'
+    const escapeHtml = (valor) => escapeHtmlBase(valor ?? '');
+
+    const atualizarTituloGrafico = (elemento, texto) => {
+      if (elemento) elemento.textContent = texto;
     };
 
-  function renderMetricas(metricas) {
-    const cards = [
-      { label: 'Beneficiários alcançados', valor: formatarNumero(metricas.beneficiariosTotais || 0), detalhe: 'Pessoas com acesso à água' },
-      { label: 'Famílias estimadas', valor: formatarNumero(metricas.familiasEstimadas || 0), detalhe: 'Baseado em 4 pessoas por família' },
-      { label: 'Volume diário estimado', valor: `${formatarNumero(metricas.volumeAguaDiario || 0)} L`, detalhe: 'Capacidade de oferta de água' },
-      { label: 'Investimento realizado', valor: formatarMoeda(metricas.investimentoRealizado || 0), detalhe: `Previsto ${formatarMoeda(metricas.investimentoPrevisto || 0)}` },
-      { label: 'Custo por beneficiário', valor: formatarMoeda(metricas.custoPorPessoa || 0), detalhe: 'Eficiência financeira atual' }
-    ];
-
-    document.getElementById('metricasImpacto').innerHTML = cards.map(c => `
-      <div class="impact-metric">
-        <span class="label">${c.label}</span>
-        <span class="value">${c.valor}</span>
-        <span class="detail">${c.detalhe}</span>
-      </div>
-    `).join('');
-  }
-
-  function renderTabelaPocos(pocos) {
-    const tbody = document.querySelector('#tabelaImpactoPocos tbody');
-    if (!pocos || !pocos.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">Nenhum poço registrado.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = pocos.map(p => {
-      const detalheAttr = criarAtributoDetalhes({
-        titulo: p.nome || 'Poço',
-        subtitulo: `${formatarNumero(p.beneficiarios || 0)} beneficiários • Status ${p.status || 'Não informado'}`,
-        campos: [
-          { label: 'Localidade', valor: p.local || 'Local não informado' },
-          { label: 'Doadores vinculados', valor: p.doadores || 'Nenhum doador vinculado' },
-          { label: 'Investimento realizado', valor: formatarMoeda(p.valorExecutado || 0) },
-          { label: 'Gap financeiro', valor: formatarMoeda(p.gapFinanceiro || 0) },
-          { label: 'Vazão estimada', valor: `${formatarNumero(p.vazao || 0)} L/h` }
-        ],
-        acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
-      });
-      return `
-        <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
-          <td>
-            <div class="font-semibold text-gray-900">${escapeHtml(p.nome)}</div>
-            <small class="text-gray-500">${escapeHtml(p.local)}</small>
-          </td>
-          <td>${escapeHtml(p.status)}</td>
-          <td>${formatarNumero(p.beneficiarios)}</td>
-          <td>${escapeHtml(p.doadores)}</td>
-          <td>${formatarMoeda(p.valorExecutado)}</td>
-          <td>${formatarMoeda(p.gapFinanceiro)}</td>
-          <td>${formatarNumero(p.vazao)} L/h</td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  function renderTimeline(eventos) {
-    const container = document.getElementById('timelineImpacto');
-    if (!eventos || !eventos.length) {
-      container.innerHTML = '<p class="text-gray-500">Sem registros recentes.</p>';
-      return;
-    }
-    container.innerHTML = eventos.map(ev => {
-      const data = ev.data ? new Date(ev.data).toLocaleDateString('pt-BR') : 'Data não informada';
-      const detalheAttr = criarAtributoDetalhes({
-        titulo: ev.poco || 'Atualização do poço',
-        subtitulo: `${data} • ${ev.statusContato || 'Sem status de contato'}`,
-        campos: [
-          { label: 'Responsável', valor: ev.responsavel || 'Não informado' },
-          { label: 'Resumo', valor: ev.resumo || 'Sem resumo registrado.' },
-          { label: 'Próxima ação', valor: ev.proximaAcao || 'Não definida' }
-        ],
-        acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
-      });
-      return `
-        <div class="timeline-item" ${detalheAttr} role="button" tabindex="0">
-          <strong>${escapeHtml(ev.poco)}</strong>
-          <div>${escapeHtml(ev.resumo)}</div>
-          <small>${data} • ${escapeHtml(ev.responsavel)} • ${escapeHtml(ev.statusContato)}</small>
+    const renderMetricas = (metricas = []) => {
+      if (!metricasContainer) return;
+      if (!metricas.length) {
+        metricasContainer.innerHTML = '<div class="impact-metric"><span class="label">Sem dados</span><span class="value">-</span><span class="detail">Cadastre informações para visualizar métricas.</span></div>';
+        return;
+      }
+      metricasContainer.innerHTML = metricas.map(item => `
+        <div class="impact-metric">
+          <span class="label">${escapeHtml(item.label)}</span>
+          <span class="value">${escapeHtml(item.valor)}</span>
+          <span class="detail">${escapeHtml(item.detalhe || '')}</span>
         </div>
-      `;
-    }).join('');
-  }
+      `).join('');
+    };
 
-  function renderGrafico(id, options) {
-    if (!window.Highcharts) return;
-    const container = document.getElementById(id);
-    if (!container) return;
-    if (chartsImpacto[id]) chartsImpacto[id].destroy();
-    chartsImpacto[id] = Highcharts.chart(id, Highcharts.merge({
-      title: { text: null },
-      credits: { enabled: false },
-      legend: { align: 'center', verticalAlign: 'bottom' }
-    }, options));
-  }
+    const renderTabela = (config = {}) => {
+      if (!tabelaCabecalho || !tabelaCorpo) return;
+      const colunas = Array.isArray(config.colunas) ? config.colunas : [];
+      const linhas = Array.isArray(config.linhas) ? config.linhas : [];
+      tabelaCabecalho.innerHTML = colunas.map(col => `<th>${escapeHtml(col)}</th>`).join('');
+      if (tabelaTitulo) tabelaTitulo.textContent = config.titulo || 'Prestação de contas';
+      if (!linhas.length) {
+        tabelaCorpo.innerHTML = `<tr><td colspan="${Math.max(colunas.length, 1)}" class="text-center text-gray-500 py-4">${escapeHtml(config.vazia || 'Nenhum registro disponível.')}</td></tr>`;
+        return;
+      }
+      tabelaCorpo.innerHTML = linhas.map(linha => {
+        const detalhe = linha.detalhe ? ` ${linha.detalhe}` : '';
+        return `<tr${detalhe}>${linha.celulas.map(cel => `<td>${cel}</td>`).join('')}</tr>`;
+      }).join('');
+    };
 
-  function renderImpacto(dados) {
-    renderMetricas(dados.metricas || {});
-    renderTabelaPocos(dados.pocos || []);
-    renderTimeline(dados.timeline || []);
+    const renderTimeline = (eventos = []) => {
+      if (!timelineContainer) return;
+      if (!eventos.length) {
+        timelineContainer.innerHTML = '<p class="text-gray-500">Sem registros recentes.</p>';
+        return;
+      }
+      timelineContainer.innerHTML = eventos.map(evento => {
+        const detalheAttr = evento.detalhe ? ` ${evento.detalhe}` : '';
+        return `
+          <div class="timeline-item"${detalheAttr}>
+            <strong>${escapeHtml(evento.titulo)}</strong>
+            <div>${escapeHtml(evento.descricao || '')}</div>
+            <small>${escapeHtml(evento.meta || '')}</small>
+          </div>
+        `;
+      }).join('');
+    };
 
-    const doadores = dados.doadores || [];
-    renderGrafico('graficoDoadoresImpacto', {
-      chart: { type: 'column' },
-      xAxis: { categories: doadores.map(d => d.nome), title: { text: null } },
-      yAxis: {
-        min: 0,
-        title: { text: 'Valor doado (R$)' },
-        labels: {
-          formatter() {
-            return `R$ ${(this.value / 1000).toLocaleString('pt-BR')}k`;
-          }
-        }
+    const renderGrafico = (id, configuracao) => {
+      const container = document.getElementById(id);
+      if (!container) return;
+      if (chartsImpacto[id]) {
+        chartsImpacto[id].destroy();
+        chartsImpacto[id] = null;
+      }
+      if (!window.Highcharts) {
+        container.innerHTML = '<div class="empty-state">Gráfico indisponível no momento.</div>';
+        return;
+      }
+      if (!configuracao || !configuracao.series || !configuracao.series.length) {
+        const mensagem = configuracao && configuracao.emptyMessage ? configuracao.emptyMessage : 'Dados insuficientes para este gráfico.';
+        container.innerHTML = `<div class="empty-state">${escapeHtml(mensagem)}</div>`;
+        return;
+      }
+      chartsImpacto[id] = Highcharts.chart(id, Highcharts.merge({
+        title: { text: null },
+        credits: { enabled: false },
+        legend: { align: 'center', verticalAlign: 'bottom' }
+      }, configuracao));
+    };
+
+    const normalizarLista = (valor) => Array.isArray(valor) ? valor : [];
+
+    const obterProjetos = (base) => {
+      if (Array.isArray(base.projetos)) return base.projetos;
+      if (Array.isArray(base.projetosImpacto)) return base.projetosImpacto;
+      if (window.__dadosMissoesAtuais && Array.isArray(window.__dadosMissoesAtuais.projetos)) return window.__dadosMissoesAtuais.projetos;
+      return [];
+    };
+
+    const obterDoadores = (base) => {
+      if (Array.isArray(base.doadores)) return base.doadores;
+      if (Array.isArray(base.rankingDoadores)) return base.rankingDoadores;
+      if (Array.isArray(base.ranking)) return base.ranking;
+      if (window.__dadosMissoesAtuais && Array.isArray(window.__dadosMissoesAtuais.doadores)) return window.__dadosMissoesAtuais.doadores;
+      return [];
+    };
+
+    const obterPocos = (base) => {
+      if (Array.isArray(base.pocos)) return base.pocos;
+      if (Array.isArray(base.pocosMonitorados)) return base.pocosMonitorados;
+      return [];
+    };
+
+    const agruparPor = (lista, chave) => {
+      return lista.reduce((acc, item) => {
+        const valor = (item[chave] || 'Indefinido').toString();
+        acc[valor] = (acc[valor] || 0) + 1;
+        return acc;
+      }, {});
+    };
+
+    const prepararDados = {
+      pocos: (base) => {
+        const metricas = base.metricas || {};
+        const listaPocos = obterPocos(base);
+        const doadores = obterDoadores(base);
+        const status = normalizarLista(base.distribuicaoStatus);
+        const regioes = normalizarLista(base.regioes);
+        const timelineBruto = normalizarLista(base.timeline);
+
+        const metricasCards = [
+          { label: 'Beneficiários alcançados', valor: utilFormatarNumero(metricas.beneficiariosTotais || 0), detalhe: 'Pessoas com acesso à água' },
+          { label: 'Famílias estimadas', valor: utilFormatarNumero(metricas.familiasEstimadas || 0), detalhe: 'Baseado em 4 pessoas por família' },
+          { label: 'Volume diário estimado', valor: `${utilFormatarNumero(metricas.volumeAguaDiario || 0)} L`, detalhe: 'Capacidade de oferta de água' },
+          { label: 'Investimento realizado', valor: utilFormatarMoeda(metricas.investimentoRealizado || 0), detalhe: `Previsto ${utilFormatarMoeda(metricas.investimentoPrevisto || 0)}` },
+          { label: 'Custo por beneficiário', valor: utilFormatarMoeda(metricas.custoPorPessoa || 0), detalhe: 'Eficiência financeira atual' }
+        ];
+
+        const linhasTabela = listaPocos.map(p => {
+          const detalhe = criarDetalhes({
+            titulo: p.nome || p.poco || 'Poço',
+            subtitulo: `${utilFormatarNumero(p.beneficiarios || 0)} beneficiários • ${p.status || 'Status não informado'}`,
+            campos: [
+              { label: 'Localidade', valor: p.local || p.municipio || 'Local não informado' },
+              { label: 'Doadores vinculados', valor: p.doadores || 'Nenhum doador vinculado' },
+              { label: 'Investimento realizado', valor: utilFormatarMoeda(p.valorExecutado || 0) },
+              { label: 'Gap financeiro', valor: utilFormatarMoeda(p.gapFinanceiro || 0) },
+              { label: 'Vazão estimada', valor: p.vazao ? `${utilFormatarNumero(p.vazao)} L/h` : 'Não informada' }
+            ]
+          });
+          const celulas = [
+            `<div class="font-semibold text-gray-900">${escapeHtml(p.nome || p.poco || 'Poço')}</div><small class="text-gray-500">${escapeHtml(p.local || p.municipio || 'Local não informado')}</small>`,
+            escapeHtml(p.status || 'Sem status'),
+            escapeHtml(utilFormatarNumero(p.beneficiarios || 0)),
+            escapeHtml(p.doadores || '—'),
+            escapeHtml(utilFormatarMoeda(p.valorExecutado || 0)),
+            escapeHtml(utilFormatarMoeda(p.gapFinanceiro || 0)),
+            escapeHtml(p.vazao ? `${utilFormatarNumero(p.vazao)} L/h` : '—')
+          ];
+          return { celulas, detalhe };
+        });
+
+        const timelineEventos = timelineBruto.map(ev => {
+          const data = ev.data ? new Date(ev.data) : null;
+          const dataFormatada = data && !isNaN(data.getTime()) ? data.toLocaleDateString('pt-BR') : 'Data não informada';
+          const detalhe = criarDetalhes({
+            titulo: ev.poco || 'Atualização do poço',
+            subtitulo: `${dataFormatada} • ${ev.statusContato || 'Sem status de contato'}`,
+            campos: [
+              { label: 'Responsável', valor: ev.responsavel || 'Não informado' },
+              { label: 'Resumo', valor: ev.resumo || 'Sem resumo registrado.' },
+              { label: 'Próxima ação', valor: ev.proximaAcao || 'Não definida' }
+            ]
+          });
+          return {
+            titulo: ev.poco || 'Poço',
+            descricao: ev.resumo || 'Sem descrição registrada.',
+            meta: `${dataFormatada} • ${ev.responsavel || 'Equipe'}`,
+            detalhe
+          };
+        });
+
+        const chartDoadores = doadores.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: doadores.map(d => d.nome || 'Doador'), title: { text: null } },
+          yAxis: {
+            min: 0,
+            title: { text: 'Valor doado (R$)' },
+            labels: {
+              formatter() {
+                return utilFormatarMoeda(this.value);
+              }
+            }
+          },
+          legend: { enabled: false },
+          tooltip: {
+            pointFormatter() {
+              return `<span style="color:${this.color}">●</span> ${escapeHtml(this.category)}: <b>${utilFormatarMoeda(this.y)}</b>`;
+            }
+          },
+          plotOptions: { column: { borderRadius: 8, pointPadding: 0.1 } },
+          series: [{ name: 'Doações', data: doadores.map(d => Number(d.valor || d.total || 0)) }]
+        } : { series: [], emptyMessage: 'Nenhum doador vinculado.' };
+
+        const chartStatus = status.length ? {
+          chart: { type: 'pie' },
+          plotOptions: {
+            pie: {
+              innerSize: '55%',
+              dataLabels: { format: '{point.name}: <b>{point.y}</b>' }
+            }
+          },
+          tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
+          series: [{
+            name: 'Poços',
+            data: status.map(s => ({
+              name: s.status,
+              y: Number(s.total || 0)
+            }))
+          }]
+        } : { series: [], emptyMessage: 'Sem dados de status.' };
+
+        const chartRegioes = regioes.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: regioes.map(r => r.estado || 'UF') },
+          yAxis: { min: 0, title: { text: 'Beneficiários' } },
+          legend: { enabled: false },
+          tooltip: { pointFormat: '<b>{point.y}</b> beneficiários' },
+          plotOptions: { column: { borderRadius: 6, pointPadding: 0.12 } },
+          series: [{ name: 'Beneficiários', data: regioes.map(r => Number(r.beneficiarios || 0)) }]
+        } : { series: [], emptyMessage: 'Sem distribuição regional registrada.' };
+
+        return {
+          titulo: '🌱 Análise de impacto das perfurações',
+          descricao: 'Resumo consolidado dos resultados entregues aos doadores e às comunidades atendidas.',
+          metricas: metricasCards,
+          tabela: {
+            titulo: 'Prestação de contas por poço',
+            colunas: ['Poço', 'Status', 'Beneficiários', 'Doadores vinculados', 'Investimento realizado', 'Gap financeiro', 'Vazão estimada'],
+            linhas: linhasTabela,
+            vazia: 'Nenhum poço registrado.'
+          },
+          graficosTitulos: {
+            primario: 'Contribuição por doador',
+            secundario: 'Status de entrega dos poços',
+            terciario: 'Distribuição dos beneficiários por estado'
+          },
+          charts: [
+            { id: 'graficoDoadoresImpacto', options: chartDoadores },
+            { id: 'graficoStatusImpacto', options: chartStatus },
+            { id: 'graficoRegioesImpacto', options: chartRegioes }
+          ],
+          timeline: timelineEventos
+        };
       },
-      legend: { enabled: false },
-      tooltip: {
-        pointFormatter() {
-          return `<span style="color:${this.color}">●</span> ${this.category}: <b>${formatarMoeda(this.y)}</b>`;
-        }
+      projetos: (base) => {
+        const projetos = obterProjetos(base);
+        const total = projetos.length;
+        const emExecucao = projetos.filter(p => String(p.status || '').toLowerCase().includes('exec')).length;
+        const concluido = projetos.filter(p => String(p.status || '').toLowerCase().includes('concl')).length;
+        const investimentoPrevisto = projetos.reduce((total, item) => total + (Number(item.investimentoPrevisto || item.custoPrevisto || 0) || 0), 0);
+        const investimentoRealizado = projetos.reduce((total, item) => total + (Number(item.valorExecutado || item.investimentoRealizado || 0) || 0), 0);
+        const beneficiarios = projetos.reduce((total, item) => total + (Number(item.beneficiarios || item.familias || 0) || 0), 0);
+        const metricasCards = [
+          { label: 'Projetos cadastrados', valor: utilFormatarNumero(total), detalhe: 'Iniciativas monitoradas pela missão.' },
+          { label: 'Em execução', valor: utilFormatarNumero(emExecucao), detalhe: `${utilFormatarNumero(concluido)} concluídos` },
+          { label: 'Investimento previsto', valor: utilFormatarMoeda(investimentoPrevisto), detalhe: `Realizado ${utilFormatarMoeda(investimentoRealizado)}` },
+          { label: 'Beneficiários atendidos', valor: utilFormatarNumero(beneficiarios), detalhe: 'Somatório informado nos projetos.' },
+          { label: 'Ticket médio por projeto', valor: total ? utilFormatarMoeda(investimentoPrevisto / total) : utilFormatarMoeda(0), detalhe: 'Com base nos valores previstos.' }
+        ];
+
+        const linhasTabela = projetos.map(projeto => {
+          const detalhe = criarDetalhes({
+            titulo: projeto.titulo || projeto.nome || 'Projeto',
+            subtitulo: `${projeto.status || 'Sem status'} • ${projeto.municipio || projeto.local || 'Local não informado'}`,
+            descricao: projeto.descricao || '',
+            campos: [
+              { label: 'Responsável', valor: projeto.responsavel || 'Não informado' },
+              { label: 'Investimento previsto', valor: utilFormatarMoeda(projeto.investimentoPrevisto || projeto.custoPrevisto || 0) },
+              { label: 'Investimento realizado', valor: utilFormatarMoeda(projeto.valorExecutado || projeto.investimentoRealizado || 0) },
+              { label: 'Beneficiários', valor: utilFormatarNumero(projeto.beneficiarios || projeto.familias || 0) },
+              { label: 'Próxima ação', valor: projeto.proximaAcao || 'Não definida' }
+            ]
+          });
+          const celulas = [
+            `<div class="font-semibold text-gray-900">${escapeHtml(projeto.titulo || projeto.nome || 'Projeto')}</div><small class="text-gray-500">${escapeHtml(projeto.municipio || projeto.local || 'Local não informado')}</small>`,
+            escapeHtml(projeto.etapa || projeto.status || 'Sem etapa'),
+            escapeHtml(projeto.responsavel || '—'),
+            escapeHtml(utilFormatarMoeda(projeto.investimentoPrevisto || projeto.custoPrevisto || 0)),
+            escapeHtml(utilFormatarNumero(projeto.beneficiarios || projeto.familias || 0)),
+            escapeHtml(projeto.proximaAcao || '—')
+          ];
+          return { celulas, detalhe };
+        });
+
+        const investimentosPorProjeto = projetos.map(item => ({
+          nome: item.titulo || item.nome || 'Projeto',
+          valor: Number(item.investimentoPrevisto || item.custoPrevisto || 0)
+        })).sort((a, b) => b.valor - a.valor).slice(0, 8);
+
+        const graficoInvestimento = investimentosPorProjeto.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: investimentosPorProjeto.map(i => i.nome) },
+          yAxis: { min: 0, title: { text: 'Investimento (R$)' } },
+          legend: { enabled: false },
+          tooltip: { pointFormat: '<b>{point.y:,.0f}</b>' },
+          series: [{ name: 'Investimento previsto', data: investimentosPorProjeto.map(i => i.valor) }]
+        } : { series: [], emptyMessage: 'Nenhum investimento registrado.' };
+
+        const statusAgrupado = Object.entries(agruparPor(projetos, 'status')).map(([nome, total]) => ({ nome, y: total }));
+        const graficoStatus = statusAgrupado.length ? {
+          chart: { type: 'pie' },
+          tooltip: { pointFormat: '<b>{point.y}</b> projetos ({point.percentage:.1f}%)' },
+          plotOptions: { pie: { innerSize: '55%', dataLabels: { format: '{point.name}: <b>{point.y}</b>' } } },
+          series: [{ name: 'Projetos', data: statusAgrupado }]
+        } : { series: [], emptyMessage: 'Sem status informados.' };
+
+        const projetosPorEstado = Object.entries(agruparPor(projetos, 'estado')).map(([estado, total]) => ({ estado, total }));
+        const graficoRegioes = projetosPorEstado.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: projetosPorEstado.map(r => r.estado || 'UF') },
+          yAxis: { min: 0, title: { text: 'Projetos' } },
+          legend: { enabled: false },
+          series: [{ name: 'Projetos', data: projetosPorEstado.map(r => r.total) }]
+        } : { series: [], emptyMessage: 'Sem distribuição regional registrada.' };
+
+        const timelineEventos = projetos.map(projeto => {
+          const data = projeto.data || projeto.inicio || projeto.previsaoInicio;
+          const dataObj = data ? new Date(data) : null;
+          const dataFormatada = dataObj && !isNaN(dataObj.getTime()) ? dataObj.toLocaleDateString('pt-BR') : 'Data não informada';
+          const detalhe = criarDetalhes({
+            titulo: projeto.titulo || projeto.nome || 'Projeto',
+            subtitulo: `${dataFormatada} • ${projeto.status || 'Sem status'}`,
+            campos: [
+              { label: 'Responsável', valor: projeto.responsavel || 'Não informado' },
+              { label: 'Descrição', valor: projeto.descricao || 'Sem descrição registrada.' },
+              { label: 'Próxima ação', valor: projeto.proximaAcao || 'Não definida' }
+            ]
+          });
+          return {
+            titulo: projeto.titulo || projeto.nome || 'Projeto',
+            descricao: projeto.descricao || 'Sem descrição registrada.',
+            meta: `${dataFormatada} • ${projeto.responsavel || 'Equipe'}`,
+            detalhe
+          };
+        }).slice(0, 8);
+
+        return {
+          titulo: '🚀 Impacto dos projetos sociais',
+          descricao: 'Acompanhe a evolução das iniciativas sociais, seus investimentos e beneficiários.',
+          metricas: metricasCards,
+          tabela: {
+            titulo: 'Portfólio de projetos',
+            colunas: ['Projeto', 'Etapa', 'Responsável', 'Investimento previsto', 'Beneficiários', 'Próxima ação'],
+            linhas: linhasTabela,
+            vazia: 'Nenhum projeto cadastrado.'
+          },
+          graficosTitulos: {
+            primario: 'Investimento por projeto',
+            secundario: 'Distribuição por status',
+            terciario: 'Projetos por estado'
+          },
+          charts: [
+            { id: 'graficoDoadoresImpacto', options: graficoInvestimento },
+            { id: 'graficoStatusImpacto', options: graficoStatus },
+            { id: 'graficoRegioesImpacto', options: graficoRegioes }
+          ],
+          timeline: timelineEventos
+        };
       },
-      plotOptions: { column: { borderRadius: 8, pointPadding: 0.1 } },
-      series: [{ name: 'Doações', data: doadores.map(d => Number(d.valor || 0)) }]
-    });
+      doadores: (base) => {
+        const doadores = obterDoadores(base);
+        const total = doadores.length;
+        const volumeDoado = doadores.reduce((total, item) => total + (Number(item.valor || item.total || 0) || 0), 0);
+        const projetosApoiados = doadores.reduce((total, item) => total + (Number(item.projetos || item.pocos || 0) || 0), 0);
+        const abrangencia = new Set(doadores.map(d => (d.estado || d.regiao || d.abrangencia || '').toString().trim()).filter(Boolean)).size;
 
-    const status = dados.distribuicaoStatus || [];
-    renderGrafico('graficoStatusImpacto', {
-      chart: { type: 'pie' },
-      plotOptions: {
-        pie: {
-          innerSize: '55%',
-          dataLabels: { format: '{point.name}: <b>{point.y}</b>' }
-        }
-      },
-      tooltip: { pointFormat: '<b>{point.y}</b> poços ({point.percentage:.1f}%)' },
-      series: [{
-        name: 'Poços',
-        data: status.map(s => ({
-          name: s.status,
-          y: Number(s.total || 0),
-          color: STATUS_CORES[s.status] || undefined
-        }))
-      }]
-    });
+        const metricasCards = [
+          { label: 'Doadores ativos', valor: utilFormatarNumero(total), detalhe: 'Parceiros cadastrados e monitorados.' },
+          { label: 'Volume doado', valor: utilFormatarMoeda(volumeDoado), detalhe: 'Somatório registrado nas parcerias.' },
+          { label: 'Projetos apoiados', valor: utilFormatarNumero(projetosApoiados), detalhe: 'Quantidade total vinculada aos doadores.' },
+          { label: 'Ticket médio', valor: total ? utilFormatarMoeda(volumeDoado / total) : utilFormatarMoeda(0), detalhe: 'Investimento médio por aliado.' },
+          { label: 'Estados de atuação', valor: utilFormatarNumero(abrangencia), detalhe: 'Cobertura territorial declarada.' }
+        ];
 
-    const regioes = dados.regioes || [];
-    renderGrafico('graficoRegioesImpacto', {
-      chart: { type: 'column' },
-      xAxis: { categories: regioes.map(r => r.estado) },
-      yAxis: { min: 0, title: { text: 'Beneficiários' } },
-      legend: { enabled: false },
-      tooltip: { pointFormat: '<b>{point.y}</b> beneficiários' },
-      plotOptions: { column: { borderRadius: 6, pointPadding: 0.12 } },
-      series: [{ name: 'Beneficiários', data: regioes.map(r => Number(r.beneficiarios || 0)) }]
-    });
-  }
+        const linhasTabela = doadores.map(doador => {
+          const detalhe = criarDetalhes({
+            titulo: doador.nome || 'Doador',
+            subtitulo: doador.categoria || doador.tipo || 'Tipo não informado',
+            campos: [
+              { label: 'Valor acumulado', valor: utilFormatarMoeda(doador.valor || doador.total || 0) },
+              { label: 'Projetos apoiados', valor: utilFormatarNumero(doador.projetos || doador.pocos || 0) },
+              { label: 'Contato principal', valor: doador.contato || 'Não informado' },
+              { label: 'Último aporte', valor: doador.ultimoAporte ? new Date(doador.ultimoAporte).toLocaleDateString('pt-BR') : 'Sem registro' }
+            ]
+          });
+          const celulas = [
+            `<div class="font-semibold text-gray-900">${escapeHtml(doador.nome || 'Doador')}</div><small class="text-gray-500">${escapeHtml(doador.estado || doador.regiao || 'Sem região')}</small>`,
+            escapeHtml(doador.categoria || doador.tipo || '—'),
+            escapeHtml(utilFormatarMoeda(doador.valor || doador.total || 0)),
+            escapeHtml(utilFormatarNumero(doador.projetos || doador.pocos || 0)),
+            escapeHtml(doador.ultimoAporte ? new Date(doador.ultimoAporte).toLocaleDateString('pt-BR') : '—')
+          ];
+          return { celulas, detalhe };
+        });
 
-  google.script.run.withSuccessHandler(renderImpacto).obterAnaliseImpacto();
+        const graficoContribuicao = doadores.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: doadores.map(d => d.nome || 'Doador'), title: { text: null } },
+          yAxis: { min: 0, title: { text: 'Valor doado (R$)' } },
+          legend: { enabled: false },
+          series: [{ name: 'Valor doado', data: doadores.map(d => Number(d.valor || d.total || 0)) }]
+        } : { series: [], emptyMessage: 'Nenhum doador registrado.' };
+
+        const categorias = Object.entries(agruparPor(doadores, 'categoria')).map(([nome, total]) => ({ name: nome, y: total }));
+        const graficoCategorias = categorias.length ? {
+          chart: { type: 'pie' },
+          series: [{ name: 'Doadores', data: categorias }],
+          tooltip: { pointFormat: '<b>{point.y}</b> doadores ({point.percentage:.1f}%)' }
+        } : { series: [], emptyMessage: 'Classifique os doadores para visualizar a distribuição.' };
+
+        const regioes = Object.entries(agruparPor(doadores, 'estado')).map(([estado, total]) => ({ estado, total }));
+        const graficoRegioes = regioes.length ? {
+          chart: { type: 'column' },
+          xAxis: { categories: regioes.map(r => r.estado || 'UF') },
+          yAxis: { min: 0, title: { text: 'Doadores' } },
+          legend: { enabled: false },
+          series: [{ name: 'Doadores', data: regioes.map(r => r.total) }]
+        } : { series: [], emptyMessage: 'Informe a região de atuação dos doadores.' };
+
+        const timelineEventos = doadores.map(doador => {
+          const data = doador.ultimoAporte || doador.ultimaAcao;
+          const dataObj = data ? new Date(data) : null;
+          const dataFormatada = dataObj && !isNaN(dataObj.getTime()) ? dataObj.toLocaleDateString('pt-BR') : 'Sem data';
+          const detalhe = criarDetalhes({
+            titulo: doador.nome || 'Doador',
+            subtitulo: `${dataFormatada} • ${doador.categoria || 'Sem categoria'}`,
+            campos: [
+              { label: 'Investimento acumulado', valor: utilFormatarMoeda(doador.valor || doador.total || 0) },
+              { label: 'Projetos apoiados', valor: utilFormatarNumero(doador.projetos || doador.pocos || 0) },
+              { label: 'Contato', valor: doador.contato || 'Não informado' }
+            ]
+          });
+          return {
+            titulo: doador.nome || 'Doador',
+            descricao: `Último aporte em ${dataFormatada}.`,
+            meta: `${doador.categoria || 'Tipo não informado'} • ${utilFormatarMoeda(doador.valor || doador.total || 0)}`,
+            detalhe
+          };
+        }).slice(0, 8);
+
+        return {
+          titulo: '🤝 Impacto da rede de doadores',
+          descricao: 'Monitore a contribuição dos aliados e identifique oportunidades de relacionamento.',
+          metricas: metricasCards,
+          tabela: {
+            titulo: 'Doadores e compromissos registrados',
+            colunas: ['Doador', 'Tipo de apoio', 'Valor acumulado', 'Projetos apoiados', 'Último aporte'],
+            linhas: linhasTabela,
+            vazia: 'Nenhum doador cadastrado.'
+          },
+          graficosTitulos: {
+            primario: 'Volume por doador',
+            secundario: 'Distribuição por tipo de apoio',
+            terciario: 'Doadores por estado'
+          },
+          charts: [
+            { id: 'graficoDoadoresImpacto', options: graficoContribuicao },
+            { id: 'graficoStatusImpacto', options: graficoCategorias },
+            { id: 'graficoRegioesImpacto', options: graficoRegioes }
+          ],
+          timeline: timelineEventos
+        };
+      }
+    };
+
+    const renderCategoria = (categoria) => {
+      const preparador = prepararDados[categoria] || prepararDados.pocos;
+      const pacote = preparador(dadosBase);
+      if (tituloEl) tituloEl.textContent = pacote.titulo;
+      if (descricaoEl) descricaoEl.textContent = pacote.descricao;
+      renderMetricas(pacote.metricas);
+      renderTabela(pacote.tabela);
+      atualizarTituloGrafico(graficoPrimarioTitulo, pacote.graficosTitulos?.primario || 'Gráfico principal');
+      atualizarTituloGrafico(graficoSecundarioTitulo, pacote.graficosTitulos?.secundario || 'Gráfico secundário');
+      atualizarTituloGrafico(graficoTerciarioTitulo, pacote.graficosTitulos?.terciario || 'Gráfico terciário');
+      pacote.charts.forEach(item => renderGrafico(item.id, item.options));
+      renderTimeline(pacote.timeline);
+      categoriaAtual = categoria;
+      if (filtroSelect && filtroSelect.value !== categoria) filtroSelect.value = categoria;
+    };
+
+    const carregar = (dados) => {
+      dadosBase = dados || {};
+      renderCategoria(categoriaAtual);
+    };
+
+    if (filtroSelect) {
+      filtroSelect.addEventListener('change', () => renderCategoria(filtroSelect.value));
+    }
+
+    if (window.google && google.script && google.script.run && google.script.run.withSuccessHandler) {
+      google.script.run.withSuccessHandler(carregar).obterAnaliseImpacto();
+    } else {
+      carregar({});
+    }
   })();
 </script>
+
