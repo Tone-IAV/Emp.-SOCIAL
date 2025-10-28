@@ -2051,5 +2051,119 @@ function obterAnaliseImpacto() {
   }
 }
 
+function obterVisaoGamificada() {
+  const resumoGestao = obterResumoGestao();
+  const dashboard = obterDashboardAnalitico();
+  const analiseImpacto = obterAnaliseImpacto();
+
+  const resumoBase = resumoGestao && resumoGestao.resumo ? resumoGestao.resumo : {};
+  const andamento = Array.isArray(resumoGestao && resumoGestao.andamento) ? resumoGestao.andamento : [];
+  const alertas = Array.isArray(resumoGestao && resumoGestao.alertas) ? resumoGestao.alertas : [];
+  const cronograma = Array.isArray(resumoGestao && resumoGestao.cronograma) ? resumoGestao.cronograma : [];
+
+  const metricasImpacto = analiseImpacto && analiseImpacto.metricas ? analiseImpacto.metricas : {};
+  const doadoresImpacto = Array.isArray(analiseImpacto && analiseImpacto.doadores) ? analiseImpacto.doadores : [];
+
+  const totaisDashboard = dashboard && dashboard.totais ? dashboard.totais : {};
+  const totalPocos = Number(resumoBase.totalPocos || 0);
+
+  const etapas = PROCESS_STAGES.map((stage, indice) => {
+    const registrosEtapa = andamento.filter(item => {
+      const etapaId = obterIdEtapaPorStatus(item.status);
+      return etapaId === stage.id;
+    });
+
+    const destaques = registrosEtapa
+      .map(item => ({
+        id: item.id,
+        nome: item.nome,
+        local: item.local,
+        responsavel: item.responsavel,
+        proximaAcao: item.proximaAcao,
+        gapFinanceiro: Number(item.gapFinanceiro || 0),
+        diasSemContato: Number(item.diasSemContato || 0)
+      }))
+      .sort((a, b) => {
+        const gapDiff = (b.gapFinanceiro || 0) - (a.gapFinanceiro || 0);
+        if (gapDiff !== 0) return gapDiff;
+        return (b.diasSemContato || 0) - (a.diasSemContato || 0);
+      })
+      .slice(0, 3);
+
+    const alerta = destaques.some(d => (d.gapFinanceiro || 0) > 0 || (d.diasSemContato || 0) > 12);
+    const percentual = totalPocos > 0 ? Math.round((registrosEtapa.length / totalPocos) * 100) : 0;
+
+    return {
+      id: stage.id,
+      titulo: stage.label,
+      status: stage.status,
+      descricao: stage.description,
+      total: registrosEtapa.length,
+      percentual,
+      destaques,
+      alerta,
+      ordem: indice + 1
+    };
+  });
+
+  const missoes = alertas.slice(0, 5).map(missao => ({
+    titulo: missao.poco,
+    motivo: missao.motivo,
+    responsavel: missao.responsavel,
+    proximaAcao: missao.proximaAcao
+  }));
+
+  const projetos = cronograma
+    .slice()
+    .sort((a, b) => {
+      const dataA = a.data ? new Date(a.data) : null;
+      const dataB = b.data ? new Date(b.data) : null;
+      if (!dataA && !dataB) return 0;
+      if (!dataA) return 1;
+      if (!dataB) return -1;
+      return dataA - dataB;
+    })
+    .slice(0, 6)
+    .map(item => ({
+      poco: item.poco || 'Sem identificação',
+      etapa: item.etapa || '-',
+      descricao: item.descricao || '',
+      data: item.data || '',
+      status: item.status || ''
+    }));
+
+  const rankingDoadores = doadoresImpacto.slice(0, 4).map(doador => ({
+    nome: doador.nome || 'Sem identificação',
+    valor: Number(doador.valor || 0),
+    beneficiarios: Number(doador.beneficiariosApoiados || 0),
+    pocos: Number(doador.quantidadePocos || 0)
+  }));
+
+  return {
+    resumo: {
+      totalPocos: totalPocos,
+      planejados: Number(resumoBase.planejados || 0),
+      emExecucao: Number(resumoBase.emExecucao || 0),
+      concluidos: Number(resumoBase.concluidos || 0),
+      investimentoPrevisto: Number(resumoBase.investimentoPrevisto || 0),
+      investimentoRealizado: Number(resumoBase.investimentoRealizado || 0),
+      gapFinanceiro: Number(resumoBase.gapFinanceiro || 0),
+      beneficiarios: Number(metricasImpacto.beneficiariosTotais || 0),
+      custoPorPessoa: Number(metricasImpacto.custoPorPessoa || 0),
+      doadoresAtivos: Number(totaisDashboard.doadoresAtivos || 0)
+    },
+    etapas,
+    missoes,
+    projetos,
+    rankingDoadores,
+    impacto: {
+      familiasEstimadas: Number(metricasImpacto.familiasEstimadas || 0),
+      volumeAguaDiario: Number(metricasImpacto.volumeAguaDiario || 0),
+      investimentoPrevisto: Number(metricasImpacto.investimentoPrevisto || 0),
+      investimentoRealizado: Number(metricasImpacto.investimentoRealizado || 0)
+    }
+  };
+}
+
 
 

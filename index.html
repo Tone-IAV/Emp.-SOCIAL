@@ -38,6 +38,73 @@
     .map-close:hover { background:#7dd3fc; transform:translateY(-1px); }
     #mapaEstados { width:100%; height:420px; }
     .map-legend { font-size:0.85rem; color:#0f172a; background:rgba(191,219,254,0.8); border-radius:16px; padding:14px; box-shadow:0 8px 18px rgba(30,64,175,0.15); }
+    .gamified-hub { margin:24px 20px 0; padding:28px; border-radius:28px; background:linear-gradient(180deg, rgba(191,219,254,0.65) 0%, rgba(255,255,255,0.96) 100%); box-shadow:0 28px 60px rgba(14,165,233,0.18); border:1px solid rgba(125,211,252,0.35); }
+    .gamified-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:28px; align-items:start; }
+    @media (max-width: 1024px) { .gamified-grid { grid-template-columns:1fr; } }
+    .gamified-hub__header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
+    .gamified-hub__title { font-size:1.4rem; font-weight:700; color:#0f172a; }
+    .gamified-hub__subtitle { font-size:0.9rem; color:#475569; max-width:520px; }
+    .hub-score-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:18px; margin-bottom:28px; }
+    .score-card { display:block; background:rgba(255,255,255,0.96); border-radius:20px; padding:18px; box-shadow:0 20px 42px rgba(59,130,246,0.18); position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(14,165,233,0.16); transition:transform .2s ease, box-shadow .2s ease; }
+    .score-card:hover { transform:translateY(-6px); box-shadow:0 26px 56px rgba(14,165,233,0.28); }
+    .score-card__icon { width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg, #38bdf8, #2563eb); display:flex; align-items:center; justify-content:center; color:white; font-size:1.35rem; margin-bottom:12px; box-shadow:0 12px 24px rgba(59,130,246,0.3); }
+    .score-card__label { font-size:0.75rem; letter-spacing:0.08em; font-weight:600; color:#0369a1; text-transform:uppercase; }
+    .score-card__value { font-size:1.9rem; font-weight:700; color:#0f172a; margin:6px 0; }
+    .score-card__detail { font-size:0.82rem; color:#475569; }
+    .journey-board { background:rgba(255,255,255,0.92); border-radius:26px; padding:24px; box-shadow:0 24px 48px rgba(15,23,42,0.12); border:1px solid rgba(226,232,240,0.8); }
+    .journey-board__header { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .journey-board__title { font-size:1.05rem; font-weight:700; color:#0f172a; }
+    .journey-board__subtitle { font-size:0.82rem; color:#475569; max-width:480px; }
+    .journey-track { position:relative; display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:22px; }
+    .journey-track::before { content:""; position:absolute; top:50%; left:6%; right:6%; height:4px; background:linear-gradient(90deg, rgba(14,165,233,0.55), rgba(37,99,235,0.25)); z-index:0; }
+    .stage-node { background:#ffffff; border-radius:24px; padding:18px; box-shadow:0 24px 40px rgba(59,130,246,0.18); border:1px solid rgba(191,219,254,0.8); position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; min-height:210px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+    .stage-node:hover { transform:translateY(-6px); box-shadow:0 30px 56px rgba(14,165,233,0.3); }
+    .stage-node::before { content:attr(data-order); position:absolute; top:16px; right:18px; font-size:0.85rem; font-weight:700; color:rgba(14,165,233,0.35); }
+    .stage-node__status { font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#0ea5e9; }
+    .stage-node__titulo { font-size:1.05rem; font-weight:700; color:#0f172a; }
+    .stage-node__contagem { display:flex; align-items:baseline; gap:6px; font-size:1.6rem; font-weight:700; color:#1d4ed8; }
+    .stage-node__contagem span { font-size:0.75rem; text-transform:uppercase; color:#475569; font-weight:600; letter-spacing:0.05em; }
+    .stage-node__progress { background:rgba(191,219,254,0.6); height:8px; border-radius:999px; position:relative; overflow:hidden; }
+    .stage-node__progress-bar { position:absolute; inset:0; width:var(--progress,0%); background:linear-gradient(90deg, #38bdf8, #2563eb); border-radius:999px; }
+    .stage-node__percentual { font-size:0.78rem; color:#0f172a; font-weight:600; }
+    .stage-node__lista { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+    .stage-node__item { background:rgba(59,130,246,0.08); border-radius:16px; padding:10px 12px; display:flex; flex-direction:column; gap:4px; font-size:0.8rem; color:#334155; }
+    .stage-node__item strong { font-size:0.86rem; color:#0f172a; }
+    .stage-node__item span { font-size:0.76rem; color:#475569; }
+    .stage-node__empty { font-size:0.78rem; color:#64748b; background:rgba(226,232,240,0.7); padding:12px; border-radius:14px; text-align:center; }
+    .stage-node--alerta { border-color:rgba(248,113,113,0.45); box-shadow:0 30px 60px rgba(248,113,113,0.25); }
+    .stage-node--alerta .stage-node__progress-bar { background:linear-gradient(90deg, #f97316, #ef4444); }
+    .project-flow { margin-top:28px; background:rgba(255,255,255,0.94); border-radius:24px; padding:22px; box-shadow:0 24px 42px rgba(15,23,42,0.1); border:1px solid rgba(226,232,240,0.85); }
+    .project-flow__title { font-size:1rem; font-weight:700; color:#0f172a; margin-bottom:12px; }
+    .project-timeline { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
+    .project-timeline__item { position:relative; border-left:3px solid #38bdf8; padding-left:14px; background:rgba(59,130,246,0.06); border-radius:0 16px 16px 0; padding-top:8px; padding-bottom:8px; }
+    .project-timeline__item::before { content:""; position:absolute; left:-7px; top:10px; width:12px; height:12px; border-radius:999px; background:#0ea5e9; box-shadow:0 0 0 4px rgba(14,165,233,0.2); }
+    .project-timeline__item strong { font-size:0.86rem; color:#0f172a; }
+    .project-timeline__meta { font-size:0.74rem; color:#475569; display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+    .project-timeline__descricao { font-size:0.78rem; color:#334155; margin-top:6px; }
+    .mission-sidebar { display:flex; flex-direction:column; gap:22px; }
+    .mission-card { background:rgba(255,255,255,0.95); border-radius:24px; padding:20px; box-shadow:0 24px 44px rgba(15,23,42,0.12); border:1px solid rgba(226,232,240,0.9); }
+    .mission-card__title { font-size:0.98rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+    .mission-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
+    .mission-list__item { background:rgba(14,165,233,0.12); border-radius:18px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; font-size:0.82rem; color:#334155; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+    .mission-list__item:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(14,165,233,0.25); }
+    .mission-list__item strong { font-size:0.9rem; color:#0f172a; }
+    .mission-list__tag { font-size:0.72rem; text-transform:uppercase; font-weight:700; color:#0ea5e9; letter-spacing:0.08em; }
+    .mission-list__acao { font-size:0.78rem; color:#334155; }
+    .mission-card__empty { font-size:0.8rem; color:#64748b; text-align:center; padding:14px; background:rgba(226,232,240,0.65); border-radius:16px; }
+    .impact-glance { display:grid; gap:12px; }
+    .impact-pill { background:linear-gradient(135deg, rgba(14,165,233,0.16), rgba(59,130,246,0.2)); border-radius:18px; padding:14px; display:flex; flex-direction:column; gap:6px; font-size:0.84rem; color:#0f172a; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+    .impact-pill:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(37,99,235,0.25); }
+    .impact-pill strong { font-size:1rem; font-weight:700; }
+    .impact-pill span { font-size:0.78rem; color:#334155; }
+    .donor-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+    .donor-list__item { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; background:rgba(15,23,42,0.04); border-radius:18px; padding:12px 14px; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+    .donor-list__item:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(15,23,42,0.18); }
+    .donor-list__item strong { font-size:0.86rem; color:#0f172a; }
+    .donor-list__item span { font-size:0.74rem; color:#475569; display:block; }
+    .donor-list__value { text-align:right; display:flex; flex-direction:column; gap:4px; }
+    .hub-empty { font-size:0.8rem; color:#64748b; text-align:center; padding:16px; background:rgba(226,232,240,0.6); border-radius:16px; }
+    .score-card:focus-visible, .stage-node:focus-visible, .mission-list__item:focus-visible, .project-timeline__item:focus-visible, .impact-pill:focus-visible, .donor-list__item:focus-visible { outline:3px solid rgba(14,165,233,0.55); outline-offset:3px; }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -115,6 +182,67 @@
     </div>
   </div>
 
+  <section class="gamified-hub" aria-labelledby="tituloHubGamificado">
+    <div class="gamified-grid">
+      <div>
+        <header class="gamified-hub__header">
+          <div>
+            <h1 id="tituloHubGamificado" class="gamified-hub__title">Mapa vivo da missão 💠</h1>
+            <p class="gamified-hub__subtitle">Navegue como um jogo: acompanhe a jornada dos poços, organize projetos colaborativos e mantenha as missões registradas com precisão na base de dados.</p>
+          </div>
+          <button type="button" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold shadow" data-navegacao="dashboard">Abrir painel analítico</button>
+        </header>
+
+        <div id="hubScoreCards" class="hub-score-grid">
+          <div class="hub-empty">Carregando métricas da missão...</div>
+        </div>
+
+        <div class="journey-board">
+          <div class="journey-board__header">
+            <div>
+              <h2 class="journey-board__title">Trilha dos poços</h2>
+              <p class="journey-board__subtitle">Cada etapa representa um checkpoint crítico. Clique para mergulhar na gestão detalhada e atualizar dados diretamente na base.</p>
+            </div>
+            <button type="button" class="px-3 py-2 rounded-full bg-white border border-sky-200 text-sky-700 text-sm font-semibold shadow-sm" data-navegacao="pocos">Cadastrar ou atualizar poço</button>
+          </div>
+          <div id="journeyTrack" class="journey-track">
+            <div class="hub-empty">Mapeando estágios dos poços...</div>
+          </div>
+        </div>
+
+        <div class="project-flow">
+          <div class="project-flow__title">Cronograma vivo dos projetos</div>
+          <ul id="projectTimeline" class="project-timeline">
+            <li class="mission-card__empty">Carregando etapas do cronograma...</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="mission-sidebar">
+        <div class="mission-card">
+          <div class="mission-card__title">⚡ Missões prioritárias</div>
+          <ul id="missionList" class="mission-list">
+            <li class="mission-card__empty">Buscando alertas críticos...</li>
+          </ul>
+        </div>
+
+        <div class="mission-card">
+          <div class="mission-card__title">🎯 Impacto imediato</div>
+          <div id="impactGlance" class="impact-glance">
+            <div class="hub-empty">Calculando impacto gerado...</div>
+          </div>
+        </div>
+
+        <div class="mission-card">
+          <div class="mission-card__title">🤝 Aliados em campo</div>
+          <ul id="donorRanking" class="donor-list">
+            <li class="mission-card__empty">Conectando com os doadores em destaque...</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
   <!-- ÁREA PRINCIPAL -->
   <main>
     <div id="dashboard" class="section active"><?!= include('Dashboard'); ?></div>
@@ -129,41 +257,238 @@
     © 2025 Projeto Poços Missionários — Sistema desenvolvido em Google Apps Script
   </footer>
 
-  <!-- SCRIPT DE NAVEGAÇÃO -->
   <script>
-    document.querySelectorAll('.nav-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const secaoAnterior = document.querySelector('.section.active');
-        const botaoAnterior = document.querySelector('.nav-item.active');
+    (function() {
+      const scoreContainer = document.getElementById('hubScoreCards');
+      const trackContainer = document.getElementById('journeyTrack');
+      const missionContainer = document.getElementById('missionList');
+      const projectContainer = document.getElementById('projectTimeline');
+      const impactContainer = document.getElementById('impactGlance');
+      const donorContainer = document.getElementById('donorRanking');
 
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+      const placeholder = (element, mensagem) => {
+        if (!element) return;
+        element.innerHTML = `<div class="hub-empty">${escapeHtml(mensagem)}</div>`;
+      };
 
-        const target = btn.dataset.target;
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-        const secao = document.getElementById(target);
+      const formatarPercentual = valor => `${Math.round(Number(valor) || 0)}%`;
+      const formatarDataCurta = valor => {
+        if (!valor) return 'Sem data';
+        const data = new Date(valor);
+        if (isNaN(data.getTime())) return 'Sem data';
+        return data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+      };
 
-        if (secao) {
-          secao.classList.add('active');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+      const createScoreCard = (icon, titulo, valor, detalhe, destino) => {
+        const destinoAttr = destino ? ` data-navegacao="${destino}"` : '';
+        return `
+          <article class="score-card" role="button" tabindex="0"${destinoAttr}>
+            <div class="score-card__icon">${icon}</div>
+            <span class="score-card__label">${escapeHtml(titulo)}</span>
+            <div class="score-card__value">${escapeHtml(String(valor))}</div>
+            <p class="score-card__detail">${escapeHtml(String(detalhe))}</p>
+          </article>
+        `;
+      };
+
+      const render = (dados) => {
+        if (!dados) {
+          placeholder(scoreContainer, 'Não foi possível carregar as métricas.');
+          placeholder(trackContainer, 'Não foi possível carregar o pipeline.');
+          placeholder(missionContainer, 'Não foi possível carregar as missões prioritárias.');
+          placeholder(projectContainer, 'Não foi possível carregar o cronograma.');
+          placeholder(impactContainer, 'Sem dados de impacto disponíveis.');
+          placeholder(donorContainer, 'Sem doadores destacados no momento.');
           return;
         }
 
-        console.error(`Seção "${target}" não encontrada. Verifique se o include correspondente está disponível.`);
+        const resumo = dados.resumo || {};
+        const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
+        const missoes = Array.isArray(dados.missoes) ? dados.missoes : [];
+        const projetos = Array.isArray(dados.projetos) ? dados.projetos : [];
+        const impacto = dados.impacto || {};
+        const doadores = Array.isArray(dados.rankingDoadores) ? dados.rankingDoadores : [];
 
-        if (secaoAnterior) {
-          secaoAnterior.classList.add('active');
+        if (scoreContainer) {
+          scoreContainer.innerHTML = [
+            createScoreCard('🎯', 'Poços monitorados', formatarNumero(resumo.totalPocos || 0), `${formatarNumero(resumo.concluidos || 0)} concluídos`, 'dashboard'),
+            createScoreCard('🚀', 'Missões em campo', formatarNumero(resumo.emExecucao || 0), `${formatarNumero(resumo.planejados || 0)} em preparação`, 'gestao'),
+            createScoreCard('👥', 'Beneficiários alcançados', formatarNumero(resumo.beneficiarios || 0), `Custo médio ${formatarMoeda(resumo.custoPorPessoa || 0)}/pessoa`, 'impacto'),
+            createScoreCard('💰', 'Investimento realizado', formatarMoeda(resumo.investimentoRealizado || 0), `Gap ${formatarMoeda(resumo.gapFinanceiro || 0)}`, 'gestao'),
+            createScoreCard('🤝', 'Doadores ativos', formatarNumero(resumo.doadoresAtivos || 0), 'Rede colaborativa atualizada', 'impacto')
+          ].join('');
         }
 
-        if (botaoAnterior) {
-          botaoAnterior.classList.add('active');
+        if (trackContainer) {
+          if (!etapas.length) {
+            placeholder(trackContainer, 'Cadastre um poço para ativar a trilha do jogo.');
+          } else {
+            trackContainer.innerHTML = etapas.map(etapa => {
+              const totalFormatado = formatarNumero(etapa.total || 0);
+              const safePercent = Math.min(Math.max(Number(etapa.percentual) || 0, 0), 100);
+              const destaques = Array.isArray(etapa.destaques) && etapa.destaques.length
+                ? etapa.destaques.map(item => `
+                    <li class="stage-node__item">
+                      <strong>${escapeHtml(item.nome || 'Sem identificação')}</strong>
+                      <span>${escapeHtml(item.local || 'Sem local informado')}</span>
+                      ${item.responsavel ? `<span>Responsável: ${escapeHtml(item.responsavel)}</span>` : ''}
+                      ${item.gapFinanceiro > 0 ? `<span>Gap: <b>${formatarMoeda(item.gapFinanceiro)}</b></span>` : ''}
+                      ${item.diasSemContato > 0 ? `<span>${escapeHtml(`${item.diasSemContato} dias sem contato`)}</span>` : ''}
+                      ${item.proximaAcao ? `<span>Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
+                    </li>
+                  `).join('')
+                : '<li class="stage-node__empty">Nenhuma pendência crítica nesta etapa.</li>';
+              const ariaLabel = `${totalFormatado} poços em ${etapa.titulo}`;
+              return `
+                <article class="stage-node ${etapa.alerta ? 'stage-node--alerta' : ''}" data-order="${escapeHtml(String(etapa.ordem || ''))}" data-navegacao="pocos" role="button" tabindex="0" aria-label="${escapeHtml(ariaLabel)}">
+                  <div>
+                    <div class="stage-node__status">${escapeHtml(etapa.status)}</div>
+                    <div class="stage-node__titulo">${escapeHtml(etapa.titulo)}</div>
+                  </div>
+                  <div class="stage-node__contagem">${escapeHtml(totalFormatado)} <span>poços</span></div>
+                  <div class="stage-node__progress" aria-hidden="true"><span class="stage-node__progress-bar" style="--progress:${safePercent}%;"></span></div>
+                  <div class="stage-node__percentual">${escapeHtml(formatarPercentual(etapa.percentual || 0))} do pipeline</div>
+                  <ul class="stage-node__lista">${destaques}</ul>
+                </article>
+              `;
+            }).join('');
+          }
+        }
+
+        if (missionContainer) {
+          if (!missoes.length) {
+            missionContainer.innerHTML = '<li class="mission-card__empty">Sem alertas críticos. Continue monitorando o campo!</li>';
+          } else {
+            missionContainer.innerHTML = missoes.map(item => `
+              <li class="mission-list__item" data-navegacao="gestao" role="button" tabindex="0">
+                <span class="mission-list__tag">Prioridade</span>
+                <strong>${escapeHtml(item.titulo || 'Missão')}</strong>
+                <span class="mission-list__acao">${escapeHtml(item.motivo || 'Ação necessária')}</span>
+                ${item.responsavel ? `<span class="mission-list__acao">Responsável: ${escapeHtml(item.responsavel)}</span>` : ''}
+                ${item.proximaAcao ? `<span class="mission-list__acao">Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
+              </li>
+            `).join('');
+          }
+        }
+
+        if (projectContainer) {
+          if (!projetos.length) {
+            projectContainer.innerHTML = '<li class="mission-card__empty">Nenhuma etapa de projeto registrada ainda.</li>';
+          } else {
+            projectContainer.innerHTML = projetos.map(item => `
+              <li class="project-timeline__item" data-navegacao="gestao" role="button" tabindex="0">
+                <strong>${escapeHtml(item.poco || 'Projeto')}</strong>
+                <div class="project-timeline__meta">
+                  <span>${escapeHtml(item.etapa || '-')}</span>
+                  <span>${escapeHtml(formatarDataCurta(item.data))}</span>
+                  ${item.status ? `<span>${escapeHtml(item.status)}</span>` : ''}
+                </div>
+                ${item.descricao ? `<div class="project-timeline__descricao">${escapeHtml(item.descricao)}</div>` : ''}
+              </li>
+            `).join('');
+          }
+        }
+
+        if (impactContainer) {
+          const cards = [
+            { label: 'Famílias estimadas atendidas', valor: formatarNumero(impacto.familiasEstimadas || 0) },
+            { label: 'Volume diário de água', valor: `${formatarNumero(impacto.volumeAguaDiario || 0)} L/dia` },
+            { label: 'Investimento previsto', valor: formatarMoeda(impacto.investimentoPrevisto || 0) },
+            { label: 'Investimento realizado', valor: formatarMoeda(impacto.investimentoRealizado || 0) }
+          ];
+          impactContainer.innerHTML = cards.map(card => `
+            <div class="impact-pill" data-navegacao="impacto" role="button" tabindex="0">
+              <strong>${escapeHtml(String(card.valor))}</strong>
+              <span>${escapeHtml(card.label)}</span>
+            </div>
+          `).join('');
+        }
+
+        if (donorContainer) {
+          if (!doadores.length) {
+            donorContainer.innerHTML = '<li class="mission-card__empty">Traga novos aliados para acelerar as missões.</li>';
+          } else {
+            donorContainer.innerHTML = doadores.map(item => `
+              <li class="donor-list__item" data-navegacao="impacto" role="button" tabindex="0">
+                <div>
+                  <strong>${escapeHtml(item.nome || 'Aliado')}</strong>
+                  <span>${escapeHtml(`${formatarNumero(item.pocos || 0)} poços apoiados`)}</span>
+                </div>
+                <div class="donor-list__value">
+                  <span>${escapeHtml(formatarMoeda(item.valor || 0))}</span>
+                  <span>${escapeHtml(`${formatarNumero(item.beneficiarios || 0)} beneficiários`)}</span>
+                </div>
+              </li>
+            `).join('');
+          }
+        }
+      };
+
+      const inicializar = () => {
+        if (window.google && google.script && google.script.run && google.script.run.withSuccessHandler) {
+          google.script.run.withSuccessHandler(render).obterVisaoGamificada();
         } else {
-          const botaoDashboard = document.querySelector('.nav-item[data-target="dashboard"]');
-          const secaoDashboard = document.getElementById('dashboard');
-          if (botaoDashboard) botaoDashboard.classList.add('active');
-          if (secaoDashboard) secaoDashboard.classList.add('active');
+          render(null);
         }
+      };
+
+      inicializar();
+    })();
+  </script>
+
+  <!-- SCRIPT DE NAVEGAÇÃO -->
+  <script>
+    const setActiveSection = (target) => {
+      const secaoDestino = document.getElementById(target);
+      if (!secaoDestino) {
+        console.error(`Seção "${target}" não encontrada. Verifique se o include correspondente está disponível.`);
+        return false;
+      }
+
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      secaoDestino.classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      const botaoDestino = document.querySelector(`.nav-item[data-target="${target}"]`);
+      if (botaoDestino) {
+        botaoDestino.classList.add('active');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return true;
+    };
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setActiveSection(btn.dataset.target);
       });
+    });
+
+    window.navegarPara = (target) => {
+      if (!setActiveSection(target)) {
+        setActiveSection('dashboard');
+      }
+    };
+
+    document.addEventListener('click', (evento) => {
+      const alvo = evento.target.closest('[data-navegacao]');
+      if (!alvo) return;
+      const destino = alvo.getAttribute('data-navegacao');
+      if (!destino) return;
+      evento.preventDefault();
+      window.navegarPara(destino);
+    });
+
+    document.addEventListener('keydown', (evento) => {
+      const alvo = evento.target.closest('[data-navegacao]');
+      if (!alvo) return;
+      if (evento.key === 'Enter' || evento.key === ' ') {
+        evento.preventDefault();
+        const destino = alvo.getAttribute('data-navegacao');
+        if (destino) {
+          window.navegarPara(destino);
+        }
+      }
     });
 
     const overlay = document.getElementById('painelMapa');
