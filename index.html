@@ -1,609 +1,344 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <base target="_top">
-  <title>Emp. Social - Centro de Missões</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <style>
-    :root {
-      color-scheme: light;
-      --emp-bg-top: radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 55%),
-        linear-gradient(180deg, #e0f2fe 0%, #f8fafc 45%, #ffffff 100%);
-      --emp-surface: rgba(255,255,255,0.92);
-      --emp-text: #0f172a;
-      --emp-subtext: #475569;
-      --emp-accent: #2563eb;
-      --emp-accent-soft: rgba(37, 99, 235, 0.1);
-    }
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <title>Emp. Social</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --primary: #005a9c;
+        --primary-dark: #004270;
+        --background: #f4f6f8;
+        --surface: #ffffff;
+        --text: #2c3e50;
+        --muted: #7f8c8d;
+      }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: var(--emp-bg-top);
-      color: var(--emp-text);
-      min-height: 100vh;
-    }
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--background);
+        color: var(--text);
+      }
 
-    .app-shell {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+      header.site-header {
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
 
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      display: grid;
-      gap: 0.75rem;
-      background: linear-gradient(120deg, #38bdf8 0%, #2563eb 100%);
-      color: #0f172a;
-      padding: 1.25rem clamp(1rem, 3vw, 2rem);
-      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.2);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-    }
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
+      .brand {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 18px 0;
+      }
 
-    .brand strong {
-      font-size: clamp(1.1rem, 2.2vw, 1.45rem);
-      letter-spacing: -0.01em;
-    }
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+      }
 
-    .brand span {
-      font-size: clamp(0.78rem, 1.7vw, 0.92rem);
-      opacity: 0.85;
-      max-width: 60ch;
-    }
+      nav a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 12px 16px;
+        border-radius: 6px;
+        transition: background 0.2s ease-in-out;
+      }
 
-    nav[aria-label="Módulos disponíveis"] {
-      overflow-x: auto;
-      padding-bottom: 0.35rem;
-    }
-
-    .nav-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-    }
-
-    .nav-button {
-      appearance: none;
-      border: 0;
-      padding: 0.75rem 1.25rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.88);
-      color: var(--emp-text);
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      align-items: flex-start;
-      min-width: clamp(180px, 24vw, 240px);
-      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    }
-
-    .nav-button:hover,
-    .nav-button:focus-visible {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
-      outline: none;
-    }
-
-    .nav-button[aria-current="page"] {
-      background: linear-gradient(120deg, rgba(255,255,255,0.98) 0%, rgba(191,219,254,0.9) 100%);
-      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-    }
-
-    .nav-button__title {
-      font-size: 0.95rem;
-      letter-spacing: -0.01em;
-    }
-
-    .nav-button__subtitle {
-      font-size: 0.78rem;
-      font-weight: 500;
-      color: var(--emp-subtext);
-    }
-
-    main {
-      flex: 1;
-      padding: clamp(2rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem);
-      display: flex;
-      justify-content: center;
-    }
-
-    .module-container {
-      width: min(1200px, 100%);
-      display: block;
-    }
-
-    .welcome-card {
-      background: var(--emp-surface);
-      border-radius: 28px;
-      padding: clamp(2rem, 4vw, 3rem);
-      box-shadow: 0 36px 90px rgba(14, 165, 233, 0.24);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      backdrop-filter: blur(4px);
-      display: flex;
-      flex-direction: column;
-      gap: 1.4rem;
-      text-align: center;
-    }
-
-    .welcome-card h1 {
-      margin: 0;
-      font-size: clamp(1.6rem, 3vw, 2rem);
-      color: var(--emp-text);
-    }
-
-    .welcome-card p {
-      margin: 0;
-      font-size: 1rem;
-      color: var(--emp-subtext);
-      line-height: 1.6;
-    }
-
-    .welcome-card .hint {
-      font-size: 0.85rem;
-      color: var(--emp-accent);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .state-card {
-      display: grid;
-      place-items: center;
-      gap: 1rem;
-    }
-
-    .loading-state,
-    .error-state {
-      background: rgba(15, 23, 42, 0.02);
-      border-radius: 24px;
-      padding: clamp(1.5rem, 3vw, 2.5rem);
-      border: 1px dashed rgba(148, 163, 184, 0.4);
-      text-align: center;
-    }
-
-    .loading-state strong,
-    .error-state strong {
-      display: block;
-      font-size: 1.05rem;
-      margin-bottom: 0.35rem;
-    }
-
-    .error-state {
-      border-color: rgba(248, 113, 113, 0.6);
-      color: #b91c1c;
-      background: rgba(254, 226, 226, 0.55);
-    }
-
-    @media (max-width: 720px) {
-      .nav-button {
-        min-width: min(240px, 100%);
-        width: 100%;
+      nav a:hover,
+      nav a.active {
+        background: var(--primary-dark);
       }
 
       main {
-        padding-inline: 1.25rem;
+        max-width: 1200px;
+        margin: 32px auto;
+        padding: 0 24px 48px;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <strong>💧 Emp. Social - Centro de Missões</strong>
-        <span>Selecione um módulo para carregar os painéis especializados do Apps Script</span>
+
+      .card {
+        background: var(--surface);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 32px;
+      }
+
+      .card-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        padding: 24px 24px 0;
+      }
+
+      .card-subtitle {
+        color: var(--muted);
+        padding: 0 24px 16px;
+        margin-top: 4px;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0 24px 16px;
+        gap: 8px;
+      }
+
+      button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s ease-in-out;
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid rgba(0, 90, 156, 0.3);
+      }
+
+      button:hover {
+        background: var(--primary-dark);
+      }
+
+      button.secondary:hover {
+        background: rgba(0, 90, 156, 0.08);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: rgba(0, 90, 156, 0.08);
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 12px 18px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      tbody tr:hover {
+        background: rgba(0, 90, 156, 0.05);
+      }
+
+      .table-container {
+        padding: 0 24px 24px;
+        overflow-x: auto;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .loading {
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      @media (max-width: 768px) {
+        nav ul {
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        nav a {
+          padding: 10px 12px;
+        }
+
+        th,
+        td {
+          padding: 10px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <? var initialView = currentView; ?>
+    <header class="site-header">
+      <div class="nav-container">
+        <div class="brand">Emp. Social</div>
+        <nav>
+          <ul>
+            <? views.forEach(function(view) { ?>
+              <li>
+                <a
+                  href="?view=<?= view.id ?>"
+                  data-view="<?= view.id ?>"
+                  class="<?= view.id === initialView ? 'active' : '' ?>"
+                ><?= view.label ?></a>
+              </li>
+            <? }); ?>
+          </ul>
+        </nav>
       </div>
-      <nav aria-label="Módulos disponíveis">
-        <ul class="nav-list" id="navList"></ul>
-      </nav>
     </header>
 
     <main>
-      <div class="module-container" id="mainContent">
-        <section class="welcome-card" aria-labelledby="boasVindasTitulo">
-          <p class="hint">Central de acesso</p>
-          <h1 id="boasVindasTitulo">Escolha um módulo para começar</h1>
-          <p>Utilize o menu superior para carregar o painel desejado sem sair do ambiente do Google Apps Script. Os módulos são carregados dinamicamente e mantêm as configurações globais de visualização.</p>
+      <? views.forEach(function(view) { ?>
+        <section
+          id="view-<?= view.id ?>"
+          class="card view-section <?= view.id === initialView ? '' : 'hidden' ?>"
+          data-view-section="<?= view.id ?>"
+        >
+          <?!= include(view.partial) ?>
         </section>
-      </div>
+      <? }); ?>
     </main>
-  </div>
 
-  <script>
-    window.EmpSocial = Object.freeze({
-      defaultSection: 'Dashboard',
-      sections: [
-        { id: 'Dashboard', file: 'Dashboard', label: 'Painel principal', description: 'Indicadores consolidados' },
-        { id: 'Gestao', file: 'Gestao', label: 'Gestão à vista', description: 'Atividades e cronogramas' },
-        { id: 'Impacto', file: 'Impacto', label: 'Impacto', description: 'Beneficiários e métricas sociais' },
-        { id: 'Pocos', file: 'Pocos', label: 'Poços', description: 'Cadastro detalhado e status' },
-        { id: 'Kanban', file: 'Kanban', label: 'Kanban', description: 'Fluxo operacional' },
-        { id: 'Detalhes', file: 'Detalhes', label: 'Detalhes dinâmicos', description: 'Consultas e relatórios' },
-        { id: 'Mapa', file: 'Mapa', label: 'Mapa vivo', description: 'Visualização geográfica em tempo real' }
-      ]
-    });
-  </script>
-  <script>
-    (function () {
-      const global = window;
+    <template id="table-template">
+      <thead></thead>
+      <tbody></tbody>
+    </template>
 
-      if (typeof global.escapeHtml !== 'function') {
-        global.escapeHtml = (valor = '') => String(valor)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
+    <script>
+      const views = <?!= JSON.stringify(views) ?>;
+      const defaultView = '<?= initialView ?>';
 
-      if (typeof global.formatarNumero !== 'function') {
-        global.formatarNumero = (valor, casasDecimais = 0) => {
-          const numero = Number(valor);
-          const seguro = Number.isFinite(numero) ? numero : 0;
-          return seguro.toLocaleString('pt-BR', {
-            minimumFractionDigits: casasDecimais,
-            maximumFractionDigits: casasDecimais
-          });
-        };
-      }
-
-      if (typeof global.formatarMoeda !== 'function') {
-        const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-        global.formatarMoeda = (valor) => {
-          const numero = Number(valor);
-          return formatadorMoeda.format(Number.isFinite(numero) ? numero : 0);
-        };
-      }
-
-      if (typeof global.formatarData !== 'function') {
-        global.formatarData = (valor) => {
-          if (!valor) return '';
-          const data = new Date(valor);
-          if (Number.isNaN(data.getTime())) return '';
-          return data.toLocaleDateString('pt-BR');
-        };
-      }
-
-      const registrosDetalhes = new Map();
-      let contadorDetalhes = 0;
-
-      const normalizarLista = (valor) => Array.isArray(valor)
-        ? valor.filter(item => item !== null && item !== undefined)
-        : [];
-
-      const normalizarCategoria = (valor) => {
-        const texto = (valor || '').toString().toLowerCase();
-        return ['pocos', 'projetos', 'doadores'].includes(texto) ? texto : 'pocos';
-      };
-
-      const normalizarDetalhe = (entrada = {}) => {
-        const detalhe = {
-          id: entrada.id || null,
-          titulo: entrada.titulo || 'Detalhe',
-          subtitulo: entrada.subtitulo || '',
-          resumo: entrada.resumo || entrada.descricao || '',
-          status: entrada.status || '',
-          meta: entrada.meta || '',
-          tags: normalizarLista(entrada.tags),
-          metricas: normalizarLista(entrada.metricas),
-          campos: normalizarLista(entrada.campos),
-          doadores: normalizarLista(entrada.doadores),
-          documentos: normalizarLista(entrada.documentos),
-          contatos: normalizarLista(entrada.contatos),
-          evidencias: normalizarLista(entrada.evidencias),
-          timeline: normalizarLista(entrada.timeline),
-          categoria: normalizarCategoria(entrada.categoria),
-          acao: entrada.acao || null,
-          acaoEditar: entrada.acaoEditar || null,
-          destino: 'Detalhes'
-        };
-        if (!entrada.categoria && entrada.acao && entrada.acao.destino) {
-          detalhe.categoria = normalizarCategoria(entrada.acao.destino);
-        }
-        return detalhe;
-      };
-
-      const registrarDetalhe = (entrada) => {
-        const registro = normalizarDetalhe(entrada);
-        const chave = `emp-det-${Date.now()}-${(++contadorDetalhes).toString(36)}`;
-        registrosDetalhes.set(chave, registro);
-        return chave;
-      };
-
-      const criarAtributoDetalhes = (entrada = {}) => {
-        const chave = registrarDetalhe(entrada || {});
-        return `data-emp-detalhe="${chave}"`;
-      };
-
-      const abrirDetalheRegistrado = (chave) => {
-        if (!chave || !registrosDetalhes.has(chave)) return;
-        const registro = registrosDetalhes.get(chave);
-        const payload = Object.assign({}, registro);
-        const destino = registro.destino || 'Detalhes';
-        if (typeof global.navegarPara === 'function') {
-          global.navegarPara(destino, { pushState: true })
-            .then(() => {
-              global.dispatchEvent(new CustomEvent('EmpSocial:mostrarDetalhe', { detail: payload }));
-            })
-            .catch(erro => console.error('Não foi possível abrir os detalhes solicitados.', erro));
-        } else {
-          console.warn('Função navegarPara não disponível para abrir detalhes.');
-        }
-      };
-
-      const ehAtalhoDeAtivacao = (evento) => evento.key === 'Enter' || evento.key === ' ';
-
-      document.addEventListener('click', (evento) => {
-        const alvo = evento.target.closest('[data-emp-detalhe]');
-        if (!alvo) return;
-        evento.preventDefault();
-        const chave = alvo.getAttribute('data-emp-detalhe');
-        abrirDetalheRegistrado(chave);
+      document.addEventListener('DOMContentLoaded', () => {
+        setupNavigation();
+        navigateTo(defaultView, false);
       });
 
-      document.addEventListener('keydown', (evento) => {
-        if (!ehAtalhoDeAtivacao(evento)) return;
-        const alvo = evento.target.closest('[data-emp-detalhe]');
-        if (!alvo) return;
-        evento.preventDefault();
-        const chave = alvo.getAttribute('data-emp-detalhe');
-        abrirDetalheRegistrado(chave);
-      });
+      function setupNavigation() {
+        document.querySelectorAll('nav a[data-view]').forEach((link) => {
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const view = link.dataset.view;
+            navigateTo(view, true);
+          });
+        });
 
-      global.criarAtributoDetalhes = criarAtributoDetalhes;
-      global.EmpSocialDetalhesRegistros = registrosDetalhes;
-    })();
-  </script>
-  <script>
-    (function () {
-      const config = window.EmpSocial;
-      const navList = document.getElementById('navList');
-      const mainContent = document.getElementById('mainContent');
-
-      if (!config || !navList || !mainContent) {
-        return;
+        window.addEventListener('popstate', () => {
+          const view = new URL(window.location.href).searchParams.get('view') || defaultView;
+          navigateTo(view, false);
+        });
       }
 
-      const encontrarSection = (valor) => {
-        if (!valor) return null;
-        const alvo = valor.toString().toLowerCase();
-        return config.sections.find((entry) => entry.id.toLowerCase() === alvo || entry.file.toLowerCase() === alvo) || null;
-      };
+      function navigateTo(view, pushState = true) {
+        if (!views.some((item) => item.id === view)) {
+          view = defaultView;
+        }
 
-      const createNavButton = (section) => {
-        const listItem = document.createElement('li');
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'nav-button';
-        button.dataset.sectionId = section.id;
-        button.innerHTML = `
-          <span class="nav-button__title">${section.label}</span>
-          <span class="nav-button__subtitle">${section.description}</span>
-        `;
-        button.addEventListener('click', () => loadSection(section.id, { pushState: true }));
-        listItem.appendChild(button);
-        return listItem;
-      };
-
-      const setActiveButton = (sectionId) => {
-        navList.querySelectorAll('button').forEach((button) => {
-          const isActive = button.dataset.sectionId === sectionId;
-          button.setAttribute('aria-current', isActive ? 'page' : 'false');
+        document.querySelectorAll('[data-view-section]').forEach((section) => {
+          section.classList.toggle('hidden', section.dataset.viewSection !== view);
         });
-      };
 
-      const executeScripts = (container) => {
-        const scripts = Array.from(container.querySelectorAll('script'));
-        scripts.forEach((script) => {
-          const replacement = document.createElement('script');
-          Array.from(script.attributes).forEach((attr) => {
-            replacement.setAttribute(attr.name, attr.value);
-          });
-          replacement.textContent = script.textContent;
-          script.replaceWith(replacement);
+        document.querySelectorAll('nav a[data-view]').forEach((link) => {
+          link.classList.toggle('active', link.dataset.view === view);
         });
-      };
-
-      const renderHTML = (html, sectionId, pushState) => {
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = html;
-        const nodes = Array.from(wrapper.childNodes);
-
-        mainContent.replaceChildren(...nodes);
-        executeScripts(mainContent);
-        setActiveButton(sectionId);
 
         if (pushState) {
-          if (typeof google !== 'undefined' && google.script && google.script.history) {
-            google.script.history.push({ state: { section: sectionId }, hash: sectionId });
-          } else if (window.history && window.history.pushState) {
-            window.history.pushState({ section: sectionId }, '', `#${sectionId}`);
-          }
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', view);
+          history.pushState({}, '', url);
         }
-      };
 
-      const showLoading = (section) => {
-        mainContent.innerHTML = `
-          <section class="loading-state" role="status">
-            <strong>Carregando ${section.label}...</strong>
-            <span>Buscando dados atualizados no Apps Script.</span>
-          </section>
-        `;
-      };
+        loadTable(view);
+      }
 
-      const showError = (section, message) => {
-        mainContent.innerHTML = `
-          <section class="error-state" role="alert">
-            <strong>Não foi possível carregar ${section.label}</strong>
-            <span>${message || 'Tente novamente em instantes.'}</span>
-          </section>
-        `;
-      };
+      function loadTable(view) {
+        const loading = document.querySelector(`[data-loading="${view}"]`);
+        const table = document.querySelector(`[data-table="${view}"]`);
+        if (!loading || !table) return;
 
-      const loadSection = (sectionId, options = {}) => {
-        const { pushState = false, onLoaded, onError } = options;
-        const section = encontrarSection(sectionId) || config.sections[0];
-        if (!section) {
+        loading.classList.remove('hidden');
+        table.classList.add('hidden');
+        table.innerHTML = '';
+
+        const viewConfig = views.find((item) => item.id === view);
+        if (!viewConfig) {
+          loading.textContent = 'Visualização não configurada.';
           return;
         }
 
-        showLoading(section);
-        setActiveButton(section.id);
-
-        const onSuccess = (html) => {
-          renderHTML(html, section.id, pushState);
-          if (typeof onLoaded === 'function') {
-            try {
-              onLoaded({ section: section.id });
-            } catch (callbackError) {
-              console.error('Erro ao executar callback de carregamento.', callbackError);
-            }
-          }
-        };
-
-        const onFailure = (error) => {
-          const message = error && error.message ? error.message : 'Erro inesperado.';
-          showError(section, message);
-          if (typeof onError === 'function') {
-            try {
-              onError(error);
-            } catch (callbackError) {
-              console.error('Erro ao executar callback de falha.', callbackError);
-            }
-          }
-        };
-
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).include(section.file);
-        } else {
-          fetch(`${section.file}.html`)
-            .then((response) => {
-              if (!response.ok) throw new Error('Arquivo não encontrado.');
-              return response.text();
-            })
-            .then(onSuccess)
-            .catch(onFailure);
+        const method = viewConfig.fetch;
+        if (!method || typeof google.script.run[method] !== 'function') {
+          console.warn(`Nenhum método de busca configurado para "${view}".`);
+          loading.textContent = 'Não foi possível carregar os dados desta visualização.';
+          return;
         }
-      };
 
-      const navegarParaInterno = (destino, opcoes = {}) => {
-        const { pushState = true } = opcoes;
-        return new Promise((resolve, reject) => {
-          const section = encontrarSection(destino);
-          if (!section) {
-            const erro = new Error(`Seção "${destino}" não encontrada.`);
-            console.warn(erro.message);
-            reject(erro);
-            return;
-          }
-          loadSection(section.id, {
-            pushState,
-            onLoaded: (info) => {
-              if (typeof opcoes.onLoaded === 'function') {
-                try {
-                  opcoes.onLoaded(info);
-                } catch (callbackError) {
-                  console.error('Erro no callback onLoaded.', callbackError);
-                }
-              }
-              resolve(info);
-            },
-            onError: (erro) => {
-              if (typeof opcoes.onError === 'function') {
-                try {
-                  opcoes.onError(erro);
-                } catch (callbackError) {
-                  console.error('Erro no callback onError.', callbackError);
-                }
-              }
-              reject(erro);
-            }
-          });
-        });
-      };
-
-      const mapaFormulario = { poco: 'Pocos', projeto: 'Gestao', doador: 'Impacto' };
-
-      window.navegarPara = (destino, opcoes = {}) => navegarParaInterno(destino, opcoes);
-
-      window.abrirFormularioCadastro = (configFormulario = {}) => {
-        const { tipo, dados, destino, navegacao } = configFormulario;
-        const tipoNormalizado = (tipo || 'poco').toString().toLowerCase();
-        const alvo = destino || mapaFormulario[tipoNormalizado] || tipo || 'Pocos';
-        return navegarParaInterno(alvo, Object.assign({ pushState: true }, navegacao)).then(() => {
-          window.dispatchEvent(new CustomEvent('EmpSocial:abrirFormulario', {
-            detail: {
-              tipo: tipoNormalizado,
-              dados: dados || {},
-              acao: dados && dados.id ? 'editar' : 'novo'
-            }
-          }));
-        });
-      };
-
-      config.sections.forEach((section) => {
-        navList.appendChild(createNavButton(section));
-      });
-
-      const handleInitialLoad = () => {
-        const fallback = () => {
-          const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
-          loadSection(hash || config.defaultSection, { pushState: false });
-        };
-
-        if (typeof google !== 'undefined' && google.script && google.script.url && google.script.url.getLocation) {
-          google.script.url.getLocation((location) => {
-            const paramSection = location.parameter && location.parameter.section;
-            const hashSection = location.hash;
-            const target = (paramSection || hashSection || '').replace('#', '') || config.defaultSection;
-            loadSection(target, { pushState: false });
-          });
-        } else {
-          fallback();
-        }
-      };
-
-      if (typeof google !== 'undefined' && google.script && google.script.history && google.script.history.setChangeHandler) {
-        google.script.history.setChangeHandler((event) => {
-          const target = (event && event.state && event.state.section) || event.hash;
-          if (target) {
-            loadSection(target, { pushState: false });
-          }
-        });
-      } else {
-        window.addEventListener('popstate', (event) => {
-          const target = event.state && event.state.section;
-          if (target) {
-            loadSection(target, { pushState: false });
-          }
-        });
+        google.script.run
+          .withSuccessHandler((data) => renderTable(view, data))
+          .withFailureHandler(handleError)[method]();
       }
 
-      handleInitialLoad();
-    })();
-  </script>
-</body>
+      function renderTable(view, data) {
+        const loading = document.querySelector(`[data-loading="${view}"]`);
+        const table = document.querySelector(`[data-table="${view}"]`);
+        if (!loading || !table) return;
+
+        loading.classList.add('hidden');
+        table.classList.remove('hidden');
+
+        const template = document.getElementById('table-template');
+        const clone = template.content.cloneNode(true);
+        const thead = clone.querySelector('thead');
+        const tbody = clone.querySelector('tbody');
+
+        if (!Array.isArray(data) || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="padding: 24px; text-align: center; color: var(--muted);">Nenhum registro encontrado.</td></tr>`;
+        } else {
+          const columns = Object.keys(data[0]);
+          const headerRow = document.createElement('tr');
+          columns.forEach((column) => {
+            const th = document.createElement('th');
+            th.textContent = column;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+
+          data.forEach((row) => {
+            const tr = document.createElement('tr');
+            columns.forEach((column) => {
+              const td = document.createElement('td');
+              td.textContent = row[column] || '';
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+        }
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+      }
+
+      function openForm(view) {
+        alert(`Funcionalidade de formulário para "${view}" ainda será implementada.`);
+      }
+
+      function handleError(error) {
+        alert(`Erro ao carregar dados: ${error.message || error}`);
+        console.error(error);
+      }
+    </script>
+  </body>
 </html>
