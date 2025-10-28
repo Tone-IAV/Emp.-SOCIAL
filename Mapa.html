@@ -484,7 +484,40 @@
       }
     };
 
-    const aplicarDados = dados => {
+    const construirFallbackDados = () => {
+      if (window.__dadosMapaDemo && typeof window.__dadosMapaDemo === 'object') {
+        return window.__dadosMapaDemo;
+      }
+      const totais = {
+        totalPocos: 12,
+        concluidos: 7,
+        taxaConclusao: 0,
+        beneficiariosTotal: 1840,
+        mediaBeneficiarios: 0,
+        doadoresAtivos: 5,
+        investimentoRealizado: 520000,
+        gapFinanceiro: 125000
+      };
+      const porEstado = [
+        { estado: 'CE', pocos: 4, beneficiarios: 680 },
+        { estado: 'PI', pocos: 3, beneficiarios: 420 },
+        { estado: 'RN', pocos: 2, beneficiarios: 260 },
+        { estado: 'PB', pocos: 2, beneficiarios: 310 },
+        { estado: 'BA', pocos: 1, beneficiarios: 170 }
+      ];
+      const totalPocosCalculado = porEstado.reduce((acc, item) => acc + (Number(item.pocos) || 0), 0) || totais.totalPocos;
+      const totalBeneficiarios = porEstado.reduce((acc, item) => acc + (Number(item.beneficiarios) || 0), 0) || totais.beneficiariosTotal;
+      totais.totalPocos = totalPocosCalculado;
+      totais.beneficiariosTotal = totalBeneficiarios;
+      totais.mediaBeneficiarios = totalPocosCalculado ? Math.round(totalBeneficiarios / totalPocosCalculado) : 0;
+      const concluidos = totais.concluidos || Math.round(totalPocosCalculado * 0.55);
+      totais.concluidos = concluidos;
+      totais.taxaConclusao = totalPocosCalculado ? Number(((concluidos / totalPocosCalculado) * 100).toFixed(1)) : 0;
+      return { totais, porEstado };
+    };
+
+    const aplicarDados = (dados, opcoes = {}) => {
+      const { manterStatus = false, statusMensagem = '' } = opcoes;
       if (!dados) {
         statusEl.textContent = 'Não foi possível carregar os dados geográficos neste momento.';
         statusEl.classList.remove('hidden');
@@ -494,8 +527,13 @@
       atualizarResumo(dados.totais || {});
       atualizarTabela(dados.porEstado || []);
       renderMapa(dados);
-      statusEl.textContent = '';
-      statusEl.classList.add('hidden');
+      if (manterStatus) {
+        statusEl.textContent = statusMensagem || '';
+        statusEl.classList.toggle('hidden', !statusMensagem);
+      } else {
+        statusEl.textContent = '';
+        statusEl.classList.add('hidden');
+      }
       wrapper.classList.remove('hidden');
       if (badgeAtualizacao) {
         const agora = new Date();
@@ -508,6 +546,12 @@
       statusEl.textContent = 'Carregando mapa em tempo real...';
       if (window.google && google.script && google.script.run && google.script.run.withSuccessHandler) {
         google.script.run.withSuccessHandler(aplicarDados).obterDashboardAnalitico();
+        return;
+      }
+
+      const fallback = construirFallbackDados();
+      if (fallback) {
+        aplicarDados(fallback, { manterStatus: true, statusMensagem: 'Exibindo dados demonstrativos.' });
         return;
       }
 
