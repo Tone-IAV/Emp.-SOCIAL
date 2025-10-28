@@ -1899,6 +1899,10 @@ Aliados recomendados:
         botaoDestino.classList.add('active');
       }
 
+      if (typeof fecharOverlay === 'function') {
+        fecharOverlay();
+      }
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return true;
     };
@@ -1953,16 +1957,25 @@ Aliados recomendados:
       }
     };
 
+    const abrirOverlay = () => {
+      if (!overlay) return;
+      overlay.classList.add('visible');
+      overlay.setAttribute('aria-hidden', 'false');
+      if (typeof window.renderMapaDistribuicao === 'function') {
+        window.renderMapaDistribuicao('mapaEstados');
+      } else {
+        console.warn('Função "renderMapaDistribuicao" não encontrada. Certifique-se de carregá-la antes de abrir o painel.');
+      }
+    };
+
     if (!overlay || !btnInfo || !fechar) {
       console.warn('Painel do mapa não foi inicializado corretamente. Verifique se os elementos necessários estão presentes.');
     } else {
       btnInfo.addEventListener('click', () => {
-        overlay.classList.add('visible');
-        overlay.setAttribute('aria-hidden', 'false');
-        if (typeof window.renderMapaDistribuicao === 'function') {
-          window.renderMapaDistribuicao('mapaEstados');
+        if (overlay.classList.contains('visible')) {
+          fecharOverlay();
         } else {
-          console.warn('Função "renderMapaDistribuicao" não encontrada. Certifique-se de carregá-la antes de abrir o painel.');
+          abrirOverlay();
         }
       });
 
