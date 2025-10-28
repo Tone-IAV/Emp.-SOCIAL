@@ -29,8 +29,8 @@
     .section { display:none; animation:fadeIn .3s ease; }
     .section.active { display:block; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
-    .map-overlay { position:fixed; inset:0; background:rgba(191,219,254,0.6); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
-    .map-overlay.visible { opacity:1; pointer-events:auto; }
+    .map-overlay { position:fixed; inset:0; background:rgba(191,219,254,0.6); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .map-overlay.visible { display:flex; opacity:1; pointer-events:auto; }
     .map-modal { background:linear-gradient(180deg,#ffffff 0%,#e0f2fe 100%); border-radius:24px; max-width:900px; width:100%; padding:28px; box-shadow:0 24px 50px rgba(59,130,246,0.25); position:relative; display:flex; flex-direction:column; gap:16px; }
     .map-modal h3 { font-size:1.25rem; font-weight:700; color:#0369a1; margin:0; }
     .map-modal p { color:#0f172a; font-size:0.95rem; margin:0; }
@@ -104,6 +104,41 @@
     .donor-list__item span { font-size:0.74rem; color:#475569; display:block; }
     .donor-list__value { text-align:right; display:flex; flex-direction:column; gap:4px; }
     .hub-empty { font-size:0.8rem; color:#64748b; text-align:center; padding:16px; background:rgba(226,232,240,0.6); border-radius:16px; }
+    .mission-orchestrator { margin-top:28px; background:rgba(255,255,255,0.95); border-radius:30px; padding:28px; box-shadow:0 30px 68px rgba(14,165,233,0.16); border:1px solid rgba(125,211,252,0.3); display:flex; flex-direction:column; gap:24px; }
+    .mission-orchestrator__header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:18px; }
+    .mission-orchestrator__title { font-size:1.3rem; font-weight:700; color:#0f172a; }
+    .mission-orchestrator__subtitle { max-width:540px; font-size:0.9rem; color:#475569; }
+    .mission-orchestrator__grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; }
+    @media (max-width: 1024px) { .mission-orchestrator__grid { grid-template-columns:1fr; } }
+    .mission-orchestrator__panel { background:linear-gradient(180deg, rgba(191,219,254,0.35) 0%, rgba(255,255,255,0.92) 100%); border-radius:24px; padding:22px; box-shadow:0 20px 44px rgba(14,165,233,0.18); display:flex; flex-direction:column; gap:20px; }
+    .mission-overview-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; }
+    .mission-overview-card { background:rgba(255,255,255,0.95); border-radius:20px; padding:16px; box-shadow:0 16px 32px rgba(59,130,246,0.18); display:flex; flex-direction:column; gap:6px; border:1px solid rgba(148,163,184,0.25); }
+    .mission-overview-card strong { font-size:1.6rem; color:#1d4ed8; }
+    .mission-overview-card span { font-size:0.82rem; text-transform:uppercase; font-weight:600; color:#0f172a; letter-spacing:0.08em; }
+    .mission-overview-card p { font-size:0.78rem; color:#475569; margin:0; }
+    .mission-insights { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px; }
+    .mission-insights__item { background:rgba(14,165,233,0.14); border-radius:18px; padding:14px 16px; font-size:0.85rem; color:#0f172a; border:1px solid rgba(14,165,233,0.28); box-shadow:0 14px 30px rgba(14,165,233,0.18); }
+    .mission-insights__item strong { display:block; font-size:0.78rem; letter-spacing:0.06em; color:#0369a1; text-transform:uppercase; margin-bottom:4px; }
+    .mission-form { background:#ffffff; border-radius:24px; padding:24px; box-shadow:0 26px 58px rgba(15,23,42,0.12); border:1px solid rgba(203,213,225,0.6); display:flex; flex-direction:column; gap:18px; }
+    .mission-form__group { display:grid; gap:16px; }
+    .mission-form__group--cols { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+    .mission-form label { font-size:0.8rem; font-weight:600; color:#0369a1; text-transform:uppercase; letter-spacing:0.06em; }
+    .mission-form input, .mission-form select, .mission-form textarea { border-radius:16px; border:1px solid rgba(148,163,184,0.4); padding:12px 14px; font-size:0.9rem; color:#0f172a; background:rgba(248,250,252,0.9); transition:border-color .2s ease, box-shadow .2s ease; }
+    .mission-form input:focus, .mission-form select:focus, .mission-form textarea:focus { outline:none; border-color:#38bdf8; box-shadow:0 0 0 3px rgba(56,189,248,0.25); }
+    .mission-form textarea { min-height:88px; resize:vertical; }
+    .mission-form__actions { display:flex; flex-wrap:wrap; gap:12px; justify-content:flex-end; }
+    .mission-form__actions button { border:none; border-radius:999px; padding:10px 20px; font-weight:600; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+    .mission-form__actions button:hover { transform:translateY(-1px); }
+    .mission-form__actions .btn-secundario { background:#e0f2fe; color:#0369a1; box-shadow:0 12px 24px rgba(56,189,248,0.18); }
+    .mission-form__actions .btn-primario { background:linear-gradient(90deg,#0ea5e9,#2563eb); color:#ffffff; box-shadow:0 14px 36px rgba(14,165,233,0.25); }
+    .mission-autofill { background:rgba(15,118,110,0.06); border-radius:20px; padding:18px; border:1px solid rgba(45,212,191,0.35); display:flex; flex-direction:column; gap:12px; }
+    .mission-autofill h4 { font-size:0.95rem; font-weight:700; color:#0f766e; margin:0; }
+    .mission-autofill__list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+    .mission-autofill__item { background:#ffffff; border-radius:14px; padding:10px 12px; font-size:0.82rem; color:#0f172a; border:1px solid rgba(45,212,191,0.35); }
+    .mission-feedback { font-size:0.82rem; font-weight:600; color:#047857; background:rgba(16,185,129,0.12); border-radius:16px; padding:12px 14px; display:none; }
+    .mission-feedback.visible { display:block; }
+    .mission-drafts { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+    .mission-drafts__item { background:rgba(15,23,42,0.05); border-radius:16px; padding:12px 14px; font-size:0.82rem; color:#0f172a; border:1px solid rgba(148,163,184,0.25); }
     .score-card:focus-visible, .stage-node:focus-visible, .mission-list__item:focus-visible, .project-timeline__item:focus-visible, .impact-pill:focus-visible, .donor-list__item:focus-visible { outline:3px solid rgba(14,165,233,0.55); outline-offset:3px; }
     [data-detalhes] { cursor:pointer; }
     tr[data-detalhes]:hover, tr[data-detalhes]:focus-visible,
@@ -253,7 +288,7 @@
     </div>
   </nav>
 
-  <div id="painelMapa" class="map-overlay">
+  <div id="painelMapa" class="map-overlay" aria-hidden="true">
     <div class="map-modal">
       <button class="map-close" type="button" aria-label="Fechar mapa">×</button>
       <div>
@@ -277,6 +312,118 @@
           </div>
           <button type="button" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold shadow" data-navegacao="dashboard">Abrir painel analítico</button>
         </header>
+
+        <section class="mission-orchestrator" aria-labelledby="missionOrchestratorTitulo">
+          <div class="mission-orchestrator__header">
+            <div>
+              <h2 id="missionOrchestratorTitulo" class="mission-orchestrator__title">Central de missões inteligentes</h2>
+              <p class="mission-orchestrator__subtitle">Cadastre poços e projetos sociais de maneira orientada. O sistema sugere indicadores, métricas financeiras e próximos passos conforme o tipo de iniciativa.</p>
+            </div>
+            <div id="missionFeedback" class="mission-feedback" role="status" aria-live="polite"></div>
+          </div>
+          <div class="mission-orchestrator__grid">
+            <div class="mission-orchestrator__panel">
+              <div>
+                <h3 class="journey-board__title">Resumo imediato</h3>
+                <div id="missionOverviewCards" class="mission-overview-grid">
+                  <div class="hub-empty">Carregando resumo das missões...</div>
+                </div>
+              </div>
+              <div>
+                <h3 class="journey-board__title">Insights automáticos</h3>
+                <ul id="missionInsights" class="mission-insights">
+                  <li class="hub-empty">Analisando dados de campo...</li>
+                </ul>
+              </div>
+              <div class="mission-autofill">
+                <h4>Checklist inteligente</h4>
+                <ul id="missionAutoChecklist" class="mission-autofill__list">
+                  <li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 class="journey-board__title">Rascunhos prontos para envio</h3>
+                <ul id="missionDrafts" class="mission-drafts">
+                  <li class="hub-empty">Nenhum rascunho salvo ainda.</li>
+                </ul>
+              </div>
+            </div>
+            <form id="formPlanejamentoMissao" class="mission-form" autocomplete="off">
+              <div class="mission-form__group">
+                <label for="codigoMissao">Código inteligente</label>
+                <input id="codigoMissao" name="codigoMissao" placeholder="Será gerado automaticamente" readonly>
+              </div>
+              <div class="mission-form__group mission-form__group--cols">
+                <div>
+                  <label for="tipoMissao">Tipo de missão</label>
+                  <select id="tipoMissao" name="tipoMissao" required>
+                    <option value="" disabled selected>Selecione</option>
+                    <option value="poco">Poço artesiano</option>
+                    <option value="projeto">Projeto social</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="categoriaMissao">Categoria do projeto</label>
+                  <select id="categoriaMissao" name="categoriaMissao" disabled>
+                    <option value="" disabled selected>Escolha o tipo primeiro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mission-form__group mission-form__group--cols">
+                <div>
+                  <label for="tituloMissao">Nome da missão</label>
+                  <input id="tituloMissao" name="tituloMissao" placeholder="Ex.: Missão Água Viva - Sítio Novo" required>
+                </div>
+                <div>
+                  <label for="responsavelMissao">Responsável direto</label>
+                  <input id="responsavelMissao" name="responsavelMissao" placeholder="Quem lidera em campo">
+                </div>
+              </div>
+              <div class="mission-form__group mission-form__group--cols">
+                <div>
+                  <label for="estadoMissao">Estado</label>
+                  <input id="estadoMissao" name="estadoMissao" placeholder="UF" maxlength="2">
+                </div>
+                <div>
+                  <label for="municipioMissao">Município / Comunidade</label>
+                  <input id="municipioMissao" name="municipioMissao" placeholder="Localidade atendida">
+                </div>
+                <div>
+                  <label for="familiasAtendidas">Famílias atendidas</label>
+                  <input id="familiasAtendidas" name="familiasAtendidas" type="number" min="0" placeholder="0">
+                </div>
+              </div>
+              <div class="mission-form__group">
+                <label for="indicadoresMissao">Indicadores sugeridos</label>
+                <textarea id="indicadoresMissao" name="indicadoresMissao" placeholder="O sistema trará indicadores conforme o tipo escolhido"></textarea>
+              </div>
+              <div class="mission-form__group">
+                <label for="impactoPrevisto">Impacto previsto</label>
+                <textarea id="impactoPrevisto" name="impactoPrevisto" placeholder="Como essa missão muda a realidade das famílias"></textarea>
+              </div>
+              <div class="mission-form__group">
+                <label for="financeiroMissao">Saúde financeira e produtiva</label>
+                <textarea id="financeiroMissao" name="financeiroMissao" placeholder="Estimativas de investimento, break-even, margens"></textarea>
+              </div>
+              <div class="mission-form__group">
+                <label for="doacoesMissao">Doações e aliados recomendados</label>
+                <textarea id="doacoesMissao" name="doacoesMissao" placeholder="Sugestões de doadores, valores alvo e contrapartidas"></textarea>
+              </div>
+              <div class="mission-form__group">
+                <label for="proximosPassos">Próximos passos automáticos</label>
+                <textarea id="proximosPassos" name="proximosPassos" placeholder="O sistema sugerirá um roteiro de execução"></textarea>
+              </div>
+              <div class="mission-form__group">
+                <label for="observacoesMissao">Observações adicionais</label>
+                <textarea id="observacoesMissao" name="observacoesMissao" placeholder="Espaço livre para registros específicos"></textarea>
+              </div>
+              <div class="mission-form__actions">
+                <button type="button" class="btn-secundario" id="btnLimparMissao">Limpar</button>
+                <button type="submit" class="btn-primario">Salvar rascunho inteligente</button>
+              </div>
+            </form>
+          </div>
+        </section>
 
         <div id="hubScoreCards" class="hub-score-grid">
           <div class="hub-empty">Carregando métricas da missão...</div>
@@ -363,11 +510,70 @@
       const projectContainer = document.getElementById('projectTimeline');
       const impactContainer = document.getElementById('impactGlance');
       const donorContainer = document.getElementById('donorRanking');
+      const missionOverview = document.getElementById('missionOverviewCards');
+      const missionInsightsList = document.getElementById('missionInsights');
       const { escapeHtml, formatarNumero, formatarMoeda, criarAtributoDetalhes } = window;
 
       const placeholder = (element, mensagem) => {
         if (!element) return;
         element.innerHTML = `<div class="hub-empty">${escapeHtml(mensagem)}</div>`;
+      };
+
+      const renderMissionOverview = (resumo, missoes, projetos, impacto) => {
+        if (!missionOverview) return;
+        const totalPocos = Number(resumo.totalPocos || 0);
+        const totalProjetos = Number(resumo.totalProjetos || 0);
+        const totalDeclarado = Number(resumo.totalMissoes || 0);
+        const totalCalculado = totalDeclarado || totalPocos + totalProjetos || missoes.length + projetos.length;
+        const emExecucao = Number(resumo.emExecucao || 0) || projetos.filter(proj => (proj.status || '').toLowerCase() !== 'concluído').length;
+        const criticas = missoes.length;
+        const familias = Number(resumo.beneficiarios || impacto.familiasEstimadas || 0);
+        const cards = [
+          { label: 'Missões totais', valor: formatarNumero(totalCalculado), descricao: 'Poços e projetos acompanhados.' },
+          { label: 'Em execução', valor: formatarNumero(emExecucao), descricao: 'Etapas vivas no pipeline.' },
+          { label: 'Prioridade imediata', valor: formatarNumero(criticas), descricao: 'Ações que precisam de atenção.' },
+          { label: 'Famílias impactadas', valor: formatarNumero(familias), descricao: 'Estimativa somada de beneficiários.' }
+        ];
+        missionOverview.innerHTML = cards.map(card => `
+          <article class="mission-overview-card" role="presentation">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(String(card.valor))}</strong>
+            <p>${escapeHtml(card.descricao)}</p>
+          </article>
+        `).join('');
+      };
+
+      const renderMissionInsights = (resumo, missoes, projetos, impacto, doadores) => {
+        if (!missionInsightsList) return;
+        const insights = [];
+        const gap = Number(resumo.gapFinanceiro || 0);
+        if (gap > 0) {
+          insights.push({ titulo: 'Gap financeiro detectado', mensagem: `Direcione ${formatarMoeda(gap)} para equilibrar o ciclo atual.` });
+        }
+        if (missoes.length) {
+          const foco = missoes[0];
+          insights.push({
+            titulo: 'Missão em alerta',
+            mensagem: `${foco.titulo || foco.poco || 'Ação prioritária'} exige: ${foco.proximaAcao || foco.motivo || 'definir próximo passo imediato.'}`
+          });
+        }
+        if (impacto.volumeAguaDiario) {
+          insights.push({ titulo: 'Produção hídrica', mensagem: `Volume diário registrado: ${formatarNumero(impacto.volumeAguaDiario)} L distribuídos.` });
+        }
+        if (doadores.length) {
+          const aliado = doadores[0];
+          insights.push({ titulo: 'Aliado estratégico', mensagem: `${aliado.nome || 'Aliado'} mantém ${formatarNumero(aliado.pocos || 0)} poços e ${formatarNumero(aliado.beneficiarios || 0)} beneficiários ativos.` });
+        }
+        if (!insights.length) {
+          missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
+          return;
+        }
+        missionInsightsList.innerHTML = insights.map(item => `
+          <li class="mission-insights__item">
+            <strong>${escapeHtml(item.titulo)}</strong>
+            <span>${escapeHtml(item.mensagem)}</span>
+          </li>
+        `).join('');
       };
 
       const formatarPercentual = valor => `${Math.round(Number(valor) || 0)}%`;
@@ -406,6 +612,10 @@
           placeholder(projectContainer, 'Não foi possível carregar o cronograma.');
           placeholder(impactContainer, 'Sem dados de impacto disponíveis.');
           placeholder(donorContainer, 'Sem doadores destacados no momento.');
+          placeholder(missionOverview, 'Nenhuma missão cadastrada. Crie um rascunho para começar.');
+          if (missionInsightsList) {
+            missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
+          }
           return;
         }
 
@@ -415,6 +625,12 @@
         const projetos = Array.isArray(dados.projetos) ? dados.projetos : [];
         const impacto = dados.impacto || {};
         const doadores = Array.isArray(dados.rankingDoadores) ? dados.rankingDoadores : [];
+
+        window.__dadosMissoesAtuais = { resumo, missoes, projetos, impacto, doadores };
+        document.dispatchEvent(new CustomEvent('dadosMissoesAtualizados'));
+
+        renderMissionOverview(resumo, missoes, projetos, impacto);
+        renderMissionInsights(resumo, missoes, projetos, impacto, doadores);
 
         if (scoreContainer) {
           scoreContainer.innerHTML = [
@@ -589,6 +805,368 @@
     })();
   </script>
 
+  <script>
+    (function() {
+      const form = document.getElementById('formPlanejamentoMissao');
+      if (!form) return;
+
+      const tipoSelect = document.getElementById('tipoMissao');
+      const categoriaSelect = document.getElementById('categoriaMissao');
+      const tituloInput = document.getElementById('tituloMissao');
+      const responsavelInput = document.getElementById('responsavelMissao');
+      const estadoInput = document.getElementById('estadoMissao');
+      const municipioInput = document.getElementById('municipioMissao');
+      const familiasInput = document.getElementById('familiasAtendidas');
+      const indicadoresField = document.getElementById('indicadoresMissao');
+      const impactoField = document.getElementById('impactoPrevisto');
+      const financeiroField = document.getElementById('financeiroMissao');
+      const doacoesField = document.getElementById('doacoesMissao');
+      const passosField = document.getElementById('proximosPassos');
+      const checklistList = document.getElementById('missionAutoChecklist');
+      const draftsList = document.getElementById('missionDrafts');
+      const feedbackBox = document.getElementById('missionFeedback');
+      const codigoInput = document.getElementById('codigoMissao');
+      const limparBtn = document.getElementById('btnLimparMissao');
+      const { escapeHtml, formatarMoeda } = window;
+
+      if (!tipoSelect || !categoriaSelect) return;
+
+      const coordenadoresRegionais = {
+        'CE': 'Ana Paula — Sertão Central',
+        'BA': 'João Batista — Chapada',
+        'PE': 'Marta Lins — Semiárido',
+        'RN': 'Cláudio Alves — Seridó',
+        'PI': 'Lia Gomes — Cariri',
+        'PB': 'Rafael Lima — Borborema'
+      };
+
+      const configMissoes = {
+        poco: {
+          prefixo: 'POC',
+          checklistBase: [
+            'Validar solicitação comunitária com visita técnica.',
+            'Confirmar disponibilidade de energia e logística de perfuratriz.',
+            'Emitir orçamento comparativo com fornecedores homologados.'
+          ],
+          categorias: {
+            operacao: {
+              nome: 'Perfuração e operação do poço',
+              indicadores: [
+                'Profundidade média perfurada (m)',
+                'Vazão testada (L/h)',
+                'Tempo de resposta da equipe técnica',
+                'Custo por metro perfurado'
+              ],
+              impacto: [
+                'Disponibilizar água potável contínua para famílias locais.',
+                'Reduzir deslocamento médio para coleta de água em 70%.',
+                'Criar base para projetos produtivos agrícolas.'
+              ],
+              financeiro: [
+                'Investimento previsto para perfuração e bomba submersa.',
+                'Custos de manutenção trimestral estimados.',
+                'Provisionamento para análise de qualidade da água.'
+              ],
+              doacoes: [
+                'Doadores com foco em infraestrutura hídrica.',
+                'Campanhas mensais de manutenção comunitária.',
+                'Cofinanciamento com prefeituras ou empresas locais.'
+              ],
+              proximosPassos: [
+                'Agendar mobilização comunitária de lançamento.',
+                'Enviar contrato e cronograma ao fornecedor.',
+                'Programar monitoramento pós-instalação (30, 60 e 120 dias).'
+              ],
+              familiasPadrao: 60
+            }
+          }
+        },
+        projeto: {
+          prefixo: 'PRO',
+          checklistBase: [
+            'Validar diagnóstico socioeconômico da comunidade.',
+            'Calcular orçamento de implantação e capital de giro inicial.',
+            'Definir indicadores de impacto social e produtivo.'
+          ],
+          categorias: {
+            plantacao: {
+              nome: 'Plantações agroecológicas',
+              indicadores: [
+                'Área cultivada (hectares)',
+                'Produção mensal (kg)',
+                'Índice de adoção de técnicas regenerativas',
+                'Participação de famílias na gestão'
+              ],
+              impacto: [
+                'Aumentar segurança alimentar das famílias atendidas.',
+                'Gerar excedente comercializável em feiras locais.',
+                'Promover capacitações em manejo agroecológico.'
+              ],
+              financeiro: [
+                'Investimento em insumos, sementes e irrigação.',
+                'Capital de giro para os três primeiros ciclos.',
+                'Receita média por safra e ponto de equilíbrio.'
+              ],
+              doacoes: [
+                'Doadores interessados em agricultura familiar.',
+                'Campanhas de financiamento coletivo por safra.',
+                'Parcerias com cooperativas e secretarias rurais.'
+              ],
+              proximosPassos: [
+                'Planejar mutirões de preparo do solo.',
+                'Agendar treinamentos com assistência técnica.',
+                'Definir calendário de colheita e distribuição.'
+              ],
+              familiasPadrao: 45
+            },
+            padaria: {
+              nome: 'Padarias comunitárias',
+              indicadores: [
+                'Produção diária de pães e derivados',
+                'Ticket médio por cliente',
+                'Taxa de reinvestimento na operação',
+                'Número de famílias empregadas'
+              ],
+              impacto: [
+                'Garantir acesso a alimentos a preço justo.',
+                'Gerar renda fixa para famílias envolvidas.',
+                'Fortalecer a economia solidária local.'
+              ],
+              financeiro: [
+                'Investimento em equipamentos e reforma do espaço.',
+                'Custos mensais de insumos e energia.',
+                'Margem média de contribuição e ponto de equilíbrio.'
+              ],
+              doacoes: [
+                'Parceiros focados em segurança alimentar.',
+                'Campanhas de apadrinhamento por família beneficiada.',
+                'Contrapartidas com fornecimento a escolas locais.'
+              ],
+              proximosPassos: [
+                'Definir cardápio e tabela de preços solidários.',
+                'Agendar treinamento de boas práticas de produção.',
+                'Estabelecer canais de venda e entregas comunitárias.'
+              ],
+              familiasPadrao: 35
+            },
+            empreendimento: {
+              nome: 'Empreendimentos sociais diversos',
+              indicadores: [
+                'Receita mensal recorrente',
+                'Margem operacional',
+                'Empregos diretos e indiretos criados',
+                'Índice de satisfação das famílias atendidas'
+              ],
+              impacto: [
+                'Diversificar a renda das famílias do território.',
+                'Criar oportunidades de formação profissional.',
+                'Manter ciclo de aprendizagem contínuo.'
+              ],
+              financeiro: [
+                'Plano de negócios com fluxo de caixa projetado.',
+                'Fontes de receita e mix de produtos/serviços.',
+                'Estratégia de sustentabilidade financeira anual.'
+              ],
+              doacoes: [
+                'Investidores de impacto e fundos solidários.',
+                'Campanhas de microcrédito comunitário.',
+                'Acordos de compra garantida com parceiros.'
+              ],
+              proximosPassos: [
+                'Validar proposta de valor com a comunidade.',
+                'Mapear fornecedores e parceiros estratégicos.',
+                'Estabelecer metas de impacto trimestrais.'
+              ],
+              familiasPadrao: 50
+            }
+          }
+        }
+      };
+
+      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('\n');
+      const rascunhos = [];
+      let codigoBase = '';
+
+      function atualizarCategorias() {
+        const tipo = tipoSelect.value;
+        if (!tipo) {
+          categoriaSelect.innerHTML = '<option value="" disabled selected>Escolha o tipo primeiro</option>';
+          categoriaSelect.disabled = true;
+          return;
+        }
+        const configTipo = configMissoes[tipo];
+        if (!configTipo) return;
+        const categorias = configTipo.categorias || {};
+        const chaves = Object.keys(categorias);
+        if (!chaves.length) return;
+        if (tipo === 'poco') {
+          categoriaSelect.innerHTML = `<option value="${escapeHtml(chaves[0])}" selected>${escapeHtml(categorias[chaves[0]].nome)}</option>`;
+          categoriaSelect.disabled = true;
+        } else {
+          categoriaSelect.disabled = false;
+          categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a categoria</option>' + chaves.map(chave => `<option value="${escapeHtml(chave)}">${escapeHtml(categorias[chave].nome)}</option>`).join('');
+        }
+      }
+
+      function gerarCodigoBase() {
+        const tipo = tipoSelect.value;
+        if (!tipo) {
+          codigoBase = '';
+          codigoInput.value = '';
+          return;
+        }
+        const configTipo = configMissoes[tipo] || {};
+        const prefixo = configTipo.prefixo || 'MIS';
+        const agora = new Date();
+        const anoMes = `${String(agora.getFullYear()).slice(-2)}${String(agora.getMonth() + 1).padStart(2, '0')}`;
+        const sequencia = `${agora.getDate().toString().padStart(2, '0')}${agora.getHours().toString().padStart(2, '0')}`;
+        codigoBase = `${prefixo}-${anoMes}${sequencia}`;
+        atualizarCodigo();
+      }
+
+      function atualizarCodigo() {
+        if (!codigoBase) return;
+        const uf = (estadoInput.value || 'NA').toUpperCase().replace(/[^A-Z]/g, '').padEnd(2, 'X').slice(0, 2);
+        codigoInput.value = `${codigoBase}-${uf}`;
+      }
+
+      function sugerirResponsavel() {
+        const uf = (estadoInput.value || '').toUpperCase();
+        if (!uf || responsavelInput.value) return;
+        if (coordenadoresRegionais[uf]) {
+          responsavelInput.value = coordenadoresRegionais[uf];
+        }
+      }
+
+      function atualizarChecklist(itens) {
+        if (!checklistList) return;
+        if (!itens.length) {
+          checklistList.innerHTML = '<li class="hub-empty">Sem etapas recomendadas para este tipo de missão.</li>';
+          return;
+        }
+        checklistList.innerHTML = itens.map(item => `<li class="mission-autofill__item">${escapeHtml(item)}</li>`).join('');
+      }
+
+      function sugerirDoadoresAutomatizados() {
+        if (!doacoesField) return;
+        const dados = window.__dadosMissoesAtuais;
+        if (!dados || !Array.isArray(dados.doadores) || !dados.doadores.length) return;
+        const principais = dados.doadores.slice(0, 2).map(item => `${item.nome || 'Aliado'} • Contribuição média ${formatarMoeda(item.valor || 0)}`);
+        const textoAtual = doacoesField.value.trim();
+        const sugestao = '\nAliados recomendados:\n' + principais.map(item => `• ${item}`).join('\n');
+        if (!textoAtual.includes('Aliados recomendados')) {
+          doacoesField.value = `${textoAtual}${textoAtual ? '\n\n' : ''}${sugestao}`.trim();
+        }
+      }
+
+      function preencherSugestoes() {
+        const tipo = tipoSelect.value;
+        if (!tipo) return;
+        const configTipo = configMissoes[tipo];
+        if (!configTipo) return;
+        const categorias = configTipo.categorias || {};
+        const chaveCategoria = tipo === 'poco'
+          ? Object.keys(categorias)[0]
+          : categoriaSelect.value;
+        const configCategoria = categorias[chaveCategoria];
+        if (!configCategoria) return;
+
+        indicadoresField.value = formatarLista(configCategoria.indicadores);
+        impactoField.value = formatarLista(configCategoria.impacto);
+        financeiroField.value = formatarLista(configCategoria.financeiro);
+        doacoesField.value = formatarLista(configCategoria.doacoes);
+        const checklist = [...(configTipo.checklistBase || []), ...(configCategoria.proximosPassos || [])];
+        passosField.value = formatarLista(checklist);
+        atualizarChecklist(checklist);
+
+        if (!familiasInput.value) {
+          familiasInput.value = configCategoria.familiasPadrao || '';
+        }
+
+        sugerirResponsavel();
+        atualizarCodigo();
+        sugerirDoadoresAutomatizados();
+      }
+
+      function limparFormulario() {
+        form.reset();
+        categoriaSelect.innerHTML = '<option value="" disabled selected>Escolha o tipo primeiro</option>';
+        categoriaSelect.disabled = true;
+        checklistList.innerHTML = '<li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>';
+        codigoBase = '';
+        codigoInput.value = '';
+        indicadoresField.value = '';
+        impactoField.value = '';
+        financeiroField.value = '';
+        doacoesField.value = '';
+        passosField.value = '';
+        familiasInput.value = '';
+        if (feedbackBox) {
+          feedbackBox.classList.remove('visible');
+          feedbackBox.textContent = '';
+        }
+      }
+
+      function renderizarRascunhos() {
+        if (!draftsList) return;
+        if (!rascunhos.length) {
+          draftsList.innerHTML = '<li class="hub-empty">Nenhum rascunho salvo ainda.</li>';
+          return;
+        }
+        draftsList.innerHTML = rascunhos.slice(-4).reverse().map(item => `
+          <li class="mission-drafts__item">
+            <strong>${escapeHtml(item.codigo)}</strong> — ${escapeHtml(item.titulo)}
+            <div>${escapeHtml(item.resumo)}</div>
+            <small>${escapeHtml(item.local)}</small>
+          </li>
+        `).join('');
+      }
+
+      function exibirFeedback(mensagem) {
+        if (!feedbackBox) return;
+        feedbackBox.textContent = mensagem;
+        feedbackBox.classList.add('visible');
+        clearTimeout(exibirFeedback.timeout);
+        exibirFeedback.timeout = setTimeout(() => feedbackBox.classList.remove('visible'), 6000);
+      }
+
+      form.addEventListener('submit', evento => {
+        evento.preventDefault();
+        const dados = {
+          codigo: codigoInput.value || 'MISSÃO-S/ID',
+          titulo: tituloInput.value || 'Missão sem título',
+          local: `${municipioInput.value || 'Local não informado'} / ${(estadoInput.value || '').toUpperCase() || '--'}`,
+          resumo: (passosField.value.split('\n')[0] || 'Plano inicial registrado.').replace(/^•\s*/, '')
+        };
+        rascunhos.push(dados);
+        renderizarRascunhos();
+        exibirFeedback(`Rascunho salvo! O plano "${dados.titulo}" está pronto para revisão.`);
+      });
+
+      tipoSelect.addEventListener('change', () => {
+        atualizarCategorias();
+        gerarCodigoBase();
+        preencherSugestoes();
+      });
+
+      categoriaSelect.addEventListener('change', preencherSugestoes);
+      estadoInput.addEventListener('change', () => {
+        sugerirResponsavel();
+        atualizarCodigo();
+        preencherSugestoes();
+      });
+      municipioInput.addEventListener('change', preencherSugestoes);
+      tituloInput.addEventListener('change', () => {
+        if (!codigoBase) gerarCodigoBase();
+      });
+      limparBtn.addEventListener('click', limparFormulario);
+
+      document.addEventListener('dadosMissoesAtualizados', preencherSugestoes);
+
+      renderizarRascunhos();
+    })();
+  </script>
+
   <!-- SCRIPT DE NAVEGAÇÃO -->
   <script>
     const setActiveSection = (target) => {
@@ -657,6 +1235,7 @@
     const fecharOverlay = () => {
       if (overlay) {
         overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
       }
     };
 
@@ -665,6 +1244,7 @@
     } else {
       btnInfo.addEventListener('click', () => {
         overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
         if (typeof window.renderMapaDistribuicao === 'function') {
           window.renderMapaDistribuicao('mapaEstados');
         } else {
