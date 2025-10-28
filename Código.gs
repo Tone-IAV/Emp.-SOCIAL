@@ -106,6 +106,41 @@ const COLUNAS_CONTATOS = [
   'RegistradoPor'
 ];
 
+const COLUNAS_HISTORICO_STATUS = [
+  'PoçoID',
+  'StatusAnterior',
+  'NovoStatus',
+  'DataAlteracao',
+  'AlteradoPor'
+];
+
+const COLUNAS_EMPRESAS = [
+  'ID',
+  'NomeEmpresa',
+  'CNPJ',
+  'Tipo',
+  'Contato',
+  'Observações'
+];
+
+const COLUNAS_CONFIGURACOES = [
+  'Chave',
+  'Valor'
+];
+
+const ABA_ESTRUTURA = 'Estrutura';
+
+const SCHEMAS_PADRAO = Object.freeze({
+  'Poços': COLUNAS_POCOS,
+  'Doadores': COLUNAS_DOADORES,
+  'Depósitos': COLUNAS_DEPOSITOS,
+  'PrestaçãoContas': COLUNAS_PRESTACAO_CONTAS,
+  'Contatos': COLUNAS_CONTATOS,
+  'HistóricoStatus': COLUNAS_HISTORICO_STATUS,
+  'Empresas': COLUNAS_EMPRESAS,
+  'Configurações': COLUNAS_CONFIGURACOES
+});
+
 const LOG_PREFIX = '[EmpSocial]';
 
 function registrarErro_(contexto, erro) {
@@ -570,11 +605,32 @@ function obterOuCriarSheet_(ss, nome, colunasDesejadas) {
   if (!sheet) {
     sheet = ss.insertSheet(nome);
     sheet.appendRow(colunasDesejadas);
-    sheet.setFrozenRows(1);
-    return sheet;
   }
+  sheet.setFrozenRows(1);
   garantirColunas(sheet, colunasDesejadas);
   return sheet;
+}
+
+function atualizarAbaEstrutura_(ss) {
+  const headers = ['Aba', 'Coluna', 'Posição'];
+  let sheet = ss.getSheetByName(ABA_ESTRUTURA);
+  if (!sheet) {
+    sheet = ss.insertSheet(ABA_ESTRUTURA);
+  }
+  sheet.clearContents();
+  sheet.appendRow(headers);
+
+  const linhas = [];
+  Object.entries(SCHEMAS_PADRAO).forEach(([nomeAba, colunas]) => {
+    colunas.forEach((coluna, index) => {
+      linhas.push([nomeAba, coluna, index + 1]);
+    });
+  });
+
+  if (linhas.length) {
+    sheet.getRange(2, 1, linhas.length, headers.length).setValues(linhas);
+  }
+  sheet.setFrozenRows(1);
 }
 
 // ===========================
@@ -582,31 +638,10 @@ function obterOuCriarSheet_(ss, nome, colunasDesejadas) {
 // ===========================
 function initSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const names = ['Poços', 'Doadores', 'PrestaçãoContas', 'Depósitos', 'Contatos'];
-
-  names.forEach(name => {
-    if (!ss.getSheetByName(name)) {
-      const sh = ss.insertSheet(name);
-      if (name === 'Poços') {
-        sh.appendRow(COLUNAS_POCOS);
-      } else if (name === 'Doadores') {
-        sh.appendRow(COLUNAS_DOADORES);
-      } else if (name === 'PrestaçãoContas') {
-        sh.appendRow(COLUNAS_PRESTACAO_CONTAS);
-      } else if (name === 'Depósitos') {
-        sh.appendRow(COLUNAS_DEPOSITOS);
-      } else if (name === 'Contatos') {
-        sh.appendRow(COLUNAS_CONTATOS);
-      }
-      sh.setFrozenRows(1);
-    } else {
-      if (name === 'Poços') garantirColunas(ss.getSheetByName(name), COLUNAS_POCOS);
-      if (name === 'Doadores') garantirColunas(ss.getSheetByName(name), COLUNAS_DOADORES);
-      if (name === 'PrestaçãoContas') garantirColunas(ss.getSheetByName(name), COLUNAS_PRESTACAO_CONTAS);
-      if (name === 'Depósitos') garantirColunas(ss.getSheetByName(name), COLUNAS_DEPOSITOS);
-      if (name === 'Contatos') garantirColunas(ss.getSheetByName(name), COLUNAS_CONTATOS);
-    }
+  Object.entries(SCHEMAS_PADRAO).forEach(([nome, colunas]) => {
+    obterOuCriarSheet_(ss, nome, colunas);
   });
+  atualizarAbaEstrutura_(ss);
   return 'Guias verificadas/criadas com sucesso.';
 }
 
