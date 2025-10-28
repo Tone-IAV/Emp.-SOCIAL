@@ -324,7 +324,7 @@
 <script>
   (() => {
     const chartsDashboard = {};
-    const { escapeHtml, formatarNumero, formatarMoeda } = window;
+    const { escapeHtml, formatarNumero, formatarMoeda, criarAtributoDetalhes } = window;
 
     const STATUS_CORES = {
       'Solicitado': '#f97316',
@@ -660,8 +660,19 @@
       });
 
       renderTabela('tabelaDoadoresDestaque', dados.doadoresDestaque, item => {
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.nome || 'Doador em destaque',
+          subtitulo: `Contribuição ${formatarMoeda(item.valor || 0)}`,
+          campos: [
+            { label: 'Beneficiários apoiados', valor: formatarNumero(item.beneficiariosApoiados || 0) },
+            { label: 'Poços financiados', valor: formatarNumero(item.quantidadePocos || 0) },
+            { label: 'Contato principal', valor: item.contato || 'Não informado' },
+            { label: 'Observações', valor: item.observacoes || 'Sem observações registradas.' }
+          ],
+          acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${escapeHtml(item.nome)}</td>
             <td>${formatarMoeda(item.valor)}</td>
             <td>${formatarNumero(item.beneficiariosApoiados)}</td>
@@ -671,8 +682,19 @@
       }, 4);
 
       renderTabela('tabelaAlertas', dados.alertas, item => {
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Poço em alerta',
+          subtitulo: item.motivo ? `Motivo: ${item.motivo}` : 'Alerta operacional',
+          campos: [
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+            { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' },
+            { label: 'Status', valor: item.status || 'Sem status' },
+            { label: 'Contato', valor: item.contato || 'Sem contato associado' }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${escapeHtml(item.poco)}</td>
             <td>${escapeHtml(item.motivo)}</td>
             <td>${escapeHtml(item.responsavel)}</td>
@@ -688,8 +710,22 @@
           ? ultimoContatoData.toLocaleDateString('pt-BR')
           : '-';
         const dias = item.diasSemContato != null ? `${item.diasSemContato} dias` : 'Sem registro';
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Próxima ação',
+          subtitulo: item.proximaAcao ? `Próximo passo: ${item.proximaAcao}` : 'Ação pendente',
+          campos: [
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+            { label: 'Contato', valor: item.contato || 'Sem contato associado' },
+            { label: 'Status do contato', valor: item.statusContato || 'Sem status' },
+            { label: 'Impacto esperado', valor: item.impacto || 'Sem impacto registrado' },
+            { label: 'Situação hídrica', valor: item.situacaoHidrica || 'Sem dados' },
+            { label: 'Último contato', valor: ultimoContato },
+            { label: 'Tempo sem contato', valor: dias }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${escapeHtml(item.poco)}</td>
             <td>${escapeHtml(item.responsavel || '-')}</td>
             <td>
@@ -714,8 +750,19 @@
         const dataTexto = dataContato && !isNaN(dataContato)
           ? dataContato.toLocaleDateString('pt-BR')
           : '-';
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Contato registrado',
+          subtitulo: `Contato realizado em ${dataTexto}`,
+          campos: [
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+            { label: 'Pessoa contatada', valor: item.contato || 'Sem identificação' },
+            { label: 'Status', valor: item.status || 'Sem status' },
+            { label: 'Resumo', valor: item.resumo || 'Sem resumo registrado.' }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${dataTexto}</td>
             <td>${escapeHtml(item.poco)}</td>
             <td>${escapeHtml(item.contato)}</td>
@@ -726,8 +773,19 @@
       });
 
       renderTabela('tabelaHistoricoInstalacoes', historico, item => {
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: `Ano ${item.ano || '-'}`,
+          subtitulo: `${formatarNumero(item.total || 0)} poços concluídos`,
+          campos: [
+            { label: 'Investimento realizado', valor: formatarMoeda(item.investimento || 0) },
+            { label: 'Beneficiários atendidos', valor: formatarNumero(item.beneficiarios || 0) },
+            { label: 'Metros perfurados', valor: formatarNumero(item.metros || 0) },
+            { label: 'Vazão estimada / dia', valor: formatarLitrosDia(item.vazaoDia || 0) }
+          ],
+          acao: { label: 'Manter na visão geral', destino: 'dashboard' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${escapeHtml(String(item.ano || '-'))}</td>
             <td>${formatarNumero(item.total || 0)}</td>
             <td>${formatarMoeda(item.investimento || 0)}</td>
@@ -741,8 +799,18 @@
       renderTabela('tabelaAcoesPosInstalacao', acoesPos, item => {
         const acoes = item.acoes ? escapeHtml(item.acoes).replace(/\n/g, '<br>') : '-';
         const usos = item.usos ? escapeHtml(item.usos).replace(/\n/g, '<br>') : '-';
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Ações pós-instalação',
+          subtitulo: item.situacaoHidrica ? `Situação hídrica: ${item.situacaoHidrica}` : 'Situação hídrica não informada',
+          campos: [
+            { label: 'Estado', valor: item.estado || '-' },
+            { label: 'Ações pós-instalação', valor: item.acoes || 'Sem ações registradas.' },
+            { label: 'Usos comunitários', valor: item.usos || 'Sem usos registrados.' }
+          ],
+          acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>${escapeHtml(item.poco)}</td>
             <td>${escapeHtml(item.estado || '-')}</td>
             <td>${escapeHtml(item.situacaoHidrica || '-')}</td>

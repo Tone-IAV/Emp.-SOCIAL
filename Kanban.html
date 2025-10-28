@@ -122,6 +122,20 @@
         </div>
         <div class="mt-2 text-xs text-slate-500">Beneficiários: <b>${poco.beneficiarios || 0}</b></div>
         <div class="mt-1 text-xs text-slate-500">Responsável: <b>${escapeHtml(poco.responsavel || '—')}</b></div>`;
+      if (typeof window.definirDetalhesElemento === 'function') {
+        window.definirDetalhesElemento(card, {
+          titulo: poco.titulo || 'Poço',
+          subtitulo: `${poco.status || 'Sem status'} • ${poco.local || 'Local não informado'}`,
+          campos: [
+            { label: 'Etapa atual', valor: poco.status || 'Não informado' },
+            { label: 'Valor previsto', valor: formatarMoeda(poco.previsto || 0) },
+            { label: 'Valor executado', valor: formatarMoeda(poco.executado || 0) },
+            { label: 'Beneficiários', valor: poco.beneficiarios || 0 },
+            { label: 'Responsável', valor: poco.responsavel || 'Não informado' }
+          ],
+          acao: { label: 'Abrir cadastro do poço', destino: 'pocos' }
+        });
+      }
       card.style.borderTop = `4px solid ${coresColuna[poco.status] || '#e5e7eb'}`;
       coluna.appendChild(card);
     });

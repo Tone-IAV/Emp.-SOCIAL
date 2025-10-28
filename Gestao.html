@@ -131,7 +131,7 @@
 
 <script>
   (() => {
-    const { formatarNumero, formatarMoeda, escapeHtml } = window;
+    const { formatarNumero, formatarMoeda, escapeHtml, criarAtributoDetalhes } = window;
 
     function renderTabelaGenerica(id, linhas, template, colunas = 4) {
       const tbody = document.querySelector(`#${id} tbody`);
@@ -151,8 +151,18 @@
       }
       container.innerHTML = lista.map(item => {
         const data = item.data ? new Date(item.data).toLocaleDateString('pt-BR') : 'Data a definir';
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Marco do cronograma',
+          subtitulo: `${data} • ${item.status || 'Status não informado'}`,
+          campos: [
+            { label: 'Etapa', valor: item.etapa || 'Não informada' },
+            { label: 'Descrição', valor: item.descricao || 'Sem descrição registrada.' },
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
         return `
-          <div class="timeline-item">
+          <div class="timeline-item" ${detalheAttr} role="button" tabindex="0">
             <strong>${escapeHtml(item.poco)}</strong> — <span class="gestao-tag">${escapeHtml(item.etapa)}</span>
             <div>${escapeHtml(item.descricao)}</div>
             <small>${data} • ${escapeHtml(item.status)}</small>
@@ -182,8 +192,20 @@
         const gap = item.gapFinanceiro > 0
           ? `<span class="text-red-600 font-semibold">${formatarMoeda(item.gapFinanceiro)}</span>`
           : `<span class="text-emerald-600">${formatarMoeda(item.gapFinanceiro)}</span>`;
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.nome || 'Poço',
+          subtitulo: `${item.status || 'Sem status'} — ${item.local || 'Local não informado'}`,
+          campos: [
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+            { label: 'Próxima ação', valor: item.proximaAcao || 'Sem ação definida' },
+            { label: 'Status do contato', valor: item.statusContato || 'Sem status' },
+            { label: 'Último contato', valor: ultimoContato },
+            { label: 'Gap financeiro', valor: formatarMoeda(item.gapFinanceiro || 0) }
+          ],
+          acao: { label: 'Abrir cadastro do poço', destino: 'pocos' }
+        });
         return `
-          <tr>
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
             <td>
               <div class="font-semibold text-gray-900">${escapeHtml(item.nome)}</div>
               <small class="text-gray-500">${escapeHtml(item.local)}</small>
@@ -200,28 +222,55 @@
         `;
       }, 6);
 
-      renderTabelaGenerica('tabelaAlertasGestao', dados.alertas, item => `
-        <tr>
-          <td>${escapeHtml(item.poco)}</td>
-          <td>${escapeHtml(item.motivo)}</td>
-          <td>${escapeHtml(item.responsavel)}</td>
-          <td>${escapeHtml(item.proximaAcao)}</td>
-        </tr>
-      `);
+      renderTabelaGenerica('tabelaAlertasGestao', dados.alertas, item => {
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.poco || 'Poço em alerta',
+          subtitulo: item.motivo ? `Motivo: ${item.motivo}` : 'Alerta aberto',
+          campos: [
+            { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+            { label: 'Próxima ação', valor: item.proximaAcao || 'Sem próxima ação' },
+            { label: 'Status', valor: item.status || 'Sem status' },
+            { label: 'Contato', valor: item.contato || 'Sem contato associado' }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
+        return `
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
+            <td>${escapeHtml(item.poco)}</td>
+            <td>${escapeHtml(item.motivo)}</td>
+            <td>${escapeHtml(item.responsavel)}</td>
+            <td>${escapeHtml(item.proximaAcao)}</td>
+          </tr>
+        `;
+      });
 
-      renderTabelaGenerica('tabelaFornecedores', dados.fornecedores, item => `
-        <tr>
-          <td>${escapeHtml(item.fornecedor)}</td>
-          <td>${formatarNumero(item.pocosAtendidos)}</td>
-          <td>${formatarMoeda(item.valorPrevisto)}</td>
-          <td>${formatarMoeda(item.valorExecutado)}</td>
-          <td>${escapeHtml(item.status)}</td>
-          <td>
-            <div>${escapeHtml(item.contato || '-')}</div>
-            <small class="text-gray-500">${escapeHtml(item.observacoes || '')}</small>
-          </td>
-        </tr>
-      `, 6);
+      renderTabelaGenerica('tabelaFornecedores', dados.fornecedores, item => {
+        const detalheAttr = criarAtributoDetalhes({
+          titulo: item.fornecedor || 'Fornecedor',
+          subtitulo: `${formatarNumero(item.pocosAtendidos || 0)} poços atendidos`,
+          campos: [
+            { label: 'Valor previsto', valor: formatarMoeda(item.valorPrevisto || 0) },
+            { label: 'Valor executado', valor: formatarMoeda(item.valorExecutado || 0) },
+            { label: 'Status', valor: item.status || 'Sem status' },
+            { label: 'Contato', valor: item.contato || 'Sem contato' },
+            { label: 'Observações', valor: item.observacoes || 'Sem observações registradas.' }
+          ],
+          acao: { label: 'Abrir gestão', destino: 'gestao' }
+        });
+        return `
+          <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
+            <td>${escapeHtml(item.fornecedor)}</td>
+            <td>${formatarNumero(item.pocosAtendidos)}</td>
+            <td>${formatarMoeda(item.valorPrevisto)}</td>
+            <td>${formatarMoeda(item.valorExecutado)}</td>
+            <td>${escapeHtml(item.status)}</td>
+            <td>
+              <div>${escapeHtml(item.contato || '-')}</div>
+              <small class="text-gray-500">${escapeHtml(item.observacoes || '')}</small>
+            </td>
+          </tr>
+        `;
+      }, 6);
 
       renderCronograma(dados.cronograma);
     }

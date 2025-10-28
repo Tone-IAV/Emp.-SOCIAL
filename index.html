@@ -105,6 +105,41 @@
     .donor-list__value { text-align:right; display:flex; flex-direction:column; gap:4px; }
     .hub-empty { font-size:0.8rem; color:#64748b; text-align:center; padding:16px; background:rgba(226,232,240,0.6); border-radius:16px; }
     .score-card:focus-visible, .stage-node:focus-visible, .mission-list__item:focus-visible, .project-timeline__item:focus-visible, .impact-pill:focus-visible, .donor-list__item:focus-visible { outline:3px solid rgba(14,165,233,0.55); outline-offset:3px; }
+    [data-detalhes] { cursor:pointer; }
+    tr[data-detalhes]:hover, tr[data-detalhes]:focus-visible,
+    li[data-detalhes]:hover, li[data-detalhes]:focus-visible,
+    .timeline-item[data-detalhes]:hover, .timeline-item[data-detalhes]:focus-visible { background:rgba(14,165,233,0.12); }
+    body.detail-open { overflow:hidden; }
+    .detail-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; padding:24px; z-index:120; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+    .detail-overlay.visible { opacity:1; pointer-events:auto; }
+    .detail-modal { background:#ffffff; border-radius:24px; box-shadow:0 28px 60px rgba(15,23,42,0.25); width:min(720px, 100%); max-height:90vh; overflow:auto; padding:28px; display:flex; flex-direction:column; gap:18px; position:relative; }
+    .detail-close { position:absolute; top:18px; right:18px; width:36px; height:36px; border:none; border-radius:999px; background:#e0f2fe; color:#0f172a; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 20px rgba(14,165,233,0.25); transition:transform .2s ease, background .2s ease; }
+    .detail-close:hover { background:#bae6fd; transform:translateY(-2px); }
+    .detail-title { font-size:1.3rem; font-weight:700; color:#0f172a; margin:0; }
+    .detail-subtitle { font-size:0.95rem; color:#0369a1; margin:0; }
+    .detail-description { font-size:0.9rem; color:#475569; margin:0; }
+    .detail-list { margin:0; display:flex; flex-direction:column; gap:12px; }
+    .detail-row { display:grid; grid-template-columns:160px 1fr; gap:12px; padding:12px 14px; border-radius:16px; background:rgba(226,232,240,0.55); }
+    .detail-term { font-size:0.8rem; font-weight:600; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.06em; }
+    .detail-value { font-size:0.92rem; color:#0f172a; line-height:1.4; }
+    .detail-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:4px; }
+    .detail-action-button {
+      background:linear-gradient(90deg,#38bdf8,#2563eb);
+      color:#ffffff;
+      border:none;
+      border-radius:999px;
+      padding:10px 18px;
+      font-weight:600;
+      font-size:0.9rem;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(37,99,235,0.25);
+      transition:transform .2s ease, box-shadow .2s ease;
+    }
+    .detail-action-button:hover { transform:translateY(-2px); box-shadow:0 14px 32px rgba(37,99,235,0.3); }
+    @media (max-width: 640px) {
+      .detail-row { grid-template-columns:1fr; }
+      .detail-term { font-size:0.75rem; }
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -148,6 +183,56 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    };
+  </script>
+  <script>
+    window.criarAtributoDetalhes = function(config = {}) {
+      const normalizar = (valor) => {
+        if (valor === null || valor === undefined) return '';
+        if (Array.isArray(valor)) return valor.join(', ');
+        return String(valor);
+      };
+
+      try {
+        const payload = {
+          titulo: normalizar(config.titulo || 'Detalhes'),
+          subtitulo: normalizar(config.subtitulo || ''),
+          descricao: normalizar(config.descricao || ''),
+          campos: Array.isArray(config.campos)
+            ? config.campos.map(campo => ({
+                label: normalizar(campo && campo.label),
+                valor: normalizar(campo && campo.valor)
+              }))
+            : []
+        };
+        if (config.acao && typeof config.acao === 'object') {
+          payload.acao = {
+            label: normalizar(config.acao.label || ''),
+            destino: normalizar(config.acao.destino || ''),
+            descricao: normalizar(config.acao.descricao || '')
+          };
+        }
+        const encoded = encodeURIComponent(JSON.stringify(payload));
+        return `data-detalhes="${encoded}"`;
+      } catch (erro) {
+        console.error('Não foi possível preparar os detalhes do item.', erro);
+        return '';
+      }
+    };
+
+    window.definirDetalhesElemento = function(elemento, config = {}) {
+      if (!elemento) return;
+      const atributo = window.criarAtributoDetalhes(config);
+      if (!atributo) return;
+      const match = atributo.match(/data-detalhes="([^"]*)"/);
+      if (!match || match.length < 2) return;
+      elemento.setAttribute('data-detalhes', match[1]);
+      if (!elemento.hasAttribute('tabindex')) {
+        elemento.setAttribute('tabindex', '0');
+      }
+      if (!elemento.hasAttribute('role')) {
+        elemento.setAttribute('role', 'button');
+      }
     };
   </script>
 </head>
@@ -252,6 +337,19 @@
     <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
   </main>
 
+  <div id="detalhesOverlay" class="detail-overlay" aria-hidden="true" role="dialog">
+    <div class="detail-modal" role="document">
+      <button type="button" class="detail-close" id="btnFecharDetalhes" aria-label="Fechar detalhes">&times;</button>
+      <div class="space-y-2">
+        <h3 class="detail-title" id="detalheTitulo"></h3>
+        <p class="detail-subtitle" id="detalheSubtitulo"></p>
+      </div>
+      <p class="detail-description" id="detalheDescricao"></p>
+      <dl class="detail-list" id="detalheConteudo"></dl>
+      <div class="detail-actions" id="detalheAcoes" style="display:none;"></div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer class="text-center text-gray-500 py-4 mt-6 text-sm">
     © 2025 Projeto Poços Missionários — Sistema desenvolvido em Google Apps Script
@@ -265,6 +363,7 @@
       const projectContainer = document.getElementById('projectTimeline');
       const impactContainer = document.getElementById('impactGlance');
       const donorContainer = document.getElementById('donorRanking');
+      const { escapeHtml, formatarNumero, formatarMoeda, criarAtributoDetalhes } = window;
 
       const placeholder = (element, mensagem) => {
         if (!element) return;
@@ -280,9 +379,17 @@
       };
 
       const createScoreCard = (icon, titulo, valor, detalhe, destino) => {
-        const destinoAttr = destino ? ` data-navegacao="${destino}"` : '';
+        const detalheAttr = criarAtributoDetalhes({
+          titulo,
+          subtitulo: detalhe || '',
+          campos: [
+            { label: 'Valor atual', valor: valor },
+            { label: 'Contexto', valor: detalhe || 'Sem detalhes adicionais.' }
+          ],
+          acao: destino ? { label: 'Abrir guia relacionada', destino } : undefined
+        });
         return `
-          <article class="score-card" role="button" tabindex="0"${destinoAttr}>
+          <article class="score-card" ${detalheAttr} role="button" tabindex="0">
             <div class="score-card__icon">${icon}</div>
             <span class="score-card__label">${escapeHtml(titulo)}</span>
             <div class="score-card__value">${escapeHtml(String(valor))}</div>
@@ -359,15 +466,26 @@
           if (!missoes.length) {
             missionContainer.innerHTML = '<li class="mission-card__empty">Sem alertas críticos. Continue monitorando o campo!</li>';
           } else {
-            missionContainer.innerHTML = missoes.map(item => `
-              <li class="mission-list__item" data-navegacao="gestao" role="button" tabindex="0">
+            missionContainer.innerHTML = missoes.map(item => {
+              const detalheAttr = criarAtributoDetalhes({
+                titulo: item.titulo || 'Missão prioritária',
+                subtitulo: item.motivo || 'Ação necessária',
+                campos: [
+                  { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+                  { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' },
+                  { label: 'Status', valor: item.status || 'Sem status' }
+                ],
+                acao: { label: 'Abrir gestão', destino: 'gestao' }
+              });
+              return `
+              <li class="mission-list__item" ${detalheAttr} role="button" tabindex="0">
                 <span class="mission-list__tag">Prioridade</span>
                 <strong>${escapeHtml(item.titulo || 'Missão')}</strong>
                 <span class="mission-list__acao">${escapeHtml(item.motivo || 'Ação necessária')}</span>
                 ${item.responsavel ? `<span class="mission-list__acao">Responsável: ${escapeHtml(item.responsavel)}</span>` : ''}
                 ${item.proximaAcao ? `<span class="mission-list__acao">Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
-              </li>
-            `).join('');
+              </li>`;
+            }).join('');
           }
         }
 
@@ -375,8 +493,20 @@
           if (!projetos.length) {
             projectContainer.innerHTML = '<li class="mission-card__empty">Nenhuma etapa de projeto registrada ainda.</li>';
           } else {
-            projectContainer.innerHTML = projetos.map(item => `
-              <li class="project-timeline__item" data-navegacao="gestao" role="button" tabindex="0">
+            projectContainer.innerHTML = projetos.map(item => {
+              const detalheAttr = criarAtributoDetalhes({
+                titulo: item.poco || 'Projeto',
+                subtitulo: `${item.etapa || 'Etapa não informada'} • ${formatarDataCurta(item.data)}`,
+                descricao: item.descricao || '',
+                campos: [
+                  { label: 'Status', valor: item.status || 'Sem status' },
+                  { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+                  { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' }
+                ],
+                acao: { label: 'Abrir gestão', destino: 'gestao' }
+              });
+              return `
+              <li class="project-timeline__item" ${detalheAttr} role="button" tabindex="0">
                 <strong>${escapeHtml(item.poco || 'Projeto')}</strong>
                 <div class="project-timeline__meta">
                   <span>${escapeHtml(item.etapa || '-')}</span>
@@ -384,32 +514,55 @@
                   ${item.status ? `<span>${escapeHtml(item.status)}</span>` : ''}
                 </div>
                 ${item.descricao ? `<div class="project-timeline__descricao">${escapeHtml(item.descricao)}</div>` : ''}
-              </li>
-            `).join('');
+              </li>`;
+            }).join('');
           }
         }
 
         if (impactContainer) {
           const cards = [
-            { label: 'Famílias estimadas atendidas', valor: formatarNumero(impacto.familiasEstimadas || 0) },
-            { label: 'Volume diário de água', valor: `${formatarNumero(impacto.volumeAguaDiario || 0)} L/dia` },
-            { label: 'Investimento previsto', valor: formatarMoeda(impacto.investimentoPrevisto || 0) },
-            { label: 'Investimento realizado', valor: formatarMoeda(impacto.investimentoRealizado || 0) }
+            { label: 'Famílias estimadas atendidas', valor: formatarNumero(impacto.familiasEstimadas || 0), descricao: 'Estimativa com base em 4 pessoas por família.' },
+            { label: 'Volume diário de água', valor: `${formatarNumero(impacto.volumeAguaDiario || 0)} L/dia`, descricao: 'Capacidade total somada dos poços ativos.' },
+            { label: 'Investimento previsto', valor: formatarMoeda(impacto.investimentoPrevisto || 0), descricao: 'Planejamento financeiro aprovado para o ciclo atual.' },
+            { label: 'Investimento realizado', valor: formatarMoeda(impacto.investimentoRealizado || 0), descricao: 'Recursos já aplicados em campo.' }
           ];
-          impactContainer.innerHTML = cards.map(card => `
-            <div class="impact-pill" data-navegacao="impacto" role="button" tabindex="0">
+          impactContainer.innerHTML = cards.map(card => {
+            const detalheAttr = criarAtributoDetalhes({
+              titulo: card.label,
+              subtitulo: card.valor,
+              descricao: card.descricao,
+              campos: [
+                { label: 'Indicador', valor: card.label },
+                { label: 'Valor atual', valor: card.valor },
+                { label: 'Descrição', valor: card.descricao }
+              ],
+              acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+            });
+            return `
+            <div class="impact-pill" ${detalheAttr} role="button" tabindex="0">
               <strong>${escapeHtml(String(card.valor))}</strong>
               <span>${escapeHtml(card.label)}</span>
-            </div>
-          `).join('');
+            </div>`;
+          }).join('');
         }
 
         if (donorContainer) {
           if (!doadores.length) {
             donorContainer.innerHTML = '<li class="mission-card__empty">Traga novos aliados para acelerar as missões.</li>';
           } else {
-            donorContainer.innerHTML = doadores.map(item => `
-              <li class="donor-list__item" data-navegacao="impacto" role="button" tabindex="0">
+            donorContainer.innerHTML = doadores.map(item => {
+              const detalheAttr = criarAtributoDetalhes({
+                titulo: item.nome || 'Aliado',
+                subtitulo: `Contribuição ${formatarMoeda(item.valor || 0)}`,
+                campos: [
+                  { label: 'Poços apoiados', valor: formatarNumero(item.pocos || 0) },
+                  { label: 'Beneficiários impactados', valor: formatarNumero(item.beneficiarios || 0) },
+                  { label: 'Contato', valor: item.contato || 'Não informado' }
+                ],
+                acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+              });
+              return `
+              <li class="donor-list__item" ${detalheAttr} role="button" tabindex="0">
                 <div>
                   <strong>${escapeHtml(item.nome || 'Aliado')}</strong>
                   <span>${escapeHtml(`${formatarNumero(item.pocos || 0)} poços apoiados`)}</span>
@@ -418,8 +571,8 @@
                   <span>${escapeHtml(formatarMoeda(item.valor || 0))}</span>
                   <span>${escapeHtml(`${formatarNumero(item.beneficiarios || 0)} beneficiários`)}</span>
                 </div>
-              </li>
-            `).join('');
+              </li>`;
+            }).join('');
           }
         }
       };
@@ -473,6 +626,9 @@
     document.addEventListener('click', (evento) => {
       const alvo = evento.target.closest('[data-navegacao]');
       if (!alvo) return;
+      if (evento.target.closest('[data-detalhes]')) {
+        return;
+      }
       const destino = alvo.getAttribute('data-navegacao');
       if (!destino) return;
       evento.preventDefault();
@@ -482,6 +638,9 @@
     document.addEventListener('keydown', (evento) => {
       const alvo = evento.target.closest('[data-navegacao]');
       if (!alvo) return;
+      if (evento.target.closest('[data-detalhes]')) {
+        return;
+      }
       if (evento.key === 'Enter' || evento.key === ' ') {
         evento.preventDefault();
         const destino = alvo.getAttribute('data-navegacao');
@@ -525,6 +684,150 @@
         }
       });
     }
+  </script>
+  <script>
+    (function() {
+      const overlay = document.getElementById('detalhesOverlay');
+      if (!overlay) return;
+
+      const tituloEl = document.getElementById('detalheTitulo');
+      const subtituloEl = document.getElementById('detalheSubtitulo');
+      const descricaoEl = document.getElementById('detalheDescricao');
+      const conteudoEl = document.getElementById('detalheConteudo');
+      const acoesEl = document.getElementById('detalheAcoes');
+      const fecharBtn = document.getElementById('btnFecharDetalhes');
+      const { escapeHtml } = window;
+      let ultimoFoco = null;
+
+      const setTexto = (elemento, valor) => {
+        if (!elemento) return;
+        if (valor) {
+          elemento.innerHTML = escapeHtml(valor);
+          elemento.style.display = '';
+        } else {
+          elemento.innerHTML = '';
+          elemento.style.display = 'none';
+        }
+      };
+
+      const formatarValor = (valor) => {
+        const texto = escapeHtml(valor || '');
+        return texto.replace(/\n/g, '<br>');
+      };
+
+      const fecharDetalhes = () => {
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('detail-open');
+        if (ultimoFoco && typeof ultimoFoco.focus === 'function') {
+          ultimoFoco.focus();
+        }
+      };
+
+      const abrirDetalhes = (dados) => {
+        if (!dados) return;
+        ultimoFoco = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setTexto(tituloEl, dados.titulo || 'Detalhes do item');
+        setTexto(subtituloEl, dados.subtitulo || '');
+        setTexto(descricaoEl, dados.descricao || '');
+
+        const campos = Array.isArray(dados.campos) ? dados.campos : [];
+        if (!campos.length) {
+          conteudoEl.innerHTML = `
+            <div class="detail-row">
+              <dt class="detail-term">Informações</dt>
+              <dd class="detail-value">Sem dados adicionais disponíveis.</dd>
+            </div>`;
+        } else {
+          conteudoEl.innerHTML = campos.map(campo => `
+            <div class="detail-row">
+              <dt class="detail-term">${escapeHtml(campo.label || '')}</dt>
+              <dd class="detail-value">${formatarValor(campo.valor || '')}</dd>
+            </div>
+          `).join('');
+        }
+
+        if (acoesEl) {
+          acoesEl.innerHTML = '';
+          acoesEl.style.display = 'none';
+          const acao = dados.acao;
+          if (acao && acao.destino) {
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.className = 'detail-action-button';
+            botao.textContent = acao.label || 'Abrir guia relacionada';
+            botao.addEventListener('click', () => {
+              fecharDetalhes();
+              if (typeof window.navegarPara === 'function') {
+                window.navegarPara(acao.destino);
+              }
+            });
+            acoesEl.appendChild(botao);
+            acoesEl.style.display = 'flex';
+          }
+        }
+
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('detail-open');
+        if (fecharBtn && typeof fecharBtn.focus === 'function') {
+          fecharBtn.focus();
+        }
+      };
+
+      const obterDetalhes = (elemento) => {
+        if (!elemento) return null;
+        const bruto = elemento.getAttribute('data-detalhes');
+        if (!bruto) return null;
+        try {
+          return JSON.parse(decodeURIComponent(bruto));
+        } catch (erro) {
+          console.error('Não foi possível abrir os detalhes do item selecionado.', erro);
+          return null;
+        }
+      };
+
+      document.addEventListener('click', (evento) => {
+        const alvo = evento.target.closest('[data-detalhes]');
+        if (!alvo) return;
+        const dados = obterDetalhes(alvo);
+        if (!dados) return;
+        evento.preventDefault();
+        abrirDetalhes(dados);
+      });
+
+      document.addEventListener('keydown', (evento) => {
+        const alvo = evento.target.closest('[data-detalhes]');
+        if (!alvo) return;
+        if (evento.key === 'Enter' || evento.key === ' ') {
+          const dados = obterDetalhes(alvo);
+          if (!dados) return;
+          evento.preventDefault();
+          abrirDetalhes(dados);
+        }
+      });
+
+      if (fecharBtn) {
+        fecharBtn.addEventListener('click', (evt) => {
+          evt.preventDefault();
+          fecharDetalhes();
+        });
+      }
+
+      overlay.addEventListener('click', (evento) => {
+        if (evento.target === overlay) {
+          fecharDetalhes();
+        }
+      });
+
+      document.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Escape' && overlay.classList.contains('visible')) {
+          fecharDetalhes();
+        }
+      });
+
+      window.fecharDetalhesItem = fecharDetalhes;
+    })();
   </script>
 </body>
 </html>

@@ -139,7 +139,7 @@
 <script>
   (() => {
     const chartsImpacto = {};
-    const { formatarNumero, formatarMoeda, escapeHtml } = window;
+    const { formatarNumero, formatarMoeda, escapeHtml, criarAtributoDetalhes } = window;
 
     const STATUS_CORES = {
       'Solicitado': '#f97316',
@@ -173,20 +173,34 @@
       tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-4">Nenhum poço registrado.</td></tr>';
       return;
     }
-    tbody.innerHTML = pocos.map(p => `
-      <tr>
-        <td>
-          <div class="font-semibold text-gray-900">${escapeHtml(p.nome)}</div>
-          <small class="text-gray-500">${escapeHtml(p.local)}</small>
-        </td>
-        <td>${escapeHtml(p.status)}</td>
-        <td>${formatarNumero(p.beneficiarios)}</td>
-        <td>${escapeHtml(p.doadores)}</td>
-        <td>${formatarMoeda(p.valorExecutado)}</td>
-        <td>${formatarMoeda(p.gapFinanceiro)}</td>
-        <td>${formatarNumero(p.vazao)} L/h</td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = pocos.map(p => {
+      const detalheAttr = criarAtributoDetalhes({
+        titulo: p.nome || 'Poço',
+        subtitulo: `${formatarNumero(p.beneficiarios || 0)} beneficiários • Status ${p.status || 'Não informado'}`,
+        campos: [
+          { label: 'Localidade', valor: p.local || 'Local não informado' },
+          { label: 'Doadores vinculados', valor: p.doadores || 'Nenhum doador vinculado' },
+          { label: 'Investimento realizado', valor: formatarMoeda(p.valorExecutado || 0) },
+          { label: 'Gap financeiro', valor: formatarMoeda(p.gapFinanceiro || 0) },
+          { label: 'Vazão estimada', valor: `${formatarNumero(p.vazao || 0)} L/h` }
+        ],
+        acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+      });
+      return `
+        <tr ${detalheAttr} class="linha-detalhe" role="button" tabindex="0">
+          <td>
+            <div class="font-semibold text-gray-900">${escapeHtml(p.nome)}</div>
+            <small class="text-gray-500">${escapeHtml(p.local)}</small>
+          </td>
+          <td>${escapeHtml(p.status)}</td>
+          <td>${formatarNumero(p.beneficiarios)}</td>
+          <td>${escapeHtml(p.doadores)}</td>
+          <td>${formatarMoeda(p.valorExecutado)}</td>
+          <td>${formatarMoeda(p.gapFinanceiro)}</td>
+          <td>${formatarNumero(p.vazao)} L/h</td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function renderTimeline(eventos) {
@@ -197,8 +211,18 @@
     }
     container.innerHTML = eventos.map(ev => {
       const data = ev.data ? new Date(ev.data).toLocaleDateString('pt-BR') : 'Data não informada';
+      const detalheAttr = criarAtributoDetalhes({
+        titulo: ev.poco || 'Atualização do poço',
+        subtitulo: `${data} • ${ev.statusContato || 'Sem status de contato'}`,
+        campos: [
+          { label: 'Responsável', valor: ev.responsavel || 'Não informado' },
+          { label: 'Resumo', valor: ev.resumo || 'Sem resumo registrado.' },
+          { label: 'Próxima ação', valor: ev.proximaAcao || 'Não definida' }
+        ],
+        acao: { label: 'Abrir guia Impacto', destino: 'impacto' }
+      });
       return `
-        <div class="timeline-item">
+        <div class="timeline-item" ${detalheAttr} role="button" tabindex="0">
           <strong>${escapeHtml(ev.poco)}</strong>
           <div>${escapeHtml(ev.resumo)}</div>
           <small>${data} • ${escapeHtml(ev.responsavel)} • ${escapeHtml(ev.statusContato)}</small>
