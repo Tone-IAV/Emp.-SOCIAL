@@ -2165,5 +2165,291 @@ function obterVisaoGamificada() {
   };
 }
 
+function obterPainelDetalhes() {
+  const padrao = { pocos: [], projetos: [], doadores: [] };
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const numero = normalizarNumero;
+    const formatarMoeda = (valor) => numero(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const formatarDataISO = (valor) => {
+      if (!valor) return '';
+      if (valor instanceof Date) {
+        return Number.isNaN(valor.getTime()) ? '' : valor.toISOString();
+      }
+      const data = new Date(valor);
+      return Number.isNaN(data.getTime()) ? '' : data.toISOString();
+    };
+    const formatarDataCurta = (valor) => {
+      const iso = formatarDataISO(valor);
+      if (!iso) return '';
+      const data = new Date(iso);
+      return Number.isNaN(data.getTime()) ? '' : data.toLocaleDateString('pt-BR');
+    };
+    const normalizarArray = (valor) => Array.isArray(valor) ? valor : [];
+    const nomeDoPoco = (registro) => {
+      if (!registro) return 'Poço sem identificação';
+      const comunidade = registro['Comunidade'];
+      const municipio = registro['Município'];
+      if (comunidade) {
+        return municipio ? `${comunidade} - ${municipio}` : comunidade;
+      }
+      return municipio || registro['Estado'] || 'Poço sem identificação';
+    };
+    const normalizarChave = (texto) => (texto ? texto.toString().trim().toLowerCase() : '');
+
+    const pocosRegistros = listarPocos();
+    const dashboard = obterDashboardAnalitico();
+    const resumoGestao = obterResumoGestao();
+    const doadoresBrutos = carregarDoadoresComDepositos_(ss);
+
+    const doadorPorId = {};
+    doadoresBrutos.forEach(d => {
+      if (d && d.ID) doadorPorId[d.ID] = d;
+    });
+
+    const mapaPocosPorChave = {};
+    const mapaPocosPorId = {};
+    pocosRegistros.forEach(p => {
+      const nome = nomeDoPoco(p);
+      mapaPocosPorId[p.ID] = p;
+      [nome, p['Comunidade'], `${p['Comunidade'] || ''} ${p['Município'] || ''}`]
+        .map(normalizarChave)
+        .forEach(chave => {
+          if (chave) mapaPocosPorChave[chave] = p;
+        });
+    });
+
+    const andamentoPorId = {};
+    const andamentoPorNome = {};
+    normalizarArray(resumoGestao && resumoGestao.andamento).forEach(item => {
+      if (item.id) andamentoPorId[item.id] = item;
+      const chave = normalizarChave(item.nome);
+      if (chave && !andamentoPorNome[chave]) andamentoPorNome[chave] = item;
+    });
+
+    const construirDoadores = (registro) => {
+      if (!registro) return [];
+      const ids = (registro.Doadores || '').toString().split(',').map(id => id.trim()).filter(Boolean);
+      return ids.map(id => {
+        const doador = doadorPorId[id];
+        if (!doador) {
+          return {
+            titulo: 'Doador não identificado',
+            descricao: id,
+            valor: formatarMoeda(0),
+            meta: ''
+          };
+        }
+        return {
+          titulo: doador.Nome || 'Doador',
+          descricao: doador.Email || doador.Telefone || '',
+          valor: formatarMoeda(doador.ValorDoado || doador.Valor || 0),
+          meta: doador.DataDoacao ? `Último aporte ${formatarDataCurta(doador.DataDoacao)}` : ''
+        };
+      });
+    };
+
+    const construirContatos = (lista) => normalizarArray(lista).map(contato => ({
+      nome: contato.nome || contato.Nome || contato.ResponsavelContato || contato.ContatoExterno || 'Contato',
+      papel: contato.papel || contato.Papel || contato.OrganizacaoContato || '',
+      telefone: contato.telefone || contato.Telefone || contato.TelefoneContato || '',
+      email: contato.email || contato.Email || ''
+    })).filter(c => c.nome || c.papel || c.telefone || c.email);
+
+    const construirTimeline = (lista) => normalizarArray(lista).map(item => ({
+      titulo: item.titulo || item.id || 'Evento',
+      descricao: item.descricao || '',
+      status: item.status || '',
+      data: formatarDataISO(item.data)
+    }));
+
+    const construirEvidencias = (lista) => normalizarArray(lista).map(ev => ({
+      titulo: ev.titulo || 'Anexo',
+      tipo: ev.tipo || 'documento',
+      url: ev.url || '',
+      data: formatarDataISO(ev.data)
+    })).filter(ev => ev.url);
+
+    const pocos = pocosRegistros.map(p => {
+      const nome = nomeDoPoco(p);
+      const local = `${p['Município'] || 'Sem município'} - ${p['Estado'] || 'Sem estado'}`;
+      const valorPrevisto = numero(p.OrcamentoPrevisto || p['Valor Previsto Perfuração']);
+      const valorExecutado = numero(p.OrcamentoExecutado || p['Valor Realizado']);
+      const gapFinanceiro = valorPrevisto - valorExecutado;
+      const beneficiarios = numero(p['Beneficiários']);
+      const andamento = andamentoPorId[p.ID] || andamentoPorNome[normalizarChave(nome)] || {};
+      return {
+        id: p.ID,
+        titulo: nome,
+        subtitulo: local,
+        status: p.Status || 'Sem status',
+        resumo: p.ResumoStatus || p.ImpactoNoStatus || 'Sem descrição detalhada.',
+        meta: andamento && andamento.gapFinanceiro !== undefined ? `Gap ${formatarMoeda(andamento.gapFinanceiro)}` : '',
+        tags: [p.TipoPoco || '', p.StatusContato ? `Contato: ${p.StatusContato}` : '', p.SituacaoHidrica || ''].filter(Boolean),
+        metricas: [
+          { label: 'Beneficiários', valorNumerico: beneficiarios, formato: 'numero', detalhe: 'Impacto direto estimado' },
+          { label: 'Investimento previsto', valorNumerico: valorPrevisto, formato: 'moeda', detalhe: `Executado ${formatarMoeda(valorExecutado)}` },
+          { label: 'Gap financeiro', valorNumerico: gapFinanceiro, formato: 'moeda', detalhe: gapFinanceiro > 0 ? 'Necessita captação' : 'Cobertura realizada' }
+        ],
+        campos: [
+          { label: 'Região', valor: p['Região'] || '-' },
+          { label: 'Solicitante', valor: p.Solicitante || '-' },
+          { label: 'Responsável local', valor: p.ResponsavelContato || '-' },
+          { label: 'Próxima ação', valor: p.ProximaAcao || '-' },
+          { label: 'Uso comunitário', valor: p.UsoAguaComunitario || '-' },
+          { label: 'Observações', valor: p['Observações'] || '-' }
+        ],
+        doadores: construirDoadores(p),
+        rotuloRede: 'Doadores vinculados',
+        contatos: construirContatos(p.Contatos),
+        timeline: construirTimeline(p.LinhaDoTempo),
+        evidencias: construirEvidencias(p.Evidencias),
+        documentos: [
+          p.TermoAutorizacaoURL ? { titulo: 'Termo de autorização', url: p.TermoAutorizacaoURL, meta: 'Documento jurídico' } : null,
+          p.NotaFiscalURL ? { titulo: 'Nota fiscal', url: p.NotaFiscalURL, meta: 'Comprovação financeira' } : null
+        ].filter(Boolean),
+        acaoGuia: 'pocos',
+        acaoEditar: {
+          tipo: 'poco',
+          dados: {
+            id: p.ID,
+            titulo: nome,
+            responsavel: p.ResponsavelContato || '',
+            estado: p['Estado'] || '',
+            municipio: p['Município'] || '',
+            categoria: p.TipoPoco || '',
+            codigo: p.ID,
+            impacto: p.ImpactoNoStatus || '',
+            proximaAcao: p.ProximaAcao || '',
+            observacoes: p['Observações'] || ''
+          }
+        }
+      };
+    });
+
+    const projetosBase = normalizarArray(dashboard && dashboard.acoesPosInstalacao);
+    const projetos = projetosBase.map((proj, indice) => {
+      const chave = normalizarChave(proj.poco);
+      let referencia = mapaPocosPorChave[chave];
+      if (!referencia) {
+        referencia = pocosRegistros.find(reg => normalizarChave(nomeDoPoco(reg)) === chave);
+      }
+      const andamento = referencia ? (andamentoPorId[referencia.ID] || andamentoPorNome[normalizarChave(nomeDoPoco(referencia))] || {}) : {};
+      const beneficiarios = referencia ? numero(referencia['Beneficiários']) : 0;
+      const valorPrevisto = referencia ? numero(referencia.OrcamentoPrevisto || referencia['Valor Previsto Perfuração']) : 0;
+      const valorExecutado = referencia ? numero(referencia.OrcamentoExecutado || referencia['Valor Realizado']) : 0;
+      const local = referencia ? `${referencia['Município'] || 'Sem município'} - ${referencia['Estado'] || 'Sem estado'}` : (proj.estado || 'Local não informado');
+      return {
+        id: referencia ? `projeto-${referencia.ID}` : `projeto-${indice + 1}`,
+        titulo: proj.poco || 'Projeto social',
+        subtitulo: local,
+        status: proj.status || (referencia ? referencia.Status : 'Planejamento'),
+        resumo: proj.acoes || 'Sem ações detalhadas.',
+        meta: proj.usos ? `Uso da água: ${proj.usos}` : '',
+        tags: [proj.situacaoHidrica ? `Situação hídrica: ${proj.situacaoHidrica}` : '', proj.estado ? `Estado: ${proj.estado}` : ''].filter(Boolean),
+        metricas: [
+          { label: 'Beneficiários', valorNumerico: beneficiarios, formato: 'numero', detalhe: 'Informado no cadastro do poço' },
+          { label: 'Investimento previsto', valorNumerico: valorPrevisto, formato: 'moeda', detalhe: `Executado ${formatarMoeda(valorExecutado)}` }
+        ],
+        campos: [
+          { label: 'Estado', valor: proj.estado || (referencia ? referencia['Estado'] : '-') },
+          { label: 'Ações sociais', valor: proj.acoes || '-' },
+          { label: 'Uso comunitário', valor: proj.usos || (referencia ? referencia.UsoAguaComunitario || '-' : '-') },
+          { label: 'Próxima ação', valor: andamento.proximaAcao || (referencia ? referencia.ProximaAcao || '-' : '-') },
+          { label: 'Responsável', valor: andamento.responsavel || (referencia ? referencia.ResponsavelContato || '-' : '-') }
+        ],
+        doadores: construirDoadores(referencia),
+        rotuloRede: 'Aliados do projeto',
+        contatos: construirContatos(referencia ? referencia.Contatos : []),
+        timeline: construirTimeline(referencia ? referencia.LinhaDoTempo : []),
+        evidencias: construirEvidencias(referencia ? referencia.Evidencias : []),
+        documentos: referencia ? [
+          referencia.TermoAutorizacaoURL ? { titulo: 'Termo de autorização', url: referencia.TermoAutorizacaoURL, meta: 'Documento jurídico' } : null,
+          referencia.NotaFiscalURL ? { titulo: 'Nota fiscal', url: referencia.NotaFiscalURL, meta: 'Comprovação financeira' } : null
+        ].filter(Boolean) : [],
+        acaoGuia: 'gestao',
+        acaoEditar: {
+          tipo: 'projeto',
+          dados: {
+            id: referencia ? referencia.ID : '',
+            titulo: proj.poco || '',
+            estado: proj.estado || (referencia ? referencia['Estado'] : ''),
+            municipio: referencia ? referencia['Município'] || '' : '',
+            categoria: 'projeto-social',
+            impacto: proj.usos || '',
+            observacoes: proj.acoes || ''
+          }
+        }
+      };
+    });
+
+    const doadores = doadoresBrutos.map(d => {
+      const total = numero(d.ValorDoado || d.Valor || 0);
+      const vinculos = (d['PoçosVinculados'] || '').toString().split(',').map(id => id.trim()).filter(Boolean);
+      const apoiados = vinculos.map(id => {
+        const ref = mapaPocosPorId[id];
+        if (!ref) {
+          return { titulo: 'Poço não identificado', descricao: id, valor: formatarMoeda(0), meta: '' };
+        }
+        return {
+          titulo: nomeDoPoco(ref),
+          descricao: `${ref['Município'] || ''} - ${ref['Estado'] || ''}`.trim(),
+          valor: formatarMoeda(ref.OrcamentoExecutado || ref['Valor Realizado'] || 0),
+          meta: `Beneficiários: ${numero(ref['Beneficiários'] || 0)}`
+        };
+      });
+      const depositos = normalizarArray(d.Depositos);
+      const linhaDepositos = depositos.map(dep => ({
+        titulo: `Depósito de ${formatarMoeda(dep.Valor)}`,
+        descricao: dep.Observacoes || dep.Metodo || '',
+        status: dep.Metodo || 'Aporte',
+        data: formatarDataISO(dep.DataDeposito)
+      }));
+      return {
+        id: d.ID || `doador-${Utilities.getUuid()}`,
+        titulo: d.Nome || 'Doador',
+        subtitulo: formatarMoeda(total),
+        status: 'Ativo',
+        resumo: d.Observacoes || 'Rede de apoio financeiro à missão.',
+        meta: vinculos.length ? `${vinculos.length} poços apoiados` : '',
+        tags: [d.CriadoEm ? `Desde ${formatarDataCurta(d.CriadoEm)}` : '', d.AtualizadoEm ? `Atualizado ${formatarDataCurta(d.AtualizadoEm)}` : ''].filter(Boolean),
+        metricas: [
+          { label: 'Valor acumulado', valorNumerico: total, formato: 'moeda', detalhe: `${d.QuantidadeDepositos || 0} aportes registrados` },
+          { label: 'Poços vinculados', valorNumerico: vinculos.length, formato: 'numero', detalhe: 'Projetos acompanhados' },
+          { label: 'Último aporte', valor: formatarDataCurta(d.DataDoacao) || 'Sem registro', detalhe: depositos[0] ? (depositos[0].Metodo || '') : '' }
+        ],
+        campos: [
+          { label: 'Contato principal', valor: d.Nome || '-' },
+          { label: 'Email', valor: d.Email || 'Não informado' },
+          { label: 'Telefone', valor: d.Telefone || 'Não informado' },
+          { label: 'Observações', valor: d.Observacoes || '-' }
+        ],
+        doadores: apoiados,
+        rotuloRede: 'Poços apoiados',
+        contatos: [{ nome: d.Nome || 'Contato', papel: 'Responsável financeiro', telefone: d.Telefone || '', email: d.Email || '' }],
+        timeline: linhaDepositos,
+        evidencias: [],
+        documentos: [],
+        acaoGuia: 'impacto',
+        acaoEditar: {
+          tipo: 'doador',
+          dados: {
+            id: d.ID || '',
+            titulo: d.Nome || '',
+            responsavel: d.Nome || '',
+            doacoes: formatarMoeda(total),
+            observacoes: d.Observacoes || ''
+          }
+        }
+      };
+    });
+
+    return { pocos, projetos, doadores };
+  } catch (erro) {
+    registrarErro_('obterPainelDetalhes', erro);
+    return padrao;
+  }
+}
+
 
 

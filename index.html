@@ -106,11 +106,29 @@
     .hub-empty { font-size:0.8rem; color:#64748b; text-align:center; padding:16px; background:rgba(226,232,240,0.6); border-radius:16px; }
     .mission-orchestrator { margin-top:28px; background:rgba(255,255,255,0.95); border-radius:30px; padding:28px; box-shadow:0 30px 68px rgba(14,165,233,0.16); border:1px solid rgba(125,211,252,0.3); display:flex; flex-direction:column; gap:24px; }
     .mission-orchestrator__header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:18px; }
+    .mission-orchestrator__actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .mission-add-button { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#0ea5e9,#2563eb); color:#ffffff; border:none; border-radius:999px; padding:12px 20px; font-weight:600; cursor:pointer; box-shadow:0 18px 38px rgba(14,165,233,0.26); transition:transform .2s ease, box-shadow .2s ease; }
+    .mission-add-button:hover { transform:translateY(-2px); box-shadow:0 22px 44px rgba(14,165,233,0.3); }
+    .mission-add-button .icon { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.18); font-size:1.2rem; }
     .mission-orchestrator__title { font-size:1.3rem; font-weight:700; color:#0f172a; }
     .mission-orchestrator__subtitle { max-width:540px; font-size:0.9rem; color:#475569; }
     .mission-orchestrator__grid { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; }
     @media (max-width: 1024px) { .mission-orchestrator__grid { grid-template-columns:1fr; } }
     .mission-orchestrator__panel { background:linear-gradient(180deg, rgba(191,219,254,0.35) 0%, rgba(255,255,255,0.92) 100%); border-radius:24px; padding:22px; box-shadow:0 20px 44px rgba(14,165,233,0.18); display:flex; flex-direction:column; gap:20px; }
+    .mission-preview { background:linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(224,242,254,0.85) 100%); }
+    .mission-preview__header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .mission-preview__boards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
+    .kanban-preview, .gantt-preview { background:rgba(255,255,255,0.9); border-radius:18px; padding:16px; box-shadow:0 16px 32px rgba(15,23,42,0.1); min-height:220px; display:flex; flex-direction:column; gap:12px; }
+    .kanban-preview__columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+    .kanban-preview__column { background:rgba(14,165,233,0.08); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .kanban-preview__column h4 { font-size:0.8rem; text-transform:uppercase; letter-spacing:0.06em; color:#0ea5e9; margin:0; }
+    .kanban-preview__item { background:#ffffff; border-radius:14px; padding:10px; box-shadow:0 10px 18px rgba(14,165,233,0.12); font-size:0.78rem; color:#0f172a; display:flex; flex-direction:column; gap:4px; }
+    .kanban-preview__item span { color:#475569; font-size:0.72rem; }
+    .gantt-preview__chart { flex:1; min-height:180px; }
+    .mission-activities { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+    .mission-activities__item { background:rgba(15,118,110,0.08); border-radius:16px; padding:12px 14px; box-shadow:0 12px 24px rgba(13,148,136,0.16); }
+    .mission-activities__item strong { display:block; font-size:0.9rem; color:#0f172a; }
+    .mission-activities__item span { display:block; font-size:0.78rem; color:#0f766e; }
     .mission-overview-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; }
     .mission-overview-card { background:rgba(255,255,255,0.95); border-radius:20px; padding:16px; box-shadow:0 16px 32px rgba(59,130,246,0.18); display:flex; flex-direction:column; gap:6px; border:1px solid rgba(148,163,184,0.25); }
     .mission-overview-card strong { font-size:1.6rem; color:#1d4ed8; }
@@ -119,7 +137,23 @@
     .mission-insights { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:12px; }
     .mission-insights__item { background:rgba(14,165,233,0.14); border-radius:18px; padding:14px 16px; font-size:0.85rem; color:#0f172a; border:1px solid rgba(14,165,233,0.28); box-shadow:0 14px 30px rgba(14,165,233,0.18); }
     .mission-insights__item strong { display:block; font-size:0.78rem; letter-spacing:0.06em; color:#0369a1; text-transform:uppercase; margin-bottom:4px; }
-    .mission-form { background:#ffffff; border-radius:24px; padding:24px; box-shadow:0 26px 58px rgba(15,23,42,0.12); border:1px solid rgba(203,213,225,0.6); display:flex; flex-direction:column; gap:18px; }
+    .mission-form-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.45); display:flex; align-items:center; justify-content:center; padding:24px; z-index:140; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .mission-form-overlay.visible { opacity:1; pointer-events:auto; }
+    .mission-form-dialog { background:#ffffff; border-radius:26px; padding:28px; width:min(760px,100%); max-height:92vh; overflow:auto; box-shadow:0 32px 64px rgba(15,23,42,0.3); display:flex; flex-direction:column; gap:20px; position:relative; }
+    .mission-form-dialog header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .mission-form-dialog h3 { font-size:1.25rem; font-weight:700; color:#0f172a; margin:0; }
+    .mission-form-dialog .close-button { border:none; background:#e0f2fe; color:#0f172a; border-radius:999px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; cursor:pointer; box-shadow:0 12px 28px rgba(14,165,233,0.24); transition:transform .2s ease, background .2s ease; }
+    .mission-form-dialog .close-button:hover { background:#bae6fd; transform:translateY(-2px); }
+    .mission-form { background:#ffffff; border-radius:24px; padding:4px 0; display:flex; flex-direction:column; gap:18px; }
+    .mission-choice-dialog { background:#ffffff; border-radius:22px; padding:26px; width:min(420px,100%); box-shadow:0 26px 54px rgba(15,23,42,0.24); display:flex; flex-direction:column; gap:18px; position:relative; }
+    .mission-choice-grid { display:grid; gap:12px; }
+    .mission-choice-button { display:flex; align-items:center; gap:14px; border:1px solid rgba(56,189,248,0.25); border-radius:18px; padding:14px 16px; background:rgba(240,249,255,0.9); cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; text-align:left; }
+    .mission-choice-button strong { display:block; font-size:1rem; color:#0f172a; }
+    .mission-choice-button small { display:block; font-size:0.8rem; color:#475569; }
+    .mission-choice-button:hover { transform:translateY(-3px); box-shadow:0 18px 32px rgba(14,165,233,0.24); border-color:rgba(14,165,233,0.5); }
+    .mission-choice-icon { display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:16px; background:linear-gradient(135deg,#38bdf8,#2563eb); color:white; font-size:1.4rem; }
+    .mission-choice-cancel { align-self:flex-end; background:none; border:none; color:#0ea5e9; font-weight:600; cursor:pointer; padding:6px 0; font-size:0.9rem; }
+    .mission-choice-cancel:hover { text-decoration:underline; }
     .mission-form__group { display:grid; gap:16px; }
     .mission-form__group--cols { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
     .mission-form label { font-size:0.8rem; font-weight:600; color:#0369a1; text-transform:uppercase; letter-spacing:0.06em; }
@@ -285,6 +319,7 @@
       <button class="nav-item" data-target="impacto">Impacto</button>
       <button class="nav-item" data-target="pocos">Poços</button>
       <button class="nav-item" data-target="kanban">Kanban</button>
+      <button class="nav-item" data-target="detalhes">Detalhes dinâmicos</button>
     </div>
   </nav>
 
@@ -317,9 +352,15 @@
           <div class="mission-orchestrator__header">
             <div>
               <h2 id="missionOrchestratorTitulo" class="mission-orchestrator__title">Central de missões inteligentes</h2>
-              <p class="mission-orchestrator__subtitle">Cadastre poços e projetos sociais de maneira orientada. O sistema sugere indicadores, métricas financeiras e próximos passos conforme o tipo de iniciativa.</p>
+              <p class="mission-orchestrator__subtitle">Cadastre poços, projetos sociais e doadores de maneira orientada. Visualize tudo em um painel vivo com atividades, kanban e gantt em tempo real.</p>
             </div>
-            <div id="missionFeedback" class="mission-feedback" role="status" aria-live="polite"></div>
+            <div class="mission-orchestrator__actions">
+              <div id="missionFeedback" class="mission-feedback" role="status" aria-live="polite"></div>
+              <button type="button" id="btnNovaEntrada" class="mission-add-button">
+                <span class="icon">+</span>
+                Nova entrada
+              </button>
+            </div>
           </div>
           <div class="mission-orchestrator__grid">
             <div class="mission-orchestrator__panel">
@@ -348,80 +389,42 @@
                 </ul>
               </div>
             </div>
-            <form id="formPlanejamentoMissao" class="mission-form" autocomplete="off">
-              <div class="mission-form__group">
-                <label for="codigoMissao">Código inteligente</label>
-                <input id="codigoMissao" name="codigoMissao" placeholder="Será gerado automaticamente" readonly>
+            <div class="mission-orchestrator__panel mission-preview">
+              <div class="mission-preview__header">
+                <div>
+                  <h3 class="journey-board__title">Atividades recentes</h3>
+                  <p class="journey-board__subtitle">Visualize os últimos movimentos registrados e acompanhe o pulso da missão.</p>
+                </div>
+                <button type="button" class="px-4 py-2 rounded-full bg-emerald-500 text-white font-semibold shadow" data-navegacao="gestao">Abrir gestão detalhada</button>
               </div>
-              <div class="mission-form__group mission-form__group--cols">
-                <div>
-                  <label for="tipoMissao">Tipo de missão</label>
-                  <select id="tipoMissao" name="tipoMissao" required>
-                    <option value="" disabled selected>Selecione</option>
-                    <option value="poco">Poço artesiano</option>
-                    <option value="projeto">Projeto social</option>
-                  </select>
+              <ul id="recentActivities" class="mission-activities">
+                <li class="hub-empty">Coletando eventos registrados...</li>
+              </ul>
+              <div class="mission-preview__boards">
+                <div class="kanban-preview">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-semibold text-sky-700">Kanban rápido</h4>
+                      <p class="text-xs text-sky-900/70">Principais cartões em movimento.</p>
+                    </div>
+                    <button type="button" class="text-xs font-semibold text-sky-600 underline" data-navegacao="kanban">Ver completo</button>
+                  </div>
+                  <div id="kanbanPreview" class="kanban-preview__columns">
+                    <div class="hub-empty">Sincronizando colunas...</div>
+                  </div>
                 </div>
-                <div>
-                  <label for="categoriaMissao">Categoria do projeto</label>
-                  <select id="categoriaMissao" name="categoriaMissao" disabled>
-                    <option value="" disabled selected>Escolha o tipo primeiro</option>
-                  </select>
-                </div>
-              </div>
-              <div class="mission-form__group mission-form__group--cols">
-                <div>
-                  <label for="tituloMissao">Nome da missão</label>
-                  <input id="tituloMissao" name="tituloMissao" placeholder="Ex.: Missão Água Viva - Sítio Novo" required>
-                </div>
-                <div>
-                  <label for="responsavelMissao">Responsável direto</label>
-                  <input id="responsavelMissao" name="responsavelMissao" placeholder="Quem lidera em campo">
-                </div>
-              </div>
-              <div class="mission-form__group mission-form__group--cols">
-                <div>
-                  <label for="estadoMissao">Estado</label>
-                  <input id="estadoMissao" name="estadoMissao" placeholder="UF" maxlength="2">
-                </div>
-                <div>
-                  <label for="municipioMissao">Município / Comunidade</label>
-                  <input id="municipioMissao" name="municipioMissao" placeholder="Localidade atendida">
-                </div>
-                <div>
-                  <label for="familiasAtendidas">Famílias atendidas</label>
-                  <input id="familiasAtendidas" name="familiasAtendidas" type="number" min="0" placeholder="0">
+                <div class="gantt-preview">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-semibold text-indigo-700">Linha do tempo</h4>
+                      <p class="text-xs text-indigo-900/70">Etapas planejadas e em execução.</p>
+                    </div>
+                    <button type="button" class="text-xs font-semibold text-indigo-600 underline" data-navegacao="gestao">Abrir cronograma</button>
+                  </div>
+                  <div id="ganttPreview" class="gantt-preview__chart"></div>
                 </div>
               </div>
-              <div class="mission-form__group">
-                <label for="indicadoresMissao">Indicadores sugeridos</label>
-                <textarea id="indicadoresMissao" name="indicadoresMissao" placeholder="O sistema trará indicadores conforme o tipo escolhido"></textarea>
-              </div>
-              <div class="mission-form__group">
-                <label for="impactoPrevisto">Impacto previsto</label>
-                <textarea id="impactoPrevisto" name="impactoPrevisto" placeholder="Como essa missão muda a realidade das famílias"></textarea>
-              </div>
-              <div class="mission-form__group">
-                <label for="financeiroMissao">Saúde financeira e produtiva</label>
-                <textarea id="financeiroMissao" name="financeiroMissao" placeholder="Estimativas de investimento, break-even, margens"></textarea>
-              </div>
-              <div class="mission-form__group">
-                <label for="doacoesMissao">Doações e aliados recomendados</label>
-                <textarea id="doacoesMissao" name="doacoesMissao" placeholder="Sugestões de doadores, valores alvo e contrapartidas"></textarea>
-              </div>
-              <div class="mission-form__group">
-                <label for="proximosPassos">Próximos passos automáticos</label>
-                <textarea id="proximosPassos" name="proximosPassos" placeholder="O sistema sugerirá um roteiro de execução"></textarea>
-              </div>
-              <div class="mission-form__group">
-                <label for="observacoesMissao">Observações adicionais</label>
-                <textarea id="observacoesMissao" name="observacoesMissao" placeholder="Espaço livre para registros específicos"></textarea>
-              </div>
-              <div class="mission-form__actions">
-                <button type="button" class="btn-secundario" id="btnLimparMissao">Limpar</button>
-                <button type="submit" class="btn-primario">Salvar rascunho inteligente</button>
-              </div>
-            </form>
+            </div>
           </div>
         </section>
 
@@ -482,7 +485,130 @@
     <div id="impacto" class="section"><?!= include('Impacto'); ?></div>
     <div id="pocos" class="section"><?!= include('Pocos'); ?></div>
     <div id="kanban" class="section"><?!= include('Kanban'); ?></div>
+    <div id="detalhes" class="section"><?!= include('Detalhes'); ?></div>
   </main>
+
+  <div id="seletorCadastroOverlay" class="mission-form-overlay" aria-hidden="true">
+    <div class="mission-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloSeletorCadastro">
+      <header class="space-y-2">
+        <h3 id="tituloSeletorCadastro" class="text-lg font-semibold text-sky-800">O que você deseja cadastrar?</h3>
+        <p class="text-sm text-slate-600">Escolha abaixo para que o formulário inteligente adapte indicadores, checklists e campos automaticamente.</p>
+      </header>
+      <div class="mission-choice-grid">
+        <button type="button" class="mission-choice-button" data-tipo-cadastro="poco">
+          <span class="mission-choice-icon">💧</span>
+          <span>
+            <strong>Perfuração de poços</strong>
+            <small>Fluxo completo de planejamento e operação hídrica.</small>
+          </span>
+        </button>
+        <button type="button" class="mission-choice-button" data-tipo-cadastro="projeto">
+          <span class="mission-choice-icon">🤝</span>
+          <span>
+            <strong>Projeto social</strong>
+            <small>Negócios sociais, iniciativas produtivas e suporte comunitário.</small>
+          </span>
+        </button>
+        <button type="button" class="mission-choice-button" data-tipo-cadastro="doador">
+          <span class="mission-choice-icon">💙</span>
+          <span>
+            <strong>Doadores</strong>
+            <small>Cadastro de aliados, compromissos de aporte e regiões de atuação.</small>
+          </span>
+        </button>
+      </div>
+      <button type="button" class="mission-choice-cancel" data-fechar-seletor>Cancelar</button>
+    </div>
+  </div>
+
+  <div id="missionFormOverlay" class="mission-form-overlay" aria-hidden="true">
+    <div class="mission-form-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloFormularioMissao">
+      <header>
+        <div>
+          <h3 id="tituloFormularioMissao">Formulário inteligente</h3>
+          <p class="text-sm text-slate-600" id="descricaoFormularioMissao">Personalize as missões com indicadores, anexos e próximos passos automáticos.</p>
+        </div>
+        <button type="button" class="close-button" id="btnFecharFormulario" aria-label="Fechar formulário">×</button>
+      </header>
+      <form id="formPlanejamentoMissao" class="mission-form" autocomplete="off">
+        <input type="hidden" id="idMissao" name="idMissao">
+        <div class="mission-form__group">
+          <label for="codigoMissao" id="labelCodigo">Código inteligente</label>
+          <input id="codigoMissao" name="codigoMissao" placeholder="Será gerado automaticamente" readonly>
+        </div>
+        <div class="mission-form__group mission-form__group--cols">
+          <div>
+            <label for="tipoMissao" id="labelTipo">Tipo de missão</label>
+            <select id="tipoMissao" name="tipoMissao" required>
+              <option value="" disabled selected>Selecione</option>
+              <option value="poco">Poço artesiano</option>
+              <option value="projeto">Projeto social</option>
+              <option value="doador">Doador</option>
+            </select>
+          </div>
+          <div>
+            <label for="categoriaMissao" id="labelCategoria">Categoria</label>
+            <select id="categoriaMissao" name="categoriaMissao" disabled>
+              <option value="" disabled selected>Escolha o tipo primeiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="mission-form__group mission-form__group--cols">
+          <div>
+            <label for="tituloMissao" id="labelTitulo">Nome da missão</label>
+            <input id="tituloMissao" name="tituloMissao" placeholder="Ex.: Missão Água Viva - Sítio Novo" required>
+          </div>
+          <div>
+            <label for="responsavelMissao" id="labelResponsavel">Responsável direto</label>
+            <input id="responsavelMissao" name="responsavelMissao" placeholder="Quem lidera em campo">
+          </div>
+        </div>
+        <div class="mission-form__group mission-form__group--cols">
+          <div>
+            <label for="estadoMissao" id="labelEstado">Estado</label>
+            <input id="estadoMissao" name="estadoMissao" placeholder="UF" maxlength="2">
+          </div>
+          <div>
+            <label for="municipioMissao" id="labelMunicipio">Município / Comunidade</label>
+            <input id="municipioMissao" name="municipioMissao" placeholder="Localidade atendida">
+          </div>
+          <div>
+            <label for="familiasAtendidas" id="labelFamilias">Famílias atendidas</label>
+            <input id="familiasAtendidas" name="familiasAtendidas" type="number" min="0" placeholder="0">
+          </div>
+        </div>
+        <div class="mission-form__group">
+          <label for="indicadoresMissao" id="labelIndicadores">Indicadores sugeridos</label>
+          <textarea id="indicadoresMissao" name="indicadoresMissao" placeholder="O sistema trará indicadores conforme o tipo escolhido"></textarea>
+        </div>
+        <div class="mission-form__group">
+          <label for="impactoPrevisto" id="labelImpacto">Impacto previsto</label>
+          <textarea id="impactoPrevisto" name="impactoPrevisto" placeholder="Como essa missão muda a realidade das famílias"></textarea>
+        </div>
+        <div class="mission-form__group">
+          <label for="financeiroMissao" id="labelFinanceiro">Saúde financeira e produtiva</label>
+          <textarea id="financeiroMissao" name="financeiroMissao" placeholder="Estimativas de investimento, break-even, margens"></textarea>
+        </div>
+        <div class="mission-form__group">
+          <label for="doacoesMissao" id="labelDoacoes">Doações e aliados recomendados</label>
+          <textarea id="doacoesMissao" name="doacoesMissao" placeholder="Sugestões de doadores, valores alvo e contrapartidas"></textarea>
+        </div>
+        <div class="mission-form__group">
+          <label for="proximosPassos" id="labelPassos">Próximos passos automáticos</label>
+          <textarea id="proximosPassos" name="proximosPassos" placeholder="O sistema sugerirá um roteiro de execução"></textarea>
+        </div>
+        <div class="mission-form__group">
+          <label for="observacoesMissao" id="labelObservacoes">Observações adicionais</label>
+          <textarea id="observacoesMissao" name="observacoesMissao" placeholder="Espaço livre para registros específicos"></textarea>
+        </div>
+        <div class="mission-form__actions">
+          <button type="button" class="btn-secundario" id="btnCancelarMissao">Cancelar</button>
+          <button type="button" class="btn-secundario" id="btnLimparMissao">Limpar</button>
+          <button type="submit" class="btn-primario">Salvar registro inteligente</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <div id="detalhesOverlay" class="detail-overlay" aria-hidden="true" role="dialog">
     <div class="detail-modal" role="document">
@@ -512,11 +638,202 @@
       const donorContainer = document.getElementById('donorRanking');
       const missionOverview = document.getElementById('missionOverviewCards');
       const missionInsightsList = document.getElementById('missionInsights');
+      const activitiesList = document.getElementById('recentActivities');
+      const kanbanPreview = document.getElementById('kanbanPreview');
+      const ganttPreview = document.getElementById('ganttPreview');
+      let ganttPreviewChart = null;
       const { escapeHtml, formatarNumero, formatarMoeda, criarAtributoDetalhes } = window;
 
       const placeholder = (element, mensagem) => {
         if (!element) return;
         element.innerHTML = `<div class="hub-empty">${escapeHtml(mensagem)}</div>`;
+      };
+
+      const parseDataValor = (valor) => {
+        if (!valor) return null;
+        if (valor instanceof Date && !isNaN(valor.getTime())) return valor;
+        const tentativaDireta = new Date(valor);
+        if (!isNaN(tentativaDireta.getTime())) return tentativaDireta;
+        if (typeof valor === 'string') {
+          const partes = valor.split(/[\/-]/);
+          if (partes.length === 3) {
+            const [dia, mes, ano] = partes.map(p => parseInt(p, 10));
+            if (!Number.isNaN(dia) && !Number.isNaN(mes) && !Number.isNaN(ano)) {
+              const dataBr = new Date(ano < 100 ? 2000 + ano : ano, (mes || 1) - 1, dia || 1);
+              if (!isNaN(dataBr.getTime())) return dataBr;
+            }
+          }
+        }
+        return null;
+      };
+
+      const normalizarStatus = (valor) => {
+        if (!valor) return 'Solicitado';
+        const texto = String(valor).toLowerCase();
+        if (texto.includes('concl') || texto.includes('final')) return 'Concluído';
+        if (texto.includes('exec') || texto.includes('obra')) return 'Execução';
+        if (texto.includes('plan') || texto.includes('prep')) return 'Planejamento';
+        return 'Solicitado';
+      };
+
+      const renderRecentActivities = (missoes, projetos) => {
+        if (!activitiesList) return;
+        const eventos = [];
+        const adicionarEvento = (item = {}, tipo) => {
+          if (!item) return;
+          const data = parseDataValor(item.ultimaAtualizacao || item.data || item.inicio || item.previsaoInicio || item.criadoEm || item.atualizadoEm);
+          const titulo = item.titulo || item.poco || item.nome || (tipo === 'missao' ? 'Missão' : 'Projeto');
+          const contexto = item.motivo || item.descricao || item.status || item.etapa || item.categoria || '';
+          const responsavel = item.responsavel || item.contato || item.responsavelDireto || '';
+          eventos.push({
+            titulo,
+            contexto,
+            responsavel,
+            tipo,
+            raw: item,
+            data: data ? data.getTime() : 0,
+            dataObjeto: data
+          });
+        };
+
+        (Array.isArray(projetos) ? projetos : []).forEach(item => adicionarEvento(item, 'projeto'));
+        (Array.isArray(missoes) ? missoes : []).forEach(item => adicionarEvento(item, 'missao'));
+
+        if (!eventos.length) {
+          placeholder(activitiesList, 'Cadastre novas ações para acompanhar a linha do tempo da missão.');
+          return;
+        }
+
+        eventos.sort((a, b) => (b.data || 0) - (a.data || 0));
+        const selecionados = eventos.slice(0, 5);
+        activitiesList.innerHTML = selecionados.map(evento => {
+          const dataFormatada = evento.dataObjeto
+            ? evento.dataObjeto.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+            : 'Data não informada';
+          const detalheAttr = criarAtributoDetalhes({
+            titulo: evento.titulo,
+            subtitulo: `${dataFormatada} • ${evento.tipo === 'missao' ? 'Missão' : 'Projeto/Poço'}`,
+            descricao: evento.contexto || 'Atualização recente registrada no painel vivo.',
+            campos: [
+              { label: 'Tipo', valor: evento.tipo === 'missao' ? 'Missão prioritária' : 'Projeto operacional' },
+              { label: 'Responsável', valor: evento.responsavel || 'Não informado' },
+              { label: 'Status', valor: evento.raw.status || evento.raw.etapa || 'Sem status' }
+            ],
+            acao: { label: 'Abrir gestão', destino: 'gestao' }
+          });
+          return `
+            <li class="mission-activities__item" ${detalheAttr} role="button" tabindex="0">
+              <strong>${escapeHtml(evento.titulo)}</strong>
+              <span>${escapeHtml(evento.contexto || 'Registro sem descrição adicional')}</span>
+              <span>${escapeHtml(dataFormatada)}${evento.responsavel ? ` • ${escapeHtml(evento.responsavel)}` : ''}</span>
+            </li>
+          `;
+        }).join('');
+      };
+
+      const renderKanbanPreview = (projetos) => {
+        if (!kanbanPreview) return;
+        const lista = Array.isArray(projetos) ? projetos : [];
+        if (!lista.length) {
+          placeholder(kanbanPreview, 'Cadastre projetos ou poços para visualizar o fluxo do kanban.');
+          return;
+        }
+        const colunasConfig = [
+          { chave: 'Solicitado', titulo: 'Solicitado' },
+          { chave: 'Planejamento', titulo: 'Planejamento' },
+          { chave: 'Execução', titulo: 'Execução' },
+          { chave: 'Concluído', titulo: 'Concluído' }
+        ];
+        const agrupado = lista.reduce((acc, item) => {
+          const statusNormalizado = normalizarStatus(item.status || item.etapa);
+          const chave = colunasConfig.find(col => col.titulo === statusNormalizado)?.titulo || 'Solicitado';
+          if (!acc[chave]) acc[chave] = [];
+          acc[chave].push(item);
+          return acc;
+        }, {});
+        kanbanPreview.innerHTML = colunasConfig.map(coluna => {
+          const itens = (agrupado[coluna.titulo] || []).slice(0, 3);
+          if (!itens.length) {
+            return `
+              <div class="kanban-preview__column">
+                <h4>${escapeHtml(coluna.titulo)}</h4>
+                <div class="hub-empty">Sem cartões</div>
+              </div>
+            `;
+          }
+          const cards = itens.map(item => {
+            const detalheAttr = criarAtributoDetalhes({
+              titulo: item.poco || item.titulo || 'Missão',
+              subtitulo: item.etapa || item.status || 'Etapa não informada',
+              descricao: item.descricao || '',
+              campos: [
+                { label: 'Responsável', valor: item.responsavel || 'Não informado' },
+                { label: 'Próxima ação', valor: item.proximaAcao || 'Não definida' },
+                { label: 'Categoria', valor: item.categoria || 'Não informada' }
+              ],
+              acao: { label: 'Ir para o kanban', destino: 'kanban' }
+            });
+            return `
+              <div class="kanban-preview__item" ${detalheAttr} role="button" tabindex="0">
+                <strong>${escapeHtml(item.poco || item.titulo || 'Missão')}</strong>
+                <span>${escapeHtml(item.municipio || item.local || item.estado || 'Local não informado')}</span>
+                ${item.proximaAcao ? `<span>Próximo passo: ${escapeHtml(item.proximaAcao)}</span>` : ''}
+              </div>
+            `;
+          }).join('');
+          return `
+            <div class="kanban-preview__column">
+              <h4>${escapeHtml(coluna.titulo)}</h4>
+              ${cards}
+            </div>
+          `;
+        }).join('');
+      };
+
+      const renderGanttPreview = (projetos) => {
+        if (!ganttPreview) return;
+        if (!window.Highcharts || typeof Highcharts.ganttChart !== 'function') {
+          placeholder(ganttPreview, 'Ative o módulo Gantt do Highcharts para visualizar a linha do tempo.');
+          return;
+        }
+        const lista = Array.isArray(projetos) ? projetos : [];
+        const tarefas = lista.slice(0, 6).map((item, index) => {
+          const inicio = parseDataValor(item.inicio || item.data || item.previsaoInicio);
+          const fim = parseDataValor(item.fim || item.previsaoFim || item.entregaPrevista);
+          if (!inicio && !fim) return null;
+          const inicioMs = (inicio || (fim ? new Date(fim.getTime() - 3 * 86400000) : new Date())).getTime();
+          const fimMs = (fim || new Date(inicioMs + 7 * 86400000)).getTime();
+          return {
+            id: `preview-${index}`,
+            name: item.poco || item.titulo || item.nome || `Tarefa ${index + 1}`,
+            start: inicioMs,
+            end: fimMs,
+            dataLabels: { enabled: false }
+          };
+        }).filter(Boolean);
+
+        if (!tarefas.length) {
+          placeholder(ganttPreview, 'Nenhuma etapa com datas definidas para montar o gantt.');
+          return;
+        }
+
+        if (ganttPreviewChart) {
+          ganttPreviewChart.destroy();
+          ganttPreviewChart = null;
+        }
+
+        ganttPreviewChart = Highcharts.ganttChart('ganttPreview', {
+          title: { text: null },
+          credits: { enabled: false },
+          xAxis: { type: 'datetime' },
+          yAxis: { type: 'category', grid: { enabled: true }, uniqueNames: true },
+          navigator: { enabled: false },
+          series: [{
+            name: 'Linha do tempo',
+            data: tarefas,
+            pointPadding: 0.25
+          }]
+        });
       };
 
       const renderMissionOverview = (resumo, missoes, projetos, impacto) => {
@@ -631,6 +948,9 @@
 
         renderMissionOverview(resumo, missoes, projetos, impacto);
         renderMissionInsights(resumo, missoes, projetos, impacto, doadores);
+        renderRecentActivities(missoes, projetos);
+        renderKanbanPreview(projetos);
+        renderGanttPreview(projetos);
 
         if (scoreContainer) {
           scoreContainer.innerHTML = [
@@ -805,6 +1125,7 @@
     })();
   </script>
 
+
   <script>
     (function() {
       const form = document.getElementById('formPlanejamentoMissao');
@@ -822,14 +1143,69 @@
       const financeiroField = document.getElementById('financeiroMissao');
       const doacoesField = document.getElementById('doacoesMissao');
       const passosField = document.getElementById('proximosPassos');
+      const observacoesField = document.getElementById('observacoesMissao');
       const checklistList = document.getElementById('missionAutoChecklist');
       const draftsList = document.getElementById('missionDrafts');
       const feedbackBox = document.getElementById('missionFeedback');
       const codigoInput = document.getElementById('codigoMissao');
       const limparBtn = document.getElementById('btnLimparMissao');
+      const cancelarBtn = document.getElementById('btnCancelarMissao');
+      const idInput = document.getElementById('idMissao');
+      const descricaoFormulario = document.getElementById('descricaoFormularioMissao');
+
+      const labelCodigo = document.getElementById('labelCodigo');
+      const labelTipo = document.getElementById('labelTipo');
+      const labelCategoria = document.getElementById('labelCategoria');
+      const labelTitulo = document.getElementById('labelTitulo');
+      const labelResponsavel = document.getElementById('labelResponsavel');
+      const labelEstado = document.getElementById('labelEstado');
+      const labelMunicipio = document.getElementById('labelMunicipio');
+      const labelFamilias = document.getElementById('labelFamilias');
+      const labelIndicadores = document.getElementById('labelIndicadores');
+      const labelImpacto = document.getElementById('labelImpacto');
+      const labelFinanceiro = document.getElementById('labelFinanceiro');
+      const labelDoacoes = document.getElementById('labelDoacoes');
+      const labelPassos = document.getElementById('labelPassos');
+      const labelObservacoes = document.getElementById('labelObservacoes');
+
+      const btnNovaEntrada = document.getElementById('btnNovaEntrada');
+      const seletorOverlay = document.getElementById('seletorCadastroOverlay');
+      const missionFormOverlay = document.getElementById('missionFormOverlay');
+      const btnFecharFormulario = document.getElementById('btnFecharFormulario');
+      const botoesSeletor = seletorOverlay ? seletorOverlay.querySelectorAll('[data-tipo-cadastro]') : [];
+      const btnCancelarSeletor = seletorOverlay ? seletorOverlay.querySelector('[data-fechar-seletor]') : null;
+
       const { escapeHtml, formatarMoeda } = window;
+      const body = document.body;
 
       if (!tipoSelect || !categoriaSelect) return;
+
+      const labelsPadrao = {
+        descricao: 'Personalize as missões com indicadores, anexos e próximos passos automáticos.',
+        categoria: 'Categoria',
+        titulo: 'Nome da missão',
+        tituloPlaceholder: 'Ex.: Missão Água Viva - Sítio Novo',
+        responsavel: 'Responsável direto',
+        responsavelPlaceholder: 'Quem lidera em campo',
+        estado: 'Estado',
+        estadoPlaceholder: 'UF',
+        municipio: 'Município / Comunidade',
+        municipioPlaceholder: 'Localidade atendida',
+        familias: 'Famílias atendidas',
+        familiasPlaceholder: '0',
+        indicadores: 'Indicadores sugeridos',
+        indicadoresPlaceholder: 'O sistema trará indicadores conforme o tipo escolhido',
+        impacto: 'Impacto previsto',
+        impactoPlaceholder: 'Como essa missão muda a realidade das famílias',
+        financeiro: 'Saúde financeira e produtiva',
+        financeiroPlaceholder: 'Estimativas de investimento, break-even, margens',
+        doacoes: 'Doações e aliados recomendados',
+        doacoesPlaceholder: 'Sugestões de doadores, valores alvo e contrapartidas',
+        proximosPassos: 'Próximos passos automáticos',
+        proximosPassosPlaceholder: 'O sistema sugerirá um roteiro de execução',
+        observacoes: 'Observações adicionais',
+        observacoesPlaceholder: 'Espaço livre para registros específicos'
+      };
 
       const coordenadoresRegionais = {
         'CE': 'Ana Paula — Sertão Central',
@@ -843,6 +1219,12 @@
       const configMissoes = {
         poco: {
           prefixo: 'POC',
+          labels: {
+            descricao: 'Detalhe perfuração, equipe e indicadores técnicos.',
+            categoria: 'Frente de operação',
+            tituloPlaceholder: 'Ex.: Poço Águas do Sertão - Comunidade X',
+            familiasPlaceholder: 'Famílias estimadas atendidas'
+          },
           checklistBase: [
             'Validar solicitação comunitária com visita técnica.',
             'Confirmar disponibilidade de energia e logística de perfuratriz.',
@@ -883,6 +1265,14 @@
         },
         projeto: {
           prefixo: 'PRO',
+          labels: {
+            descricao: 'Descreva iniciativas sociais, metas e indicadores produtivos.',
+            categoria: 'Categoria do projeto social',
+            tituloPlaceholder: 'Ex.: Padaria Solidária - Vila Esperança',
+            familiasPlaceholder: 'Famílias impactadas',
+            doacoes: 'Parceiros estratégicos',
+            doacoesPlaceholder: 'Registre aliados, aportes e contrapartidas previstas'
+          },
           checklistBase: [
             'Validar diagnóstico socioeconômico da comunidade.',
             'Calcular orçamento de implantação e capital de giro inicial.',
@@ -980,12 +1370,209 @@
               familiasPadrao: 50
             }
           }
+        },
+        doador: {
+          prefixo: 'DOA',
+          labels: {
+            descricao: 'Centralize os dados do aliado para personalizar a jornada de relacionamento.',
+            categoria: 'Tipo de apoio',
+            titulo: 'Nome do doador',
+            tituloPlaceholder: 'Ex.: Instituto Água Viva',
+            responsavel: 'Contato principal',
+            responsavelPlaceholder: 'Responsável pela relação',
+            estado: 'Estado de atuação principal',
+            municipio: 'Abrangência / Região',
+            municipioPlaceholder: 'Região atendida',
+            familias: 'Projetos apoiados',
+            familiasPlaceholder: 'Número de iniciativas apoiadas',
+            indicadores: 'Indicadores de parceria',
+            impacto: 'Expectativas de impacto',
+            impactoPlaceholder: 'Resultados esperados e metas de impacto',
+            financeiro: 'Compromissos financeiros',
+            financeiroPlaceholder: 'Valores previstos, forma de repasse e vigência',
+            doacoes: 'Histórico de aportes e contrapartidas',
+            doacoesPlaceholder: 'Registre campanhas, aportes e contrapartidas combinadas',
+            proximosPassos: 'Próximos passos com o doador',
+            proximosPassosPlaceholder: 'Defina a agenda de relacionamento e entregas',
+            observacoes: 'Notas internas e follow-up',
+            observacoesPlaceholder: 'Notas internas, alertas e anexos a providenciar'
+          },
+          checklistBase: [
+            'Validar critérios de prestação de contas e SLA de comunicação.',
+            'Registrar compromissos financeiros e vigência do acordo.',
+            'Definir responsáveis internos pelo relacionamento.'
+          ],
+          categorias: {
+            mantenedor: {
+              nome: 'Mantenedor recorrente',
+              indicadores: [
+                'Valor anual comprometido',
+                'Periodicidade das doações',
+                'Projetos prioritários do mantenedor'
+              ],
+              impacto: [
+                'Metas de beneficiários apoiados',
+                'Resultados esperados por área de atuação',
+                'Indicadores compartilhados de reputação'
+              ],
+              financeiro: [
+                'Ticket médio por transferência',
+                'Modalidade de repasse (PIX/TED ou bens)',
+                'Regras de contrapartida financeira'
+              ],
+              doacoes: [
+                'Campanhas recorrentes financiadas',
+                'Demandas de relatórios e evidências',
+                'Benefícios oferecidos ao mantenedor'
+              ],
+              proximosPassos: [
+                'Atualizar prestação de contas trimestral',
+                'Enviar convites para visitas de campo',
+                'Planejar renovação do termo de parceria'
+              ],
+              familiasPadrao: 4
+            },
+            institucional: {
+              nome: 'Parceiro institucional',
+              indicadores: [
+                'Áreas de atuação institucional',
+                'Recursos não financeiros ofertados',
+                'Capilaridade territorial'
+              ],
+              impacto: [
+                'Fortalecimento da governança local',
+                'Engajamento de voluntários especializados',
+                'Visibilidade compartilhada da missão'
+              ],
+              financeiro: [
+                'Investimentos em capacitação e comunicação',
+                'Aportes destinados a infraestrutura',
+                'Contrapartidas de advocacy'
+              ],
+              doacoes: [
+                'Eventos e campanhas cocriadas',
+                'Rede de contatos mobilizada',
+                'Conexões estratégicas fornecidas'
+              ],
+              proximosPassos: [
+                'Planejar agenda de eventos conjuntos',
+                'Mapear demandas de comunicação',
+                'Coordenar plano de relacionamento anual'
+              ],
+              familiasPadrao: 3
+            },
+            aliadoLocal: {
+              nome: 'Aliado comunitário',
+              indicadores: [
+                'Comunidades apoiadas',
+                'Recursos logísticos disponibilizados',
+                'Número de voluntários ativos'
+              ],
+              impacto: [
+                'Fortalecimento da base comunitária',
+                'Agilidade na mobilização local',
+                'Cocriação de iniciativas sociais'
+              ],
+              financeiro: [
+                'Aportes em insumos e logística',
+                'Custos operacionais cobertos',
+                'Metas de captação conjunta'
+              ],
+              doacoes: [
+                'Campanhas locais lideradas',
+                'Eventos comunitários patrocinados',
+                'Ações de sensibilização realizadas'
+              ],
+              proximosPassos: [
+                'Programar reuniões de acompanhamento mensais',
+                'Definir indicadores compartilhados',
+                'Acompanhar satisfação das comunidades atendidas'
+              ],
+              familiasPadrao: 2
+            }
+          }
         }
       };
 
-      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('\n');
+      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('
+');
       const rascunhos = [];
       let codigoBase = '';
+      let modoEdicao = false;
+
+      const atualizarBloqueioCorpo = () => {
+        if (document.querySelector('.mission-form-overlay.visible') || document.querySelector('.detail-overlay.visible')) {
+          body.classList.add('detail-open');
+        } else {
+          body.classList.remove('detail-open');
+        }
+      };
+
+      const abrirOverlay = (elemento) => {
+        if (!elemento) return;
+        elemento.classList.add('visible');
+        elemento.setAttribute('aria-hidden', 'false');
+        atualizarBloqueioCorpo();
+      };
+
+      const fecharOverlay = (elemento) => {
+        if (!elemento) return;
+        elemento.classList.remove('visible');
+        elemento.setAttribute('aria-hidden', 'true');
+        atualizarBloqueioCorpo();
+      };
+
+      const abrirFormulario = () => {
+        if (!missionFormOverlay) return;
+        abrirOverlay(missionFormOverlay);
+        setTimeout(() => tituloInput && tituloInput.focus(), 60);
+      };
+
+      const fecharFormulario = () => {
+        modoEdicao = false;
+        fecharOverlay(missionFormOverlay);
+      };
+
+      const abrirSeletor = () => {
+        if (!seletorOverlay) return;
+        limparFormulario();
+        aplicarRotulos('');
+        abrirOverlay(seletorOverlay);
+        setTimeout(() => {
+          const primeiro = seletorOverlay.querySelector('[data-tipo-cadastro]');
+          if (primeiro) primeiro.focus();
+        }, 60);
+      };
+
+      const fecharSeletor = () => fecharOverlay(seletorOverlay);
+      function aplicarRotulos(tipo) {
+        const config = configMissoes[tipo] || {};
+        const labels = Object.assign({}, labelsPadrao, config.labels || {});
+        if (descricaoFormulario) descricaoFormulario.textContent = labels.descricao || labelsPadrao.descricao;
+        if (labelCategoria) labelCategoria.textContent = labels.categoria || labelsPadrao.categoria;
+        if (labelTitulo) labelTitulo.textContent = labels.titulo || labelsPadrao.titulo;
+        if (labelResponsavel) labelResponsavel.textContent = labels.responsavel || labelsPadrao.responsavel;
+        if (labelEstado) labelEstado.textContent = labels.estado || labelsPadrao.estado;
+        if (labelMunicipio) labelMunicipio.textContent = labels.municipio || labelsPadrao.municipio;
+        if (labelFamilias) labelFamilias.textContent = labels.familias || labelsPadrao.familias;
+        if (labelIndicadores) labelIndicadores.textContent = labels.indicadores || labelsPadrao.indicadores;
+        if (labelImpacto) labelImpacto.textContent = labels.impacto || labelsPadrao.impacto;
+        if (labelFinanceiro) labelFinanceiro.textContent = labels.financeiro || labelsPadrao.financeiro;
+        if (labelDoacoes) labelDoacoes.textContent = labels.doacoes || labelsPadrao.doacoes;
+        if (labelPassos) labelPassos.textContent = labels.proximosPassos || labelsPadrao.proximosPassos;
+        if (labelObservacoes) labelObservacoes.textContent = labels.observacoes || labelsPadrao.observacoes;
+        if (tituloInput) tituloInput.placeholder = labels.tituloPlaceholder || labelsPadrao.tituloPlaceholder;
+        if (responsavelInput) responsavelInput.placeholder = labels.responsavelPlaceholder || labelsPadrao.responsavelPlaceholder;
+        if (estadoInput) estadoInput.placeholder = labels.estadoPlaceholder || labelsPadrao.estadoPlaceholder;
+        if (municipioInput) municipioInput.placeholder = labels.municipioPlaceholder || labelsPadrao.municipioPlaceholder;
+        if (familiasInput) familiasInput.placeholder = labels.familiasPlaceholder || labelsPadrao.familiasPlaceholder;
+        if (indicadoresField) indicadoresField.placeholder = labels.indicadoresPlaceholder || labelsPadrao.indicadoresPlaceholder;
+        if (impactoField) impactoField.placeholder = labels.impactoPlaceholder || labelsPadrao.impactoPlaceholder;
+        if (financeiroField) financeiroField.placeholder = labels.financeiroPlaceholder || labelsPadrao.financeiroPlaceholder;
+        if (doacoesField) doacoesField.placeholder = labels.doacoesPlaceholder || labelsPadrao.doacoesPlaceholder;
+        if (passosField) passosField.placeholder = labels.proximosPassosPlaceholder || labelsPadrao.proximosPassosPlaceholder;
+        if (observacoesField) observacoesField.placeholder = labels.observacoesPlaceholder || labelsPadrao.observacoesPlaceholder;
+      }
 
       function atualizarCategorias() {
         const tipo = tipoSelect.value;
@@ -998,10 +1585,17 @@
         if (!configTipo) return;
         const categorias = configTipo.categorias || {};
         const chaves = Object.keys(categorias);
-        if (!chaves.length) return;
+        if (!chaves.length) {
+          categoriaSelect.innerHTML = '<option value="" disabled selected>Categoria não disponível</option>';
+          categoriaSelect.disabled = true;
+          return;
+        }
         if (tipo === 'poco') {
           categoriaSelect.innerHTML = `<option value="${escapeHtml(chaves[0])}" selected>${escapeHtml(categorias[chaves[0]].nome)}</option>`;
           categoriaSelect.disabled = true;
+        } else if (chaves.length === 1) {
+          categoriaSelect.innerHTML = `<option value="${escapeHtml(chaves[0])}" selected>${escapeHtml(categorias[chaves[0]].nome)}</option>`;
+          categoriaSelect.disabled = false;
         } else {
           categoriaSelect.disabled = false;
           categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a categoria</option>' + chaves.map(chave => `<option value="${escapeHtml(chave)}">${escapeHtml(categorias[chave].nome)}</option>`).join('');
@@ -1032,7 +1626,7 @@
 
       function sugerirResponsavel() {
         const uf = (estadoInput.value || '').toUpperCase();
-        if (!uf || responsavelInput.value) return;
+        if (!uf || responsavelInput.value || tipoSelect.value === 'doador') return;
         if (coordenadoresRegionais[uf]) {
           responsavelInput.value = coordenadoresRegionais[uf];
         }
@@ -1041,21 +1635,26 @@
       function atualizarChecklist(itens) {
         if (!checklistList) return;
         if (!itens.length) {
-          checklistList.innerHTML = '<li class="hub-empty">Sem etapas recomendadas para este tipo de missão.</li>';
+          checklistList.innerHTML = '<li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>';
           return;
         }
         checklistList.innerHTML = itens.map(item => `<li class="mission-autofill__item">${escapeHtml(item)}</li>`).join('');
       }
 
       function sugerirDoadoresAutomatizados() {
-        if (!doacoesField) return;
+        if (!doacoesField || tipoSelect.value === 'doador') return;
         const dados = window.__dadosMissoesAtuais;
         if (!dados || !Array.isArray(dados.doadores) || !dados.doadores.length) return;
         const principais = dados.doadores.slice(0, 2).map(item => `${item.nome || 'Aliado'} • Contribuição média ${formatarMoeda(item.valor || 0)}`);
         const textoAtual = doacoesField.value.trim();
-        const sugestao = '\nAliados recomendados:\n' + principais.map(item => `• ${item}`).join('\n');
+        const sugestao = '
+Aliados recomendados:
+' + principais.map(item => `• ${item}`).join('
+');
         if (!textoAtual.includes('Aliados recomendados')) {
-          doacoesField.value = `${textoAtual}${textoAtual ? '\n\n' : ''}${sugestao}`.trim();
+          doacoesField.value = `${textoAtual}${textoAtual ? '
+
+' : ''}${sugestao}`.trim();
         }
       }
 
@@ -1067,22 +1666,25 @@
         const categorias = configTipo.categorias || {};
         const chaveCategoria = tipo === 'poco'
           ? Object.keys(categorias)[0]
-          : categoriaSelect.value;
+          : (categoriaSelect.value || Object.keys(categorias)[0]);
         const configCategoria = categorias[chaveCategoria];
         if (!configCategoria) return;
 
-        indicadoresField.value = formatarLista(configCategoria.indicadores);
-        impactoField.value = formatarLista(configCategoria.impacto);
-        financeiroField.value = formatarLista(configCategoria.financeiro);
-        doacoesField.value = formatarLista(configCategoria.doacoes);
+        const listaIndicadores = formatarLista(configCategoria.indicadores);
+        const listaImpacto = formatarLista(configCategoria.impacto);
+        const listaFinanceiro = formatarLista(configCategoria.financeiro);
+        const listaDoacoes = formatarLista(configCategoria.doacoes);
         const checklist = [...(configTipo.checklistBase || []), ...(configCategoria.proximosPassos || [])];
-        passosField.value = formatarLista(checklist);
+        const listaPassos = formatarLista(checklist);
+
+        if (!modoEdicao || !indicadoresField.value.trim()) indicadoresField.value = listaIndicadores;
+        if (!modoEdicao || !impactoField.value.trim()) impactoField.value = listaImpacto;
+        if (!modoEdicao || !financeiroField.value.trim()) financeiroField.value = listaFinanceiro;
+        if (!modoEdicao || !doacoesField.value.trim()) doacoesField.value = listaDoacoes;
+        if (!modoEdicao || !passosField.value.trim()) passosField.value = listaPassos;
+        if (!familiasInput.value) familiasInput.value = configCategoria.familiasPadrao || '';
+
         atualizarChecklist(checklist);
-
-        if (!familiasInput.value) {
-          familiasInput.value = configCategoria.familiasPadrao || '';
-        }
-
         sugerirResponsavel();
         atualizarCodigo();
         sugerirDoadoresAutomatizados();
@@ -1090,23 +1692,26 @@
 
       function limparFormulario() {
         form.reset();
+        codigoBase = '';
+        modoEdicao = false;
+        if (idInput) idInput.value = '';
         categoriaSelect.innerHTML = '<option value="" disabled selected>Escolha o tipo primeiro</option>';
         categoriaSelect.disabled = true;
-        checklistList.innerHTML = '<li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>';
-        codigoBase = '';
-        codigoInput.value = '';
-        indicadoresField.value = '';
-        impactoField.value = '';
-        financeiroField.value = '';
-        doacoesField.value = '';
-        passosField.value = '';
-        familiasInput.value = '';
+        atualizarChecklist([]);
+        if (codigoInput) codigoInput.value = '';
+        if (indicadoresField) indicadoresField.value = '';
+        if (impactoField) impactoField.value = '';
+        if (financeiroField) financeiroField.value = '';
+        if (doacoesField) doacoesField.value = '';
+        if (passosField) passosField.value = '';
+        if (observacoesField) observacoesField.value = '';
+        if (familiasInput) familiasInput.value = '';
         if (feedbackBox) {
           feedbackBox.classList.remove('visible');
           feedbackBox.textContent = '';
         }
+        aplicarRotulos(tipoSelect.value || '');
       }
-
       function renderizarRascunhos() {
         if (!draftsList) return;
         if (!rascunhos.length) {
@@ -1130,13 +1735,56 @@
         exibirFeedback.timeout = setTimeout(() => feedbackBox.classList.remove('visible'), 6000);
       }
 
+      function preencherFormulario(dados = {}) {
+        if (!dados) return;
+        modoEdicao = true;
+        const categoriaValor = dados.categoria || dados.tipoCategoria;
+        if (idInput) idInput.value = dados.id || dados.identificador || '';
+        if (dados.codigo) {
+          codigoInput.value = dados.codigo;
+          codigoBase = dados.codigo.includes('-') ? dados.codigo.split('-').slice(0, -1).join('-') : dados.codigo;
+        }
+        if (tituloInput) tituloInput.value = dados.titulo || dados.nome || tituloInput.value;
+        if (responsavelInput) responsavelInput.value = dados.responsavel || dados.contato || dados.responsavelDireto || responsavelInput.value;
+        if (estadoInput) estadoInput.value = (dados.estado || dados.uf || estadoInput.value || '').toUpperCase();
+        if (municipioInput) municipioInput.value = dados.municipio || dados.cidade || dados.comunidade || dados.local || municipioInput.value;
+        if (familiasInput) familiasInput.value = dados.familias || dados.familiasAtendidas || dados.projetosApoiados || familiasInput.value;
+        if (indicadoresField && (dados.indicadores || dados.indicadoresSugeridos)) indicadoresField.value = dados.indicadores || dados.indicadoresSugeridos;
+        if (impactoField && (dados.impacto || dados.impactoPrevisto)) impactoField.value = dados.impacto || dados.impactoPrevisto;
+        if (financeiroField && (dados.financeiro || dados.saudeFinanceira)) financeiroField.value = dados.financeiro || dados.saudeFinanceira;
+        if (doacoesField && (dados.doacoes || dados.aportes || dados.aliados)) doacoesField.value = dados.doacoes || dados.aportes || dados.aliados;
+        if (passosField && dados.proximosPassos) passosField.value = dados.proximosPassos;
+        if (observacoesField && (dados.observacoes || dados.notas)) observacoesField.value = dados.observacoes || dados.notas;
+        if (categoriaValor && categoriaSelect.querySelector(`option[value="${categoriaValor}"]`)) {
+          categoriaSelect.value = categoriaValor;
+        }
+        atualizarCodigo();
+      }
+
+      function iniciarNovoCadastro(tipo) {
+        if (!tipo) return;
+        modoEdicao = false;
+        limparFormulario();
+        tipoSelect.value = tipo;
+        aplicarRotulos(tipo);
+        atualizarCategorias();
+        if (tipo === 'poco' || categoriaSelect.options.length === 1) {
+          categoriaSelect.selectedIndex = 0;
+        }
+        gerarCodigoBase();
+        preencherSugestoes();
+        fecharSeletor();
+        abrirFormulario();
+      }
+
       form.addEventListener('submit', evento => {
         evento.preventDefault();
         const dados = {
           codigo: codigoInput.value || 'MISSÃO-S/ID',
           titulo: tituloInput.value || 'Missão sem título',
           local: `${municipioInput.value || 'Local não informado'} / ${(estadoInput.value || '').toUpperCase() || '--'}`,
-          resumo: (passosField.value.split('\n')[0] || 'Plano inicial registrado.').replace(/^•\s*/, '')
+          resumo: (passosField.value.split('
+')[0] || 'Plano inicial registrado.').replace(/^•\s*/, '')
         };
         rascunhos.push(dados);
         renderizarRascunhos();
@@ -1144,6 +1792,7 @@
       });
 
       tipoSelect.addEventListener('change', () => {
+        aplicarRotulos(tipoSelect.value);
         atualizarCategorias();
         gerarCodigoBase();
         preencherSugestoes();
@@ -1159,13 +1808,78 @@
       tituloInput.addEventListener('change', () => {
         if (!codigoBase) gerarCodigoBase();
       });
-      limparBtn.addEventListener('click', limparFormulario);
+      if (limparBtn) limparBtn.addEventListener('click', limparFormulario);
+      if (cancelarBtn) cancelarBtn.addEventListener('click', fecharFormulario);
+      if (btnFecharFormulario) btnFecharFormulario.addEventListener('click', fecharFormulario);
 
-      document.addEventListener('dadosMissoesAtualizados', preencherSugestoes);
+      if (missionFormOverlay) {
+        missionFormOverlay.addEventListener('click', evento => {
+          if (evento.target === missionFormOverlay) fecharFormulario();
+        });
+      }
+
+      if (seletorOverlay) {
+        seletorOverlay.addEventListener('click', evento => {
+          if (evento.target === seletorOverlay) fecharSeletor();
+        });
+      }
+
+      if (btnCancelarSeletor) {
+        btnCancelarSeletor.addEventListener('click', fecharSeletor);
+      }
+
+      if (btnNovaEntrada) {
+        btnNovaEntrada.addEventListener('click', abrirSeletor);
+      }
+
+      botoesSeletor.forEach(botao => {
+        botao.addEventListener('click', () => iniciarNovoCadastro(botao.getAttribute('data-tipo-cadastro')));
+      });
+
+      document.addEventListener('keydown', evento => {
+        if (evento.key !== 'Escape') return;
+        if (missionFormOverlay && missionFormOverlay.classList.contains('visible')) {
+          fecharFormulario();
+        } else if (seletorOverlay && seletorOverlay.classList.contains('visible')) {
+          fecharSeletor();
+        }
+      });
+
+      document.addEventListener('dadosMissoesAtualizados', () => {
+        if (!modoEdicao && tipoSelect.value) preencherSugestoes();
+      });
 
       renderizarRascunhos();
+      aplicarRotulos('');
+      atualizarCategorias();
+
+      window.abrirFormularioCadastro = ({ tipo, dados } = {}) => {
+        modoEdicao = Boolean(dados);
+        limparFormulario();
+        if (tipo) {
+          tipoSelect.value = tipo;
+        }
+        aplicarRotulos(tipoSelect.value || '');
+        atualizarCategorias();
+        if (dados && dados.categoria && categoriaSelect.querySelector(`option[value="${dados.categoria}"]`)) {
+          categoriaSelect.value = dados.categoria;
+        } else if (tipoSelect.value === 'poco' || categoriaSelect.options.length === 1) {
+          categoriaSelect.selectedIndex = 0;
+        }
+        if (dados && dados.codigo) {
+          codigoBase = dados.codigo.includes('-') ? dados.codigo.split('-').slice(0, -1).join('-') : dados.codigo;
+          codigoInput.value = dados.codigo;
+        } else {
+          gerarCodigoBase();
+        }
+        preencherSugestoes();
+        if (dados) preencherFormulario(dados);
+        fecharSeletor();
+        abrirFormulario();
+      };
     })();
   </script>
+
 
   <!-- SCRIPT DE NAVEGAÇÃO -->
   <script>
