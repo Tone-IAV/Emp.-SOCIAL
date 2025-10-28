@@ -29,15 +29,7 @@
     .section { display:none; animation:fadeIn .3s ease; }
     .section.active { display:block; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
-    .map-overlay { position:fixed; inset:0; background:rgba(191,219,254,0.6); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s ease; }
-    .map-overlay.visible { display:flex; opacity:1; pointer-events:auto; }
-    .map-modal { background:linear-gradient(180deg,#ffffff 0%,#e0f2fe 100%); border-radius:24px; max-width:900px; width:100%; padding:28px; box-shadow:0 24px 50px rgba(59,130,246,0.25); position:relative; display:flex; flex-direction:column; gap:16px; }
-    .map-modal h3 { font-size:1.25rem; font-weight:700; color:#0369a1; margin:0; }
-    .map-modal p { color:#0f172a; font-size:0.95rem; margin:0; }
-    .map-close { position:absolute; top:16px; right:16px; border:none; background:#bae6fd; font-size:1.3rem; line-height:1; cursor:pointer; color:#0f172a; border-radius:999px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(14,165,233,0.25); transition:background .2s ease, transform .2s ease; }
-    .map-close:hover { background:#7dd3fc; transform:translateY(-1px); }
     #mapaEstados { width:100%; height:420px; }
-    .map-legend { font-size:0.85rem; color:#0f172a; background:rgba(191,219,254,0.8); border-radius:16px; padding:14px; box-shadow:0 8px 18px rgba(30,64,175,0.15); }
     .gamified-hub { margin:24px 20px 0; padding:28px; border-radius:28px; background:linear-gradient(180deg, rgba(191,219,254,0.65) 0%, rgba(255,255,255,0.96) 100%); box-shadow:0 28px 60px rgba(14,165,233,0.18); border:1px solid rgba(125,211,252,0.35); }
     .gamified-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:28px; align-items:start; }
     @media (max-width: 1024px) { .gamified-grid { grid-template-columns:1fr; } }
@@ -311,7 +303,7 @@
   <nav>
     <div class="title-wrapper">
       <span class="title">💧 Poços Missionários</span>
-      <button id="btnInfoMapa" class="info-button" title="Ver orientação analítica">i</button>
+      <a class="info-button" href="Mapa.html" title="Abrir mapa vivo das missões">i</a>
     </div>
     <div class="flex flex-wrap gap-2">
       <button class="nav-item active" data-target="dashboard">Dashboard</button>
@@ -322,20 +314,6 @@
       <button class="nav-item" data-target="detalhes">Detalhes dinâmicos</button>
     </div>
   </nav>
-
-  <div id="painelMapa" class="map-overlay" aria-hidden="true">
-    <div class="map-modal">
-      <button class="map-close" type="button" aria-label="Fechar mapa">×</button>
-      <div>
-        <h3>Visão geográfica para decisão rápida</h3>
-        <p>Observe onde estão os poços monitorados, os beneficiários alcançados e quais estados demandam reforço de investimento. Utilize esta leitura antes das reuniões executivas ou com doadores.</p>
-      </div>
-      <div id="mapaEstados"></div>
-      <div class="map-legend">
-        <strong>Como interpretar:</strong> selecione um estado no mapa para visualizar o total de poços ativos e a quantidade de beneficiários atendidos. Foque nos estados com menor intensidade para direcionar recursos e mobilização.
-      </div>
-    </div>
-  </div>
 
   <section class="gamified-hub" aria-labelledby="tituloHubGamificado">
     <div class="gamified-grid">
@@ -1943,51 +1921,6 @@
       }
     });
 
-    const overlay = document.getElementById('painelMapa');
-    const btnInfo = document.getElementById('btnInfoMapa');
-    const fechar = overlay ? overlay.querySelector('.map-close') : null;
-
-    const fecharOverlay = () => {
-      if (overlay) {
-        overlay.classList.remove('visible');
-        overlay.setAttribute('aria-hidden', 'true');
-      }
-    };
-
-    const abrirOverlay = () => {
-      if (!overlay) return;
-      overlay.classList.add('visible');
-      overlay.setAttribute('aria-hidden', 'false');
-      if (typeof window.renderMapaDistribuicao === 'function') {
-        window.renderMapaDistribuicao('mapaEstados');
-      } else {
-        console.warn('Função "renderMapaDistribuicao" não encontrada. Certifique-se de carregá-la antes de abrir o painel.');
-      }
-    };
-
-    if (!overlay || !btnInfo || !fechar) {
-      console.warn('Painel do mapa não foi inicializado corretamente. Verifique se os elementos necessários estão presentes.');
-    } else {
-      btnInfo.addEventListener('click', () => {
-        if (overlay.classList.contains('visible')) {
-          fecharOverlay();
-        } else {
-          abrirOverlay();
-        }
-      });
-
-      fechar.addEventListener('click', fecharOverlay);
-
-      overlay.addEventListener('click', evt => {
-        if (evt.target === overlay) fecharOverlay();
-      });
-
-      document.addEventListener('keydown', evt => {
-        if (evt.key === 'Escape' && overlay.classList.contains('visible')) {
-          fecharOverlay();
-        }
-      });
-    }
   </script>
   <script>
     (function() {
