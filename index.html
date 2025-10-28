@@ -1494,8 +1494,7 @@
         }
       };
 
-      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('
-');
+      const formatarLista = (lista = []) => lista.map(item => `• ${item}`).join('\n');
       const rascunhos = [];
       let codigoBase = '';
       let modoEdicao = false;
@@ -1647,15 +1646,13 @@
         if (!dados || !Array.isArray(dados.doadores) || !dados.doadores.length) return;
         const principais = dados.doadores.slice(0, 2).map(item => `${item.nome || 'Aliado'} • Contribuição média ${formatarMoeda(item.valor || 0)}`);
         const textoAtual = doacoesField.value.trim();
-        const sugestao = '
-Aliados recomendados:
-' + principais.map(item => `• ${item}`).join('
-');
+        const sugestaoLinhas = ['Aliados recomendados:', ...principais.map(item => `• ${item}`)];
+        const sugestao = sugestaoLinhas.join('\n');
         if (!textoAtual.includes('Aliados recomendados')) {
-          doacoesField.value = `${textoAtual}${textoAtual ? '
-
-' : ''}${sugestao}`.trim();
+          const separadorSugestao = textoAtual ? "\n\n" : "";
+          doacoesField.value = `${textoAtual}${separadorSugestao}${sugestao}`.trim();
         }
+
       }
 
       function preencherSugestoes() {
