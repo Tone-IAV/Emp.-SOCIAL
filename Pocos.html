@@ -2475,5 +2475,27 @@
 
   atualizarResumoFluxo();
   carregarPocos();
+
+  window.addEventListener('EmpSocial:abrirFormulario', (evento) => {
+    const detalhe = evento.detail || {};
+    const tipo = (detalhe.tipo || '').toLowerCase();
+    if (tipo !== 'poco') return;
+    const dados = detalhe.dados || {};
+    const acao = detalhe.acao || (dados && dados.id ? 'editar' : 'novo');
+    if (acao === 'novo') {
+      hiddenId.value = '';
+      limparFormulario();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (dados.id) {
+      selecionarPoco(dados.id);
+      setTimeout(() => {
+        if (btnEditar) {
+          btnEditar.click();
+        }
+      }, 250);
+    }
+  });
 })();
 </script>

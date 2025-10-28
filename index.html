@@ -6,6 +6,7 @@
   <base target="_top">
   <title>Emp. Social - Centro de Missões</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
@@ -247,6 +248,137 @@
   </script>
   <script>
     (function () {
+      const global = window;
+
+      if (typeof global.escapeHtml !== 'function') {
+        global.escapeHtml = (valor = '') => String(valor)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      if (typeof global.formatarNumero !== 'function') {
+        global.formatarNumero = (valor, casasDecimais = 0) => {
+          const numero = Number(valor);
+          const seguro = Number.isFinite(numero) ? numero : 0;
+          return seguro.toLocaleString('pt-BR', {
+            minimumFractionDigits: casasDecimais,
+            maximumFractionDigits: casasDecimais
+          });
+        };
+      }
+
+      if (typeof global.formatarMoeda !== 'function') {
+        const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+        global.formatarMoeda = (valor) => {
+          const numero = Number(valor);
+          return formatadorMoeda.format(Number.isFinite(numero) ? numero : 0);
+        };
+      }
+
+      if (typeof global.formatarData !== 'function') {
+        global.formatarData = (valor) => {
+          if (!valor) return '';
+          const data = new Date(valor);
+          if (Number.isNaN(data.getTime())) return '';
+          return data.toLocaleDateString('pt-BR');
+        };
+      }
+
+      const registrosDetalhes = new Map();
+      let contadorDetalhes = 0;
+
+      const normalizarLista = (valor) => Array.isArray(valor)
+        ? valor.filter(item => item !== null && item !== undefined)
+        : [];
+
+      const normalizarCategoria = (valor) => {
+        const texto = (valor || '').toString().toLowerCase();
+        return ['pocos', 'projetos', 'doadores'].includes(texto) ? texto : 'pocos';
+      };
+
+      const normalizarDetalhe = (entrada = {}) => {
+        const detalhe = {
+          id: entrada.id || null,
+          titulo: entrada.titulo || 'Detalhe',
+          subtitulo: entrada.subtitulo || '',
+          resumo: entrada.resumo || entrada.descricao || '',
+          status: entrada.status || '',
+          meta: entrada.meta || '',
+          tags: normalizarLista(entrada.tags),
+          metricas: normalizarLista(entrada.metricas),
+          campos: normalizarLista(entrada.campos),
+          doadores: normalizarLista(entrada.doadores),
+          documentos: normalizarLista(entrada.documentos),
+          contatos: normalizarLista(entrada.contatos),
+          evidencias: normalizarLista(entrada.evidencias),
+          timeline: normalizarLista(entrada.timeline),
+          categoria: normalizarCategoria(entrada.categoria),
+          acao: entrada.acao || null,
+          acaoEditar: entrada.acaoEditar || null,
+          destino: 'Detalhes'
+        };
+        if (!entrada.categoria && entrada.acao && entrada.acao.destino) {
+          detalhe.categoria = normalizarCategoria(entrada.acao.destino);
+        }
+        return detalhe;
+      };
+
+      const registrarDetalhe = (entrada) => {
+        const registro = normalizarDetalhe(entrada);
+        const chave = `emp-det-${Date.now()}-${(++contadorDetalhes).toString(36)}`;
+        registrosDetalhes.set(chave, registro);
+        return chave;
+      };
+
+      const criarAtributoDetalhes = (entrada = {}) => {
+        const chave = registrarDetalhe(entrada || {});
+        return `data-emp-detalhe="${chave}"`;
+      };
+
+      const abrirDetalheRegistrado = (chave) => {
+        if (!chave || !registrosDetalhes.has(chave)) return;
+        const registro = registrosDetalhes.get(chave);
+        const payload = Object.assign({}, registro);
+        const destino = registro.destino || 'Detalhes';
+        if (typeof global.navegarPara === 'function') {
+          global.navegarPara(destino, { pushState: true })
+            .then(() => {
+              global.dispatchEvent(new CustomEvent('EmpSocial:mostrarDetalhe', { detail: payload }));
+            })
+            .catch(erro => console.error('Não foi possível abrir os detalhes solicitados.', erro));
+        } else {
+          console.warn('Função navegarPara não disponível para abrir detalhes.');
+        }
+      };
+
+      const ehAtalhoDeAtivacao = (evento) => evento.key === 'Enter' || evento.key === ' ';
+
+      document.addEventListener('click', (evento) => {
+        const alvo = evento.target.closest('[data-emp-detalhe]');
+        if (!alvo) return;
+        evento.preventDefault();
+        const chave = alvo.getAttribute('data-emp-detalhe');
+        abrirDetalheRegistrado(chave);
+      });
+
+      document.addEventListener('keydown', (evento) => {
+        if (!ehAtalhoDeAtivacao(evento)) return;
+        const alvo = evento.target.closest('[data-emp-detalhe]');
+        if (!alvo) return;
+        evento.preventDefault();
+        const chave = alvo.getAttribute('data-emp-detalhe');
+        abrirDetalheRegistrado(chave);
+      });
+
+      global.criarAtributoDetalhes = criarAtributoDetalhes;
+      global.EmpSocialDetalhesRegistros = registrosDetalhes;
+    })();
+  </script>
+  <script>
+    (function () {
       const config = window.EmpSocial;
       const navList = document.getElementById('navList');
       const mainContent = document.getElementById('mainContent');
@@ -254,6 +386,12 @@
       if (!config || !navList || !mainContent) {
         return;
       }
+
+      const encontrarSection = (valor) => {
+        if (!valor) return null;
+        const alvo = valor.toString().toLowerCase();
+        return config.sections.find((entry) => entry.id.toLowerCase() === alvo || entry.file.toLowerCase() === alvo) || null;
+      };
 
       const createNavButton = (section) => {
         const listItem = document.createElement('li');
@@ -325,8 +463,9 @@
         `;
       };
 
-      const loadSection = (sectionId, options = { pushState: false }) => {
-        const section = config.sections.find((entry) => entry.id === sectionId) || config.sections[0];
+      const loadSection = (sectionId, options = {}) => {
+        const { pushState = false, onLoaded, onError } = options;
+        const section = encontrarSection(sectionId) || config.sections[0];
         if (!section) {
           return;
         }
@@ -334,20 +473,95 @@
         showLoading(section);
         setActiveButton(section.id);
 
-        const onSuccess = (html) => renderHTML(html, section.id, options.pushState);
+        const onSuccess = (html) => {
+          renderHTML(html, section.id, pushState);
+          if (typeof onLoaded === 'function') {
+            try {
+              onLoaded({ section: section.id });
+            } catch (callbackError) {
+              console.error('Erro ao executar callback de carregamento.', callbackError);
+            }
+          }
+        };
+
         const onFailure = (error) => {
           const message = error && error.message ? error.message : 'Erro inesperado.';
           showError(section, message);
+          if (typeof onError === 'function') {
+            try {
+              onError(error);
+            } catch (callbackError) {
+              console.error('Erro ao executar callback de falha.', callbackError);
+            }
+          }
         };
 
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).include(section.file);
         } else {
-          fetch(`${section.file}.html`).then((response) => {
-            if (!response.ok) throw new Error('Arquivo não encontrado.');
-            return response.text();
-          }).then(onSuccess).catch(onFailure);
+          fetch(`${section.file}.html`)
+            .then((response) => {
+              if (!response.ok) throw new Error('Arquivo não encontrado.');
+              return response.text();
+            })
+            .then(onSuccess)
+            .catch(onFailure);
         }
+      };
+
+      const navegarParaInterno = (destino, opcoes = {}) => {
+        const { pushState = true } = opcoes;
+        return new Promise((resolve, reject) => {
+          const section = encontrarSection(destino);
+          if (!section) {
+            const erro = new Error(`Seção "${destino}" não encontrada.`);
+            console.warn(erro.message);
+            reject(erro);
+            return;
+          }
+          loadSection(section.id, {
+            pushState,
+            onLoaded: (info) => {
+              if (typeof opcoes.onLoaded === 'function') {
+                try {
+                  opcoes.onLoaded(info);
+                } catch (callbackError) {
+                  console.error('Erro no callback onLoaded.', callbackError);
+                }
+              }
+              resolve(info);
+            },
+            onError: (erro) => {
+              if (typeof opcoes.onError === 'function') {
+                try {
+                  opcoes.onError(erro);
+                } catch (callbackError) {
+                  console.error('Erro no callback onError.', callbackError);
+                }
+              }
+              reject(erro);
+            }
+          });
+        });
+      };
+
+      const mapaFormulario = { poco: 'Pocos', projeto: 'Gestao', doador: 'Impacto' };
+
+      window.navegarPara = (destino, opcoes = {}) => navegarParaInterno(destino, opcoes);
+
+      window.abrirFormularioCadastro = (configFormulario = {}) => {
+        const { tipo, dados, destino, navegacao } = configFormulario;
+        const tipoNormalizado = (tipo || 'poco').toString().toLowerCase();
+        const alvo = destino || mapaFormulario[tipoNormalizado] || tipo || 'Pocos';
+        return navegarParaInterno(alvo, Object.assign({ pushState: true }, navegacao)).then(() => {
+          window.dispatchEvent(new CustomEvent('EmpSocial:abrirFormulario', {
+            detail: {
+              tipo: tipoNormalizado,
+              dados: dados || {},
+              acao: dados && dados.id ? 'editar' : 'novo'
+            }
+          }));
+        });
       };
 
       config.sections.forEach((section) => {

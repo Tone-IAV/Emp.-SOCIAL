@@ -26,10 +26,7 @@
     </aside>
 
     <section class="detalhes-painel" aria-live="polite" aria-busy="false">
-      <div id="detalhesPlaceholder" class="detalhes-placeholder">
-        <span class="material-icons" aria-hidden="true">dashboard_customize</span>
-        <p>Selecione um item para ver imagens, documentos, cronograma e contatos vinculados.</p>
-      </div>
+      <div id="detalhesPlaceholder" class="detalhes-placeholder" aria-hidden="true"></div>
       <article id="detalhesPainel" class="detalhes-card" hidden>
         <header class="detalhes-card__header">
           <div>
@@ -38,6 +35,7 @@
             <p id="detalhesSubtitulo"></p>
           </div>
           <div class="detalhes-ctas">
+            <button type="button" id="detalhesNovo" class="detalhes-cta secundario" hidden>Novo cadastro</button>
             <button type="button" id="detalhesEditar" class="detalhes-cta" hidden>Editar</button>
             <button type="button" id="detalhesAbrirGuia" class="detalhes-cta secundario" hidden>Abrir guia relacionada</button>
           </div>
@@ -211,6 +209,7 @@
     const painelContatos = document.getElementById('detalhesContatos');
     const painelTimelineSecao = document.querySelector('[aria-labelledby="detalhesTimelineTitulo"]');
     const painelTimeline = document.getElementById('detalhesTimeline');
+    const btnNovo = document.getElementById('detalhesNovo');
     const btnEditar = document.getElementById('detalhesEditar');
     const btnAbrirGuia = document.getElementById('detalhesAbrirGuia');
 
@@ -219,10 +218,25 @@
       dados: { pocos: [], projetos: [], doadores: [] },
       filtrados: [],
       selecionado: null,
-      linksGuia: { pocos: 'pocos', projetos: 'gestao', doadores: 'impacto' }
+      linksGuia: { pocos: 'pocos', projetos: 'gestao', doadores: 'impacto' },
+      formularios: { pocos: 'poco', projetos: 'projeto', doadores: 'doador' }
     };
 
     const normalizarColecao = (valor) => Array.isArray(valor) ? valor : [];
+
+    const atualizarBotaoNovo = () => {
+      if (!btnNovo) return;
+      const tipoFormulario = estado.formularios[estado.categoria];
+      if (tipoFormulario && typeof window.abrirFormularioCadastro === 'function') {
+        btnNovo.hidden = false;
+        btnNovo.onclick = () => {
+          window.abrirFormularioCadastro({ tipo: tipoFormulario });
+        };
+      } else {
+        btnNovo.hidden = true;
+        btnNovo.onclick = null;
+      }
+    };
 
     const atualizarResumoCategoria = () => {
       const colecao = estado.dados[estado.categoria] || [];
@@ -403,6 +417,7 @@
     };
 
     const renderizarPainel = (item) => {
+      atualizarBotaoNovo();
       if (!item) {
         painelPlaceholder.hidden = false;
         painelEl.hidden = true;
@@ -457,6 +472,21 @@
       }
     };
 
+    const aplicarCategoria = (categoria, redefinirBusca = true) => {
+      if (!categoria || !estado.dados[categoria]) return;
+      estado.categoria = categoria;
+      filtros.forEach(btn => {
+        const ativo = btn.getAttribute('data-categoria') === categoria;
+        btn.classList.toggle('ativo', ativo);
+        btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+      });
+      if (redefinirBusca) {
+        buscaInput.value = '';
+      }
+      atualizarResumoCategoria();
+      renderizarLista();
+    };
+
     listaEl.addEventListener('click', (evento) => {
       const card = evento.target.closest('.detalhes-item');
       if (!card) return;
@@ -480,15 +510,8 @@
       botao.addEventListener('click', () => {
         const categoria = botao.getAttribute('data-categoria');
         if (!categoria || categoria === estado.categoria) return;
-        filtros.forEach(btn => {
-          btn.classList.toggle('ativo', btn === botao);
-          btn.setAttribute('aria-selected', btn === botao ? 'true' : 'false');
-        });
-        estado.categoria = categoria;
         estado.selecionado = null;
-        buscaInput.value = '';
-        atualizarResumoCategoria();
-        renderizarLista();
+        aplicarCategoria(categoria);
         renderizarPainel(null);
       });
     });
@@ -531,6 +554,8 @@
         if (estado.filtrados.length) {
           estado.selecionado = estado.filtrados[0];
           renderizarPainel(estado.selecionado);
+        } else {
+          renderizarPainel(null);
         }
       };
       const fallback = () => {
@@ -581,5 +606,44 @@
     };
 
     carregarDados();
+
+    window.addEventListener('EmpSocial:mostrarDetalhe', (evento) => {
+      const detalhe = evento.detail || {};
+      if (!detalhe) return;
+      const categoriaInformada = detalhe.categoria && estado.dados[detalhe.categoria] !== undefined
+        ? detalhe.categoria
+        : estado.categoria;
+      if (categoriaInformada !== estado.categoria) {
+        aplicarCategoria(categoriaInformada, false);
+      }
+      const metricas = normalizarColecao(detalhe.metricas).map(m => Object.assign({}, m, {
+        valor: m.formato === 'moeda'
+          ? formatarMoeda(m.valorNumerico)
+          : (m.formato === 'numero' ? formatarNumero(m.valorNumerico) : (m.valor || '-')),
+        detalhe: m.detalhe || ''
+      }));
+      const item = {
+        id: detalhe.id || `externo-${Date.now()}`,
+        titulo: detalhe.titulo || 'Item detalhado',
+        subtitulo: detalhe.subtitulo || '',
+        status: detalhe.status || '',
+        resumo: detalhe.resumo || detalhe.descricao || 'Sem descrição detalhada.',
+        meta: detalhe.meta || '',
+        tags: normalizarColecao(detalhe.tags),
+        metricas,
+        campos: normalizarColecao(detalhe.campos),
+        doadores: normalizarColecao(detalhe.doadores),
+        evidencias: normalizarColecao(detalhe.evidencias),
+        documentos: normalizarColecao(detalhe.documentos),
+        contatos: normalizarColecao(detalhe.contatos),
+        timeline: normalizarColecao(detalhe.timeline),
+        acaoGuia: detalhe.acao && detalhe.acao.destino ? detalhe.acao.destino : estado.linksGuia[categoriaInformada],
+        acaoEditar: detalhe.acaoEditar || null
+      };
+      estado.selecionado = item;
+      painelPlaceholder.hidden = true;
+      painelEl.hidden = false;
+      renderizarPainel(item);
+    });
   })();
 </script>
