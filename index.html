@@ -320,84 +320,84 @@
       <div>
         <header class="gamified-hub__header">
           <div>
-            <h1 id="tituloHubGamificado" class="gamified-hub__title">Mapa vivo da missão 💠</h1>
-            <p class="gamified-hub__subtitle">Navegue como um jogo: acompanhe a jornada dos poços, organize projetos colaborativos e mantenha as missões registradas com precisão na base de dados.</p>
+            <h1 id="tituloHubGamificado" class="gamified-hub__title">Painel geral das missões</h1>
+            <p class="gamified-hub__subtitle">Visualize indicadores essenciais, acompanhe a jornada dos poços e organize iniciativas de campo sem precisar deixar o painel principal.</p>
           </div>
-          <button type="button" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold shadow" data-navegacao="dashboard">Abrir painel analítico</button>
+          <button type="button" class="px-4 py-2 rounded-full bg-sky-500 text-white font-semibold shadow" data-navegacao="dashboard">Ir para painel analítico</button>
         </header>
 
         <section class="mission-orchestrator" aria-labelledby="missionOrchestratorTitulo">
           <div class="mission-orchestrator__header">
             <div>
-              <h2 id="missionOrchestratorTitulo" class="mission-orchestrator__title">Central de missões inteligentes</h2>
-              <p class="mission-orchestrator__subtitle">Cadastre poços, projetos sociais e doadores de maneira orientada. Visualize tudo em um painel vivo com atividades, kanban e gantt em tempo real.</p>
+              <h2 id="missionOrchestratorTitulo" class="mission-orchestrator__title">Central de gestão das missões</h2>
+              <p class="mission-orchestrator__subtitle">Gerencie poços, projetos sociais e doadores com orientação. Acompanhe tudo em um painel com atividades, kanban e gantt integrados.</p>
             </div>
             <div class="mission-orchestrator__actions">
               <div id="missionFeedback" class="mission-feedback" role="status" aria-live="polite"></div>
               <button type="button" id="btnNovaEntrada" class="mission-add-button">
                 <span class="icon">+</span>
-                Nova entrada
+                Criar registro
               </button>
             </div>
           </div>
           <div class="mission-orchestrator__grid">
             <div class="mission-orchestrator__panel">
               <div>
-                <h3 class="journey-board__title">Resumo imediato</h3>
+                <h3 class="journey-board__title">Visão geral rápida</h3>
                 <div id="missionOverviewCards" class="mission-overview-grid">
                   <div class="hub-empty">Carregando resumo das missões...</div>
                 </div>
               </div>
               <div>
-                <h3 class="journey-board__title">Insights automáticos</h3>
+                <h3 class="journey-board__title">Sugestões automáticas</h3>
                 <ul id="missionInsights" class="mission-insights">
                   <li class="hub-empty">Analisando dados de campo...</li>
                 </ul>
               </div>
               <div class="mission-autofill">
-                <h4>Checklist inteligente</h4>
+                <h4>Checklist orientado</h4>
                 <ul id="missionAutoChecklist" class="mission-autofill__list">
-                  <li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>
+                  <li class="hub-empty">Defina o tipo de missão para receber recomendações.</li>
                 </ul>
               </div>
               <div>
-                <h3 class="journey-board__title">Rascunhos prontos para envio</h3>
+                <h3 class="journey-board__title">Rascunhos em andamento</h3>
                 <ul id="missionDrafts" class="mission-drafts">
-                  <li class="hub-empty">Nenhum rascunho salvo ainda.</li>
+                  <li class="hub-empty">Nenhum rascunho disponível no momento.</li>
                 </ul>
               </div>
             </div>
             <div class="mission-orchestrator__panel mission-preview">
               <div class="mission-preview__header">
                 <div>
-                  <h3 class="journey-board__title">Atividades recentes</h3>
-                  <p class="journey-board__subtitle">Visualize os últimos movimentos registrados e acompanhe o pulso da missão.</p>
+                  <h3 class="journey-board__title">Últimas atividades</h3>
+                  <p class="journey-board__subtitle">Acompanhe os registros mais recentes para manter o ritmo das operações.</p>
                 </div>
-                <button type="button" class="px-4 py-2 rounded-full bg-emerald-500 text-white font-semibold shadow" data-navegacao="gestao">Abrir gestão detalhada</button>
+                <button type="button" class="px-4 py-2 rounded-full bg-emerald-500 text-white font-semibold shadow" data-navegacao="gestao">Ir para gestão detalhada</button>
               </div>
               <ul id="recentActivities" class="mission-activities">
-                <li class="hub-empty">Coletando eventos registrados...</li>
+                <li class="hub-empty">Sincronizando eventos recentes...</li>
               </ul>
               <div class="mission-preview__boards">
                 <div class="kanban-preview">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h4 class="text-sm font-semibold text-sky-700">Kanban rápido</h4>
-                      <p class="text-xs text-sky-900/70">Principais cartões em movimento.</p>
+                      <h4 class="text-sm font-semibold text-sky-700">Visão rápida em Kanban</h4>
+                      <p class="text-xs text-sky-900/70">Principais cartões em andamento.</p>
                     </div>
-                    <button type="button" class="text-xs font-semibold text-sky-600 underline" data-navegacao="kanban">Ver completo</button>
+                    <button type="button" class="text-xs font-semibold text-sky-600 underline" data-navegacao="kanban">Abrir quadro completo</button>
                   </div>
                   <div id="kanbanPreview" class="kanban-preview__columns">
-                    <div class="hub-empty">Sincronizando colunas...</div>
+                    <div class="hub-empty">Atualizando colunas...</div>
                   </div>
                 </div>
                 <div class="gantt-preview">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h4 class="text-sm font-semibold text-indigo-700">Linha do tempo</h4>
-                      <p class="text-xs text-indigo-900/70">Etapas planejadas e em execução.</p>
+                      <h4 class="text-sm font-semibold text-indigo-700">Cronograma resumido</h4>
+                      <p class="text-xs text-indigo-900/70">Etapas planejadas e em andamento.</p>
                     </div>
-                    <button type="button" class="text-xs font-semibold text-indigo-600 underline" data-navegacao="gestao">Abrir cronograma</button>
+                    <button type="button" class="text-xs font-semibold text-indigo-600 underline" data-navegacao="gestao">Ver cronograma detalhado</button>
                   </div>
                   <div id="ganttPreview" class="gantt-preview__chart"></div>
                 </div>
@@ -413,10 +413,10 @@
         <div class="journey-board">
           <div class="journey-board__header">
             <div>
-              <h2 class="journey-board__title">Trilha dos poços</h2>
-              <p class="journey-board__subtitle">Cada etapa representa um checkpoint crítico. Clique para mergulhar na gestão detalhada e atualizar dados diretamente na base.</p>
+              <h2 class="journey-board__title">Etapas dos poços</h2>
+              <p class="journey-board__subtitle">Cada fase indica um checkpoint relevante. Abra a gestão detalhada para atualizar as informações diretamente na base.</p>
             </div>
-            <button type="button" class="px-3 py-2 rounded-full bg-white border border-sky-200 text-sky-700 text-sm font-semibold shadow-sm" data-navegacao="pocos">Cadastrar ou atualizar poço</button>
+            <button type="button" class="px-3 py-2 rounded-full bg-white border border-sky-200 text-sky-700 text-sm font-semibold shadow-sm" data-navegacao="pocos">Gerenciar poço</button>
           </div>
           <div id="journeyTrack" class="journey-track">
             <div class="hub-empty">Mapeando estágios dos poços...</div>
@@ -424,7 +424,7 @@
         </div>
 
         <div class="project-flow">
-          <div class="project-flow__title">Cronograma vivo dos projetos</div>
+          <div class="project-flow__title">Cronograma dos projetos</div>
           <ul id="projectTimeline" class="project-timeline">
             <li class="mission-card__empty">Carregando etapas do cronograma...</li>
           </ul>
@@ -860,7 +860,7 @@
           insights.push({ titulo: 'Aliado estratégico', mensagem: `${aliado.nome || 'Aliado'} mantém ${formatarNumero(aliado.pocos || 0)} poços e ${formatarNumero(aliado.beneficiarios || 0)} beneficiários ativos.` });
         }
         if (!insights.length) {
-          missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
+          missionInsightsList.innerHTML = '<li class="hub-empty">Ainda não há sugestões. Cadastre novas missões para gerar recomendações.</li>';
           return;
         }
         missionInsightsList.innerHTML = insights.map(item => `
@@ -901,15 +901,15 @@
 
       const render = (dados) => {
         if (!dados) {
-          placeholder(scoreContainer, 'Não foi possível carregar as métricas.');
-          placeholder(trackContainer, 'Não foi possível carregar o pipeline.');
+          placeholder(scoreContainer, 'As métricas não puderam ser carregadas.');
+          placeholder(trackContainer, 'O pipeline não pôde ser carregado.');
           placeholder(missionContainer, 'Não foi possível carregar as missões prioritárias.');
-          placeholder(projectContainer, 'Não foi possível carregar o cronograma.');
+          placeholder(projectContainer, 'O cronograma não pôde ser carregado.');
           placeholder(impactContainer, 'Sem dados de impacto disponíveis.');
           placeholder(donorContainer, 'Sem doadores destacados no momento.');
-          placeholder(missionOverview, 'Nenhuma missão cadastrada. Crie um rascunho para começar.');
+          placeholder(missionOverview, 'Nenhuma missão cadastrada. Inicie criando um rascunho.');
           if (missionInsightsList) {
-            missionInsightsList.innerHTML = '<li class="hub-empty">Sem insights no momento. Cadastre novas missões para gerar recomendações automáticas.</li>';
+            missionInsightsList.innerHTML = '<li class="hub-empty">Ainda não há sugestões. Cadastre novas missões para gerar recomendações.</li>';
           }
           return;
         }
@@ -1612,7 +1612,7 @@
       function atualizarChecklist(itens) {
         if (!checklistList) return;
         if (!itens.length) {
-          checklistList.innerHTML = '<li class="hub-empty">Selecione o tipo de missão para gerar recomendações.</li>';
+          checklistList.innerHTML = '<li class="hub-empty">Escolha um tipo de missão para receber recomendações.</li>';
           return;
         }
         checklistList.innerHTML = itens.map(item => `<li class="mission-autofill__item">${escapeHtml(item)}</li>`).join('');
@@ -1690,7 +1690,7 @@
       function renderizarRascunhos() {
         if (!draftsList) return;
         if (!rascunhos.length) {
-          draftsList.innerHTML = '<li class="hub-empty">Nenhum rascunho salvo ainda.</li>';
+          draftsList.innerHTML = '<li class="hub-empty">Nenhum rascunho disponível no momento.</li>';
           return;
         }
         draftsList.innerHTML = rascunhos.slice(-4).reverse().map(item => `
