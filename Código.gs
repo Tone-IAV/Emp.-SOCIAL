@@ -4,13 +4,43 @@
  *
  * @param {GoogleAppsScript.Events.DoGet} e Request context.
  */
+var VIEW_DEFINITIONS = [
+  {
+    id: 'solicitacoes',
+    label: 'Solicitações',
+    sheet: 'Solicitações',
+    fetch: 'getSolicitacoes',
+    save: 'saveSolicitacao',
+    partial: 'Solicitacoes'
+  },
+  {
+    id: 'pocos',
+    label: 'Poços',
+    sheet: 'Poços',
+    fetch: 'getPocos',
+    save: 'savePoco',
+    partial: 'Pocos'
+  },
+  {
+    id: 'projetos',
+    label: 'Projetos',
+    sheet: 'Projetos',
+    fetch: 'getProjetos',
+    save: 'saveProjeto',
+    partial: 'Projetos'
+  },
+  {
+    id: 'doadores',
+    label: 'Doadores',
+    sheet: 'Doadores',
+    fetch: 'getDoadores',
+    save: 'saveDoador',
+    partial: 'Doadores'
+  }
+];
+
 function doGet(e) {
-  var views = [
-    { id: 'solicitacoes', label: 'Solicitações', fetch: 'getSolicitacoes', partial: 'Solicitacoes' },
-    { id: 'pocos', label: 'Poços', fetch: 'getPocos', partial: 'Pocos' },
-    { id: 'projetos', label: 'Projetos', fetch: 'getProjetos', partial: 'Projetos' },
-    { id: 'doadores', label: 'Doadores', fetch: 'getDoadores', partial: 'Doadores' }
-  ];
+  var views = VIEW_DEFINITIONS;
 
   var template = HtmlService.createTemplateFromFile('index');
   template.views = views;
@@ -289,6 +319,43 @@ function saveProjeto(record) {
 
 function saveDoador(record) {
   return saveRecord('Doadores', record);
+}
+
+function getViewConfig(viewId) {
+  if (!viewId) {
+    throw new Error('Uma visualização precisa ser informada.');
+  }
+
+  var definition = VIEW_DEFINITIONS.filter(function(view) {
+    return view.id === viewId;
+  })[0];
+
+  if (!definition) {
+    throw new Error('A visualização "' + viewId + '" não está configurada.');
+  }
+
+  var structure = getStructure();
+  var sheetConfig = structure[definition.sheet];
+
+  if (!sheetConfig) {
+    throw new Error('Não há estrutura configurada para a guia "' + definition.sheet + '".');
+  }
+
+  return {
+    id: definition.id,
+    label: definition.label,
+    sheet: definition.sheet,
+    fetch: definition.fetch,
+    save: definition.save,
+    key: sheetConfig.key,
+    columns: sheetConfig.columns.map(function(column) {
+      return {
+        name: column,
+        label: sheetConfig.labels && sheetConfig.labels[column] ? sheetConfig.labels[column] : column,
+        isKey: sheetConfig.key === column
+      };
+    })
+  };
 }
 
 /**
