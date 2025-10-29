@@ -40,6 +40,37 @@ var VIEW_DEFINITIONS = [
 ];
 
 function doGet(e) {
+  var page = e && e.parameter && e.parameter.page;
+
+  if (page === 'detalhes-projeto') {
+    var detailTemplate = HtmlService.createTemplateFromFile('ProjetoDetalhes');
+    var availableViewIds = VIEW_DEFINITIONS.map(function(definition) {
+      return definition.id;
+    });
+    var requestedDetailView = e && e.parameter && e.parameter.view;
+    var fallbackDetailView = 'projetos';
+    var detailView = requestedDetailView && availableViewIds.indexOf(requestedDetailView) !== -1
+      ? requestedDetailView
+      : fallbackDetailView;
+
+    detailTemplate.pageParams = {
+      view: detailView,
+      key: (e.parameter && e.parameter.key) || ''
+    };
+    detailTemplate.views = VIEW_DEFINITIONS.map(function(definition) {
+      return {
+        id: definition.id,
+        label: definition.label
+      };
+    });
+    detailTemplate.currentView = detailView;
+
+    return detailTemplate
+      .evaluate()
+      .setTitle('Emp. Social - Detalhes')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   var views = VIEW_DEFINITIONS;
 
   var template = HtmlService.createTemplateFromFile('index');
@@ -356,6 +387,40 @@ function getViewConfig(viewId) {
       };
     })
   };
+}
+
+function getRecordByKey(viewId, keyValue) {
+  if (!viewId) {
+    throw new Error('Uma visualização precisa ser informada.');
+  }
+
+  var definition = VIEW_DEFINITIONS.filter(function(view) {
+    return view.id === viewId;
+  })[0];
+
+  if (!definition) {
+    throw new Error('A visualização "' + viewId + '" não está configurada.');
+  }
+
+  var structure = getStructure();
+  var sheetConfig = structure[definition.sheet];
+
+  if (!sheetConfig) {
+    throw new Error('Não há estrutura configurada para a guia "' + definition.sheet + '".');
+  }
+
+  if (keyValue == null || keyValue === '') {
+    return null;
+  }
+
+  var data = getSheetData(definition.sheet);
+  var keyName = sheetConfig.key;
+
+  var match = data.filter(function(row) {
+    return String(row[keyName]) === String(keyValue);
+  })[0];
+
+  return match || null;
 }
 
 /**
