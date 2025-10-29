@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <title>Emp. Social - Detalhes do Projeto</title>
+    <?!= include('GlobalStyles') ?>
+    <style>
+      .detail-main {
+        padding: 32px 24px 48px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .loading-state,
+      .empty-state {
+        text-align: center;
+        padding: 32px 24px;
+        color: var(--muted);
+      }
+
+      .empty-state h2 {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+
+      .empty-state p {
+        margin: 0 0 16px;
+      }
+
+      .project-card {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .project-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 24px 24px 0;
+      }
+
+      .project-card-header h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+
+      .project-subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .project-card-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .project-overview {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 0 24px 24px;
+      }
+
+      .project-summary {
+        background: linear-gradient(135deg, rgba(0, 90, 156, 0.12), rgba(0, 90, 156, 0.04));
+        border-radius: 12px;
+        padding: 20px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .project-summary h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .project-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .project-chip {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(0, 90, 156, 0.15);
+        border-radius: 8px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .project-chip span {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+
+      .project-chip strong {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .project-section {
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 12px;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .project-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .project-section-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+      }
+
+      .project-section-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+      }
+
+      .project-section-content .detail-field {
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .project-visualizations-wrapper {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .project-visualizations-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 20px 24px 16px;
+      }
+
+      .project-visualizations-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .visualization-selector {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .visualization-selector button {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid rgba(0, 90, 156, 0.3);
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+
+      .visualization-selector button.active {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .visualization-panels {
+        padding: 0 24px 24px;
+      }
+
+      .visualization-panel {
+        display: none;
+        padding: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .visualization-panel + .visualization-panel {
+        margin-top: 16px;
+      }
+
+      .visualization-panel.active {
+        display: block;
+      }
+
+      .visualization-panel h4 {
+        margin: 0 0 12px;
+        font-size: 1.05rem;
+      }
+
+      .visualization-panel p {
+        margin: 0 0 16px;
+        color: var(--muted);
+      }
+
+      .visualization-placeholder {
+        display: grid;
+        gap: 12px;
+      }
+
+      .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .kanban-column {
+        background: rgba(0, 90, 156, 0.05);
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .kanban-column h5 {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--primary-dark);
+      }
+
+      .kanban-card {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: var(--text);
+      }
+
+      .timeline {
+        position: relative;
+        padding-left: 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: rgba(0, 90, 156, 0.25);
+      }
+
+      .timeline-item {
+        position: relative;
+        padding-left: 16px;
+      }
+
+      .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -12px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--primary);
+      }
+
+      .timeline-item strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.95rem;
+      }
+
+      .timeline-item span {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      @media (max-width: 768px) {
+        .project-card-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .project-card-actions {
+          justify-content: flex-start;
+        }
+
+        .visualization-panel {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="nav-container">
+        <div class="brand">Emp. Social</div>
+        <nav>
+          <a href="?view=projetos">&larr; Voltar para projetos</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="detail-main">
+      <div id="loading-state" class="card loading-state">Carregando dados do projeto...</div>
+
+      <div id="empty-state" class="card empty-state hidden">
+        <h2>Projeto não encontrado</h2>
+        <p id="empty-message">Não encontramos o projeto solicitado. Verifique o link ou volte para a lista.</p>
+        <button class="secondary" type="button" onclick="window.location.href='?view=projetos'">Voltar para projetos</button>
+      </div>
+
+      <section id="project-card" class="card project-card hidden">
+        <div class="project-card-header">
+          <div>
+            <h1 id="project-title">Projeto</h1>
+            <p id="project-subtitle" class="project-subtitle"></p>
+          </div>
+          <div class="project-card-actions">
+            <button class="secondary" type="button" onclick="window.location.href='?view=projetos'">Voltar</button>
+            <button id="edit-project-button" type="button">Editar projeto</button>
+          </div>
+        </div>
+        <div id="project-overview" class="project-overview"></div>
+      </section>
+
+      <section id="visualizations-card" class="card project-visualizations-wrapper hidden">
+        <div class="project-visualizations-header">
+          <h2>Visualizações do projeto</h2>
+          <div id="visualization-tabs" class="visualization-selector"></div>
+        </div>
+        <div id="visualization-panels" class="visualization-panels"></div>
+      </section>
+    </main>
+
+    <div
+      id="modal-overlay"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="modal" role="document">
+        <div class="modal-header">
+          <h2 id="modal-title" class="modal-title"></h2>
+          <button class="icon-button" type="button" aria-label="Fechar" data-close-modal>&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+        <div id="modal-footer" class="modal-footer hidden"></div>
+      </div>
+    </div>
+
+    <script>
+      const pageParams = <?!= JSON.stringify(pageParams || {}) ?>;
+      const viewId = pageParams.view || 'projetos';
+      const recordKey = pageParams.key || '';
+
+      let currentMetadata = null;
+      let currentRecord = null;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        setupModal();
+        initializeDetailPage();
+      });
+
+      function initializeDetailPage() {
+        if (!recordKey) {
+          showEmptyState('Selecione um projeto válido para visualizar os detalhes.');
+          return;
+        }
+
+        showLoading(true);
+
+        Promise.all([fetchMetadata(viewId), fetchRecord(viewId, recordKey)])
+          .then(([metadata, record]) => {
+            currentMetadata = metadata;
+            currentRecord = record;
+
+            if (!record) {
+              showEmptyState('Não encontramos o projeto solicitado.');
+              return;
+            }
+
+            renderProjectCard(metadata, record);
+            renderVisualizations(metadata, record);
+            showDetailContent();
+          })
+          .catch(handleError)
+          .finally(() => {
+            showLoading(false);
+          });
+      }
+
+      function showLoading(isLoading) {
+        const loading = document.getElementById('loading-state');
+        if (!loading) return;
+        loading.classList.toggle('hidden', !isLoading);
+      }
+
+      function showEmptyState(message) {
+        showLoading(false);
+        const empty = document.getElementById('empty-state');
+        const messageElement = document.getElementById('empty-message');
+        if (messageElement) {
+          messageElement.textContent = message;
+        }
+        empty.classList.remove('hidden');
+        document.getElementById('project-card').classList.add('hidden');
+        document.getElementById('visualizations-card').classList.add('hidden');
+      }
+
+      function showDetailContent() {
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('project-card').classList.remove('hidden');
+      }
+
+      function fetchMetadata(view) {
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getViewConfig(view);
+        });
+      }
+
+      function fetchRecord(view, key) {
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getRecordByKey(view, key);
+        });
+      }
+
+      function renderProjectCard(metadata, record) {
+        const columns = metadata.columns || [];
+        const overview = document.getElementById('project-overview');
+        overview.innerHTML = '';
+
+        const used = new Set();
+
+        const titleElement = document.getElementById('project-title');
+        const subtitleElement = document.getElementById('project-subtitle');
+
+        const titleColumn = columns.find((column) => /nome|t[ií]tulo|projeto/i.test(normalize(column.label || column.name || '')));
+        const title = getValue(record, titleColumn ? titleColumn.name : null, titleColumn ? titleColumn.label : null);
+        titleElement.textContent = title !== '—' ? title : 'Projeto';
+        document.title = `Emp. Social - ${titleElement.textContent}`;
+
+        const subtitleParts = [];
+        const statusColumn = columns.find((column) => /status|situa|fase/i.test(normalize(column.label || column.name || '')));
+        if (statusColumn) {
+          const statusValue = getValue(record, statusColumn.name, statusColumn.label);
+          if (statusValue && statusValue !== '—') {
+            subtitleParts.push(`Status: ${statusValue}`);
+            used.add(columnKey(statusColumn));
+          }
+        }
+
+        if (metadata.key) {
+          const keyValue = record[metadata.key];
+          if (keyValue) {
+            subtitleParts.push(`Identificador: ${keyValue}`);
+            used.add(metadata.key);
+          }
+        }
+
+        subtitleElement.textContent = subtitleParts.join(' • ');
+        subtitleElement.classList.toggle('hidden', subtitleParts.length === 0);
+
+        const summarySection = buildProjectSummary(columns, record, used, metadata.label);
+        if (summarySection) {
+          overview.appendChild(summarySection);
+        }
+
+        const sections = buildProjectSections(columns, record, used);
+        sections.forEach((section) => overview.appendChild(section));
+
+        const editButton = document.getElementById('edit-project-button');
+        if (editButton) {
+          editButton.onclick = () => openEditForm(metadata, record);
+        }
+      }
+
+      function buildProjectSummary(columns, record, used, label) {
+        if (!columns.length) {
+          return null;
+        }
+
+        const summaryKeywords = [
+          'nome',
+          'projeto',
+          'status',
+          'fase',
+          'situacao',
+          'responsavel',
+          'inicio',
+          'inici',
+          'previsao',
+          'prazo',
+          'fim',
+          'conclusao',
+          'doador',
+          'doacao',
+          'orcamento',
+          'budget',
+          'valor'
+        ];
+
+        const summarySection = document.createElement('section');
+        summarySection.className = 'project-summary';
+
+        const title = document.createElement('h3');
+        title.textContent = label ? `Resumo do ${label}` : 'Resumo do Projeto';
+        summarySection.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'project-summary-grid';
+
+        columns
+          .filter((column) => matchColumn(column, summaryKeywords) && !used.has(columnKey(column)))
+          .slice(0, 8)
+          .forEach((column) => {
+            grid.appendChild(createChip(column, record, used));
+          });
+
+        if (!grid.childElementCount) {
+          const fallbackColumn = columns.find((column) => !used.has(columnKey(column)));
+          if (fallbackColumn) {
+            grid.appendChild(createChip(fallbackColumn, record, used));
+          }
+        }
+
+        summarySection.appendChild(grid);
+        return summarySection;
+      }
+
+      function buildProjectSections(columns, record, used) {
+        const sections = [];
+
+        const contactKeywords = ['contato', 'telefone', 'email', 'responsavel', 'parceiro'];
+        const fundingKeywords = ['doacao', 'aporte', 'orcamento', 'finance', 'patrocin', 'recurso'];
+        const actionKeywords = ['acao', 'ação', 'entrega', 'atividade', 'etapa', 'meta'];
+
+        const createSection = (title, filteredColumns) => {
+          if (!filteredColumns.length) {
+            return null;
+          }
+
+          const section = document.createElement('section');
+          section.className = 'project-section';
+
+          const header = document.createElement('div');
+          header.className = 'project-section-header';
+
+          const heading = document.createElement('h4');
+          heading.className = 'project-section-title';
+          heading.textContent = title;
+
+          header.appendChild(heading);
+          section.appendChild(header);
+
+          const content = document.createElement('div');
+          content.className = 'project-section-content';
+
+          filteredColumns.forEach((column) => {
+            used.add(columnKey(column));
+            content.appendChild(createDetailField(column, record));
+          });
+
+          section.appendChild(content);
+          return section;
+        };
+
+        const contactColumns = columns.filter(
+          (column) => !used.has(columnKey(column)) && matchColumn(column, contactKeywords)
+        );
+        const fundingColumns = columns.filter(
+          (column) => !used.has(columnKey(column)) && matchColumn(column, fundingKeywords)
+        );
+        const actionColumns = columns.filter(
+          (column) => !used.has(columnKey(column)) && matchColumn(column, actionKeywords)
+        );
+
+        const otherColumns = columns.filter((column) => !used.has(columnKey(column)));
+
+        const contactSection = createSection('Relacionamentos e Contatos', contactColumns);
+        if (contactSection) {
+          sections.push(contactSection);
+        }
+
+        const fundingSection = createSection('Financiamento e Doações', fundingColumns);
+        if (fundingSection) {
+          sections.push(fundingSection);
+        }
+
+        const actionsSection = createSection('Ações Diretas e Indiretas', actionColumns);
+        if (actionsSection) {
+          sections.push(actionsSection);
+        }
+
+        const otherSection = createSection('Outras Informações', otherColumns);
+        if (otherSection) {
+          sections.push(otherSection);
+        }
+
+        return sections;
+      }
+
+      function renderVisualizations(metadata, record) {
+        const columns = metadata.columns || [];
+        const tabsContainer = document.getElementById('visualization-tabs');
+        const panelsContainer = document.getElementById('visualization-panels');
+        const card = document.getElementById('visualizations-card');
+
+        tabsContainer.innerHTML = '';
+        panelsContainer.innerHTML = '';
+
+        if (!columns.length) {
+          card.classList.add('hidden');
+          return;
+        }
+
+        const views = [
+          { id: 'gantt', label: 'Gantt' },
+          { id: 'kanban', label: 'Kanban' },
+          { id: 'timeline', label: 'Linha do Tempo' }
+        ];
+
+        const panels = {};
+
+        views.forEach((view) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = view.label;
+          button.dataset.panel = view.id;
+          button.addEventListener('click', () => setActivePanel(view.id));
+          tabsContainer.appendChild(button);
+
+          const panel = document.createElement('div');
+          panel.className = 'visualization-panel';
+          panel.dataset.panel = view.id;
+          panelsContainer.appendChild(panel);
+          panels[view.id] = panel;
+        });
+
+        const setActivePanel = (id) => {
+          panelsContainer.querySelectorAll('.visualization-panel').forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === id);
+          });
+          tabsContainer.querySelectorAll('button').forEach((button) => {
+            button.classList.toggle('active', button.dataset.panel === id);
+          });
+        };
+
+        populateGanttPanel(panels.gantt, columns, record);
+        populateKanbanPanel(panels.kanban, columns, record);
+        populateTimelinePanel(panels.timeline, columns, record);
+
+        setActivePanel('gantt');
+        card.classList.remove('hidden');
+      }
+
+      function createChip(column, record, used) {
+        if (column) {
+          used.add(columnKey(column));
+        }
+        const chip = document.createElement('div');
+        chip.className = 'project-chip';
+
+        const label = document.createElement('span');
+        label.textContent = column ? column.label || column.name : '';
+
+        const strong = document.createElement('strong');
+        strong.textContent = column ? getValue(record, column.name, column.label) : '—';
+
+        chip.appendChild(label);
+        chip.appendChild(strong);
+        return chip;
+      }
+
+      function createDetailField(column, record) {
+        const field = document.createElement('dl');
+        field.className = 'detail-field';
+
+        const title = document.createElement('dt');
+        title.textContent = column.label || column.name;
+
+        const value = document.createElement('dd');
+        value.textContent = getValue(record, column.name, column.label);
+
+        field.appendChild(title);
+        field.appendChild(value);
+        return field;
+      }
+
+      function populateGanttPanel(panel, columns, record) {
+        panel.innerHTML = '';
+
+        const header = document.createElement('h4');
+        header.textContent = 'Cronograma do Projeto';
+
+        const description = document.createElement('p');
+        description.textContent = 'Visualização simplificada do andamento do projeto com base nas datas registradas.';
+
+        const scheduleList = document.createElement('div');
+        scheduleList.className = 'visualization-placeholder';
+
+        const importantDates = extractDateFields(columns, record);
+
+        if (!importantDates.length) {
+          const empty = document.createElement('div');
+          empty.textContent = 'Nenhuma data relevante cadastrada para este projeto.';
+          scheduleList.appendChild(empty);
+        } else {
+          importantDates.forEach((item) => {
+            const field = document.createElement('div');
+            field.className = 'detail-field';
+
+            const title = document.createElement('strong');
+            title.textContent = item.label;
+
+            const span = document.createElement('span');
+            span.textContent = item.value;
+
+            field.appendChild(title);
+            field.appendChild(span);
+            scheduleList.appendChild(field);
+          });
+        }
+
+        panel.appendChild(header);
+        panel.appendChild(description);
+        panel.appendChild(scheduleList);
+      }
+
+      function populateKanbanPanel(panel, columns, record) {
+        panel.innerHTML = '';
+
+        const header = document.createElement('h4');
+        header.textContent = 'Fluxo de Trabalho';
+
+        const description = document.createElement('p');
+        description.textContent = 'Organize as ações diretas e indiretas do projeto nos estágios principais para acompanhamento rápido.';
+
+        const board = document.createElement('div');
+        board.className = 'kanban-board';
+
+        const lanes = {
+          planejado: { title: 'Planejado', items: [] },
+          andamento: { title: 'Em andamento', items: [] },
+          concluido: { title: 'Concluído', items: [] }
+        };
+
+        const actionFields = columns.filter((column) => /acao|ação|etapa|atividade|entrega|tarefa/i.test(column.label || column.name || ''));
+
+        actionFields.forEach((column) => {
+          const value = record ? record[column.name] : '';
+          if (!value) {
+            return;
+          }
+
+          const entries = Array.isArray(value)
+            ? value
+            : value
+                .toString()
+                .split(/\n|;/)
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+          entries.forEach((entry) => {
+            const normalizedEntry = entry.toLowerCase();
+            if (/conclu|finaliz|feito/.test(normalizedEntry)) {
+              lanes.concluido.items.push(entry);
+            } else if (/em andamento|andamento|execut|progress/.test(normalizedEntry)) {
+              lanes.andamento.items.push(entry);
+            } else {
+              lanes.planejado.items.push(entry);
+            }
+          });
+        });
+
+        Object.values(lanes).forEach((lane) => {
+          const column = document.createElement('div');
+          column.className = 'kanban-column';
+
+          const title = document.createElement('h5');
+          title.textContent = lane.title;
+          column.appendChild(title);
+
+          if (!lane.items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'kanban-card';
+            empty.textContent = 'Nenhuma ação categorizada.';
+            column.appendChild(empty);
+          } else {
+            lane.items.forEach((item) => {
+              const card = document.createElement('div');
+              card.className = 'kanban-card';
+              card.textContent = item;
+              column.appendChild(card);
+            });
+          }
+
+          board.appendChild(column);
+        });
+
+        panel.appendChild(header);
+        panel.appendChild(description);
+        panel.appendChild(board);
+      }
+
+      function populateTimelinePanel(panel, columns, record) {
+        panel.innerHTML = '';
+
+        const header = document.createElement('h4');
+        header.textContent = 'Linha do Tempo do Projeto';
+
+        const description = document.createElement('p');
+        description.textContent = 'Acompanhe os principais marcos, entregas e interações registradas ao longo do projeto.';
+
+        const timeline = document.createElement('div');
+        timeline.className = 'timeline';
+
+        const events = [];
+
+        const relevantColumns = columns.filter((column) => /(data|marco|evento|registro|contato)/i.test(column.label || column.name || ''));
+
+        relevantColumns.forEach((column) => {
+          const value = record ? record[column.name] : '';
+          if (!value) {
+            return;
+          }
+
+          const entries = Array.isArray(value)
+            ? value
+            : value
+                .toString()
+                .split(/\n|;/)
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+          entries.forEach((entry) => {
+            events.push({
+              title: column.label || column.name,
+              description: entry
+            });
+          });
+        });
+
+        if (!events.length) {
+          const empty = document.createElement('div');
+          empty.textContent = 'Nenhum evento registrado para este projeto.';
+          timeline.appendChild(empty);
+        } else {
+          events.forEach((event) => {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+
+            const title = document.createElement('strong');
+            title.textContent = event.title;
+
+            const span = document.createElement('span');
+            span.textContent = event.description;
+
+            item.appendChild(title);
+            item.appendChild(span);
+            timeline.appendChild(item);
+          });
+        }
+
+        panel.appendChild(header);
+        panel.appendChild(description);
+        panel.appendChild(timeline);
+      }
+
+      function extractDateFields(columns, record) {
+        const results = [];
+        const dateRegex = /(data|inicio|início|fim|prazo|previs|entrega|marco)/i;
+
+        columns.forEach((column) => {
+          if (!dateRegex.test(column.label || column.name || '')) {
+            return;
+          }
+
+          const value = record ? record[column.name] : '';
+          if (!value) {
+            return;
+          }
+
+          results.push({
+            label: column.label || column.name,
+            value: value.toString()
+          });
+        });
+
+        return results;
+      }
+
+      function openEditForm(metadata, record) {
+        const form = document.createElement('form');
+        form.className = 'modal-form';
+        form.id = `form-projetos-${Date.now()}`;
+
+        const grid = document.createElement('div');
+        grid.className = 'form-grid';
+
+        (metadata.columns || []).forEach((column) => {
+          const field = document.createElement('div');
+          field.className = 'form-field';
+
+          const label = document.createElement('label');
+          label.setAttribute('for', `${form.id}-${column.name}`);
+          label.textContent = column.label || column.name;
+          field.appendChild(label);
+
+          const input = createInputForColumn(column, record);
+          input.id = `${form.id}-${column.name}`;
+          input.name = column.name;
+
+          if (column.isKey) {
+            input.classList.add('readonly-input');
+            input.readOnly = true;
+          }
+
+          field.appendChild(input);
+          grid.appendChild(field);
+        });
+
+        form.appendChild(grid);
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const formData = new FormData(form);
+          const payload = {};
+
+          (metadata.columns || []).forEach((column) => {
+            payload[column.name] = formData.get(column.name) || '';
+          });
+
+          showSavingState(true);
+
+          google.script.run
+            .withSuccessHandler((updated) => {
+              showSavingState(false);
+              closeModal();
+              currentRecord = updated;
+              renderProjectCard(metadata, updated);
+              renderVisualizations(metadata, updated);
+            })
+            .withFailureHandler((error) => {
+              showSavingState(false);
+              handleError(error);
+            })
+            .saveProjeto(payload);
+        });
+
+        showModal({
+          title: 'Editar projeto',
+          body: form,
+          actions: [
+            {
+              label: 'Cancelar',
+              variant: 'secondary',
+              onClick: () => closeModal()
+            },
+            {
+              label: 'Salvar',
+              type: 'submit',
+              form: form.id
+            }
+          ]
+        });
+      }
+
+      function createInputForColumn(column, record) {
+        const label = normalize(column.label || column.name || '');
+        const rawValue = record && column.name ? record[column.name] : '';
+        const value = rawValue == null ? '' : rawValue;
+        let input;
+
+        if (/observa|descri|coment/i.test(label)) {
+          input = document.createElement('textarea');
+          input.value = value;
+        } else if (/data|prazo|inicio|início|fim|conclus/i.test(label)) {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.placeholder = 'dd/mm/aaaa';
+          input.value = value;
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.value = value;
+        }
+
+        return input;
+      }
+
+      function setupModal() {
+        const overlay = document.getElementById('modal-overlay');
+        if (!overlay) return;
+
+        overlay.querySelectorAll('[data-close-modal]').forEach((button) => {
+          button.addEventListener('click', () => closeModal());
+        });
+
+        overlay.addEventListener('click', (event) => {
+          if (event.target === overlay) {
+            closeModal();
+          }
+        });
+      }
+
+      function showModal({ title, body, actions = [] }) {
+        const overlay = document.getElementById('modal-overlay');
+        if (!overlay) return;
+
+        const titleElement = document.getElementById('modal-title');
+        const bodyContainer = document.getElementById('modal-body');
+        const footer = document.getElementById('modal-footer');
+
+        titleElement.textContent = title || '';
+        bodyContainer.innerHTML = '';
+        if (body instanceof Node) {
+          bodyContainer.appendChild(body);
+        }
+
+        footer.innerHTML = '';
+        actions.forEach((action) => {
+          const button = document.createElement('button');
+          button.type = action.type || 'button';
+          button.textContent = action.label;
+          if (action.variant === 'secondary') {
+            button.classList.add('secondary');
+          }
+          if (action.form) {
+            button.setAttribute('form', action.form);
+          }
+          if (typeof action.onClick === 'function') {
+            button.addEventListener('click', action.onClick);
+          }
+          footer.appendChild(button);
+        });
+
+        footer.classList.toggle('hidden', footer.children.length === 0);
+
+        overlay.classList.remove('hidden');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+      }
+
+      function closeModal() {
+        const overlay = document.getElementById('modal-overlay');
+        if (!overlay || overlay.classList.contains('hidden')) {
+          return;
+        }
+
+        overlay.classList.remove('visible');
+        overlay.classList.add('hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+
+        const bodyContainer = document.getElementById('modal-body');
+        const footer = document.getElementById('modal-footer');
+        bodyContainer.innerHTML = '';
+        footer.innerHTML = '';
+        footer.classList.add('hidden');
+      }
+
+      function showSavingState(isSaving) {
+        const footer = document.getElementById('modal-footer');
+        if (!footer) return;
+        footer.querySelectorAll('button').forEach((button) => {
+          button.disabled = isSaving;
+        });
+      }
+
+      function handleError(error) {
+        const message = error && error.message ? error.message : error;
+        alert(`Erro ao carregar dados: ${message}`);
+        console.error(error);
+      }
+
+      function normalize(value) {
+        return (value || '')
+          .toString()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      }
+
+      function matchColumn(column, keywords) {
+        const search = normalize(column.label || column.name || '');
+        return keywords.some((keyword) => search.includes(keyword));
+      }
+
+      function columnKey(column) {
+        return column.name || column.label || '';
+      }
+
+      function getValue(record, fieldName, fallback) {
+        if (!record) {
+          return '—';
+        }
+        let value = fieldName ? record[fieldName] : undefined;
+        if ((value == null || value === '') && fallback) {
+          value = record[fallback];
+        }
+        if (value == null || value === '') {
+          return '—';
+        }
+        return value;
+      }
+    </script>
+  </body>
+</html>
