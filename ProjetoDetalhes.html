@@ -431,8 +431,10 @@
             renderVisualizations(metadata, record, currentEntity);
             showDetailContent();
           })
-          .catch(handleError)
-          .finally(() => {
+          .catch((error) => {
+            handleError(error);
+          })
+          .then(() => {
             showLoading(false);
           });
       }
